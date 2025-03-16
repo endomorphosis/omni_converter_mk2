@@ -1,0 +1,6 @@
+duckdb
+numpy
+pandas
+psutil
+pydantic
+python-magic

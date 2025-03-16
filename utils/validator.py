@@ -1,0 +1,228 @@
+"""
+Validation module for the Omni-Converter.
+
+This module provides validation functionality for files and formats.
+"""
+
+import os
+from typing import Dict, List, Optional, Tuple, Any
+
+from utils.config import config_manager
+from utils.filesystem import FileInfo, FileSystem
+from utils.format_detector import format_detector
+from utils.logger import logger
+
+
+class ValidationResult:
+    """
+    Result of a validation operation.
+    
+    Attributes:
+        is_valid (bool): Whether the validation passed.
+        errors (list): List of validation errors.
+        warnings (list): List of validation warnings.
+        metadata (dict): Additional metadata about the validation.
+    """
+    
+    def __init__(
+        self, 
+        is_valid: bool = True, 
+        errors: Optional[List[str]] = None,
+        warnings: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
+        """
+        Initialize a validation result.
+        
+        Args:
+            is_valid: Whether the validation passed.
+            errors: List of validation errors.
+            warnings: List of validation warnings.
+            metadata: Additional metadata about the validation.
+        """
+        self.is_valid = is_valid
+        self.errors = errors or []
+        self.warnings = warnings or []
+        self.metadata = metadata or {}
+    
+    def add_error(self, error: str) -> None:
+        """
+        Add an error to the validation result.
+        
+        Args:
+            error: The error message.
+        """
+        self.errors.append(error)
+        self.is_valid = False
+    
+    def add_warning(self, warning: str) -> None:
+        """
+        Add a warning to the validation result.
+        
+        Args:
+            warning: The warning message.
+        """
+        self.warnings.append(warning)
+    
+    def add_metadata(self, key: str, value: Any) -> None:
+        """
+        Add metadata to the validation result.
+        
+        Args:
+            key: The metadata key.
+            value: The metadata value.
+        """
+        self.metadata[key] = value
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert to a dictionary.
+        
+        Returns:
+            A dictionary representation of the validation result.
+        """
+        return {
+            'is_valid': self.is_valid,
+            'errors': self.errors,
+            'warnings': self.warnings,
+            'metadata': self.metadata
+        }
+
+
+class BasicValidator:
+    """
+    Basic validator for the Omni-Converter.
+    
+    Validates files for processing, checking for issues like:
+    - File exists and is readable
+    - File size is within limits
+    - File format is supported
+    - File is not corrupted
+    """
+    
+    def __init__(self):
+        """Initialize the basic validator."""
+        # Load validation rules from config
+        self.validation_rules = {
+            'max_file_size_mb': config_manager.get_config_value(
+                'security.max_file_size_mb', 100),
+            'allowed_formats': config_manager.get_config_value(
+                'security.allowed_formats', [])
+        }
+    
+    def validate_file(self, file_path: str, format_name: Optional[str] = None) -> ValidationResult:
+        """
+        Validate a file for processing.
+        
+        Args:
+            file_path: The path to the file.
+            format_name: The format of the file, if known. Will be detected if not provided.
+            
+        Returns:
+            A validation result.
+            
+        Raises:
+            FileNotFoundError: If the file does not exist.
+        """
+        # Create validation result
+        result = ValidationResult()
+        
+        try:
+            # Check if file exists
+            if not FileSystem.file_exists(file_path):
+                result.add_error(f"File does not exist: {file_path}")
+                return result
+            
+            # Get file info
+            file_info = FileSystem.get_file_info(file_path)
+            
+            # Check if file is readable
+            if not file_info.is_readable:
+                result.add_error(f"File is not readable: {file_path}")
+                return result
+            
+            # Check file size
+            max_size_bytes = self.validation_rules['max_file_size_mb'] * 1024 * 1024
+            if file_info.size > max_size_bytes:
+                result.add_error(
+                    f"File size ({file_info.size} bytes) exceeds maximum allowed "
+                    f"({max_size_bytes} bytes): {file_path}"
+                )
+                return result
+            
+            # Detect format if not provided
+            if not format_name:
+                format_name, category = format_detector.detect_format(file_path)
+                if not format_name:
+                    result.add_error(f"Unable to detect format for file: {file_path}")
+                    return result
+                
+                result.add_metadata('format', format_name)
+                result.add_metadata('category', category)
+            else:
+                # Check if provided format is supported
+                category = format_detector.get_format_category(format_name)
+                if not category:
+                    result.add_error(f"Format '{format_name}' is not supported")
+                    return result
+                
+                result.add_metadata('format', format_name)
+                result.add_metadata('category', category)
+            
+            # Check if format is allowed
+            allowed_formats = self.validation_rules['allowed_formats']
+            if allowed_formats and format_name not in allowed_formats:
+                result.add_error(f"Format '{format_name}' is not allowed")
+                return result
+            
+            # Check for file corruption (basic check only)
+            # In a real implementation, this would do more thorough checks
+            if file_info.size == 0:
+                result.add_error(f"File is empty: {file_path}")
+                return result
+            
+            # Add file metadata to result
+            result.add_metadata('file_size', file_info.size)
+            result.add_metadata('mime_type', file_info.mime_type)
+            result.add_metadata('extension', file_info.extension)
+            
+            # All checks passed
+            result.is_valid = True
+            
+        except Exception as e:
+            result.add_error(f"Validation error: {str(e)}")
+            logger.error(f"Validation error for file: {file_path}", {'error': str(e)})
+        
+        return result
+    
+    def is_valid_for_processing(self, file_path: str, format_name: Optional[str] = None) -> bool:
+        """
+        Check if a file is valid for processing.
+        
+        Args:
+            file_path: The path to the file.
+            format_name: The format of the file, if known. Will be detected if not provided.
+            
+        Returns:
+            True if the file is valid for processing, False otherwise.
+        """
+        result = self.validate_file(file_path, format_name)
+        return result.is_valid
+    
+    def get_validation_errors(self, file_path: str, format_name: Optional[str] = None) -> List[str]:
+        """
+        Get validation errors for a file.
+        
+        Args:
+            file_path: The path to the file.
+            format_name: The format of the file, if known. Will be detected if not provided.
+            
+        Returns:
+            A list of validation errors.
+        """
+        result = self.validate_file(file_path, format_name)
+        return result.errors
+
+
+# Global validator instance
+validator = BasicValidator()
