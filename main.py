@@ -17,6 +17,8 @@ from utils.logger import logger
 from format_handlers.text_handler import text_handler
 from format_handlers.image_handler import image_handler
 from format_handlers.application_handler import application_handler
+from format_handlers.audio_handler import audio_handler
+from format_handlers.video_handler import video_handler
 from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
 from managers.batch_processor import batch_processor
@@ -102,11 +104,7 @@ def list_supported_formats() -> None:
             print(f"  - {fmt}")
         print()
     
-    # List categories that aren't implemented yet
-    if "audio" not in categories:
-        print("Audio Formats (0): Not implemented yet")
-    if "video" not in categories:
-        print("Video Formats (0): Not implemented yet")
+    # All categories are now implemented
 
 
 def show_version() -> None:
@@ -118,8 +116,8 @@ def show_version() -> None:
     print("- Text formats: Fully implemented (HTML, XML, Plain text, CSV, Calendar)")
     print("- Image formats: Fully implemented (JPEG, PNG, GIF, WebP, SVG)")
     print("- Application formats: Fully implemented (PDF, JSON, DOCX, XLSX, ZIP)")
-    print("- Audio formats: Not implemented")
-    print("- Video formats: Not implemented")
+    print("- Audio formats: Fully implemented (MP3, WAV, OGG, FLAC, AAC)")
+    print("- Video formats: Fully implemented (MP4, WebM, AVI, MKV, MOV)")
     print("\nSee IMPLEMENTATION_STATUS.md for detailed status report.")
 
 

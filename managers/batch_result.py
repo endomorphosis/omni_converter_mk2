@@ -147,12 +147,21 @@ class BatchResult:
             if self.end_time and self.start_time else None
         )
         
+        success_rate = (
+            f"{(self.successful_files / self.total_files) * 100:.1f}%" 
+            if self.total_files > 0 else "N/A"
+        )
+        
+        if duration is not None:
+            duration_str = f"  Duration: {duration:.2f} seconds"
+        else:
+            duration_str = "  Status: In Progress"
+        
         return (
             f"Batch Processing Result:\n"
             f"  Total Files: {self.total_files}\n"
             f"  Successful: {self.successful_files}\n"
             f"  Failed: {self.failed_files}\n"
-            f"  Success Rate: {(self.successful_files / self.total_files) * 100:.1f}% "
-            f"(if self.total_files > 0 else 'N/A')\n"
-            f"  Duration: {duration:.2f} seconds" if duration is not None else "In Progress"
+            f"  Success Rate: {success_rate}\n"
+            f"{duration_str}"
         )

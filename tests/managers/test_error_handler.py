@@ -68,21 +68,53 @@ class TestErrorHandler(unittest.TestCase):
         test_exception = ValueError("Test exception")
         context = {"file_path": "/path/to/file.txt"}
         
-        self.error_handler.log_error(test_exception, context)
+        # Set up a mock logger for this test
+        mock_logger = MagicMock()
+        original_logger = self.error_handler.logger
+        self.error_handler.logger = mock_logger
         
-        # Check that the logger was called with the correct arguments
-        self.mock_logger.error.assert_called_once()
-        args, kwargs = self.mock_logger.error.call_args
-        self.assertIn("ValueError", args[0])
-        self.assertIn("file_path", kwargs["context"])
-        self.assertIn("error_type", kwargs["context"])
-        self.assertIn("traceback", kwargs["context"])
+        try:
+            self.error_handler.log_error(test_exception, context)
+            
+            # Check that the logger was called
+            mock_logger.error.assert_called_once()
+            
+            # Get the call arguments - logger could be called with positional and keyword args
+            args, kwargs = mock_logger.error.call_args
+            
+            # Check that the error message is in the first argument
+            self.assertIn("ValueError", args[0])
+            
+            # In our implementation, context is passed as a positional parameter, not a kwarg
+            # Examine the call to see how it was made
+            if len(args) >= 2:
+                # Context is in the positional args
+                context_dict = args[1]
+                self.assertIsInstance(context_dict, dict)
+                self.assertIn("file_path", context_dict)
+                self.assertIn("error_type", context_dict)
+                self.assertIn("traceback", context_dict)
+            elif "context" in kwargs:
+                # Context is in the kwargs
+                context_dict = kwargs["context"]
+                self.assertIn("file_path", context_dict)
+                self.assertIn("error_type", context_dict)
+                self.assertIn("traceback", context_dict)
+            else:
+                # If we get here, context wasn't passed as expected
+                self.fail("Context not found in args or kwargs")
+        finally:
+            # Restore the original logger
+            self.error_handler.logger = original_logger
     
     def test_get_error_statistics(self):
         """Test getting error statistics."""
         # Add some errors
         self.error_handler.handle_error("Error 1")
         self.error_handler.handle_error("Error 2")
+        
+        # Set suppress_errors to True so handle_error won't raise the exception
+        self.error_handler.suppress_errors = True
         self.error_handler.handle_error(ValueError("Error 3"))
         
         # Get statistics
@@ -100,6 +132,9 @@ class TestErrorHandler(unittest.TestCase):
         """Test resetting error counters."""
         # Add some errors
         self.error_handler.handle_error("Error 1")
+        
+        # Set suppress_errors to True so handle_error won't raise the exception
+        self.error_handler.suppress_errors = True
         self.error_handler.handle_error(ValueError("Error 2"))
         
         # Reset counters
@@ -124,6 +159,9 @@ class TestErrorHandler(unittest.TestCase):
     
     def test_get_most_common_errors(self):
         """Test getting the most common errors."""
+        # Set suppress_errors to True so handle_error won't raise the exception
+        self.error_handler.suppress_errors = True
+        
         # Add some errors with different frequencies
         for _ in range(5):
             self.error_handler.handle_error("Common error")
@@ -162,6 +200,9 @@ class TestErrorHandler(unittest.TestCase):
     
     def test_get_error_count(self):
         """Test getting error counts."""
+        # Set suppress_errors to True so handle_error won't raise the exception
+        self.error_handler.suppress_errors = True
+        
         # Add some errors
         self.error_handler.handle_error("Error 1")
         self.error_handler.handle_error("Error 2")

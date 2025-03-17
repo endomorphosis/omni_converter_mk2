@@ -258,9 +258,14 @@ class TestResourceMonitor(unittest.TestCase):
             # Wait for the monitoring loop to run once
             stop_event.wait(timeout=1.0)
             
-            # Check that high CPU usage was logged
-            mock_logger.warning.assert_called_with(
+            # Check that high usage warnings were logged
+            mock_logger.warning.assert_any_call(
                 "High CPU usage: 85.0%", {"resource": "cpu"}
+            )
+            
+            # Also check that high memory warning was logged
+            mock_logger.warning.assert_any_call(
+                "High memory usage: 490.0 MB", {"resource": "memory"}
             )
             
             # Stop monitoring

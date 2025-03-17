@@ -27,7 +27,7 @@ This document provides a detailed overview of the implementation status of the O
 |  | TextHandler | ✅ | Implemented with support for HTML, XML, plain text, CSV, calendar |
 |  | ImageHandler | ✅ | Implemented with support for JPEG, PNG, GIF, WebP, SVG |
 |  | AudioHandler | ✅ | Implemented with support for MP3, WAV, OGG, FLAC, AAC |
-|  | VideoHandler | ❌ | Not started |
+|  | VideoHandler | ✅ | Implemented with support for MP4, WebM, AVI, MKV, MOV |
 |  | ApplicationHandler | ✅ | Implemented with support for PDF, JSON, DOCX, XLSX, ZIP |
 |  | FormatRegistry | ✅ | Fully implemented with centralized format handling |
 |  | Content | ✅ | Implemented as container for extracted content with metadata |
