@@ -5,6 +5,34 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2025-03-17
+
+### Added
+- Enhanced documentation generator with path ignoring capabilities
+  - Added ability to ignore specific paths when generating documentation
+  - Support for a `.docignore` file to store paths to ignore
+  - Command-line options to specify paths to ignore
+  - Automatic saving of ignore paths for future use
+  - Unit tests for the new ignore functionality
+  - Updated TOOLS.md with documentation for the new features
+
+## [0.5.1] - 2025-03-17
+
+### Added
+- Enhanced Command-Line Interface with batch processing
+  - Directory processing support with BatchProcessor integration
+  - Parallel processing with configurable thread count
+  - Progress bar visualization using tqdm
+  - Resource utilization reporting
+  - Support for glob patterns and wildcards
+  - Batch processing summary statistics
+
+### Changed
+- Updated main.py to use BatchProcessor for directory processing
+- Enhanced command-line options with parallel processing and resource limits
+- Updated IMPLEMENTATION_STATUS.md to mark CommandLineInterface as complete
+- Updated PHASE16_README.md to reflect CLI implementation
+
 ## [0.5.0] - 2025-03-17
 
 ### Added
@@ -17,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage for Manager components
   - Unit tests for BatchResult implementation
   - Unit tests for ErrorHandler implementation
+  - Unit tests for ResourceMonitor implementation
+  - Unit tests for SecurityManager implementation
+  - Unit tests for BatchProcessor implementation
 
 ### Changed
 - Updated IMPLEMENTATION_STATUS.md to reflect completed Manager components

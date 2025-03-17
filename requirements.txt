@@ -1,7 +1,8 @@
 duckdb
 numpy
 pandas
+Pillow
 psutil
 pydantic
 python-magic
-Pillow  # For image processing
+tqdm

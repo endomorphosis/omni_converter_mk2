@@ -1,1 +1,1 @@
-__version__: str = "0.5.0"  # Added Manager components for batch processing, resource monitoring, and security
+__version__: str = "0.5.2"  # Added documentation generator path ignoring functionality

@@ -9,7 +9,8 @@ This is the main entry point for the Omni-Converter application.
 import os
 import sys
 import argparse
-from typing import List, Optional
+import tqdm
+from typing import List, Optional, Dict, Any
 
 from utils.config import config_manager
 from utils.logger import logger
@@ -18,6 +19,8 @@ from format_handlers.image_handler import image_handler
 from format_handlers.application_handler import application_handler
 from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
+from managers.batch_processor import batch_processor
+from managers.batch_result import BatchResult
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -40,12 +43,30 @@ def parse_arguments() -> argparse.Namespace:
                         default="txt", help="Output format (default: txt)")
     
     # Processing options
-    parser.add_argument("--batch-size", type=int, 
-                        help="Maximum number of files to process at once")
+    parser.add_argument("--batch-size", type=int, default=100,
+                        help="Maximum number of files to process at once (default: 100)")
     parser.add_argument("--no-normalize", action="store_true",
                         help="Skip text normalization")
     parser.add_argument("--normalizers", 
                         help="Comma-separated list of normalizers to apply")
+    parser.add_argument("--sanitize", action="store_true", default=True,
+                        help="Sanitize content during processing (default: True)")
+    
+    # Batch processing options
+    parser.add_argument("--parallel", action="store_true", default=False,
+                        help="Enable parallel processing for batch operations")
+    parser.add_argument("--max-workers", type=int, default=4,
+                        help="Maximum number of worker threads for parallel processing (default: 4)")
+    parser.add_argument("--continue-on-error", action="store_true", default=True,
+                        help="Continue processing batch if errors occur (default: True)")
+    parser.add_argument("--skip-security", action="store_true", default=False,
+                        help="Skip security validation for faster processing")
+    
+    # Resource options
+    parser.add_argument("--max-cpu", type=float, default=None,
+                        help="Maximum CPU usage percentage (0-100)")
+    parser.add_argument("--max-memory", type=int, default=None,
+                        help="Maximum memory usage in MB")
     
     # Information options
     parser.add_argument("-l", "--list-formats", action="store_true",
@@ -58,6 +79,8 @@ def parse_arguments() -> argparse.Namespace:
                         help="Enable verbose output")
     parser.add_argument("--version", action="store_true",
                         help="Show version information and exit")
+    parser.add_argument("--no-progress", action="store_true", default=False,
+                        help="Disable progress bar for batch processing")
     
     return parser.parse_args()
 
@@ -100,13 +123,14 @@ def show_version() -> None:
     print("\nSee IMPLEMENTATION_STATUS.md for detailed status report.")
 
 
-def process_file(input_path: str, output_path: Optional[str] = None) -> bool:
+def process_file(input_path: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> bool:
     """
     Process a single file.
     
     Args:
         input_path: The path to the input file.
         output_path: The path to the output file. If None, print to stdout.
+        options: Processing options. If None, default options are used.
         
     Returns:
         True if successful, False otherwise.
@@ -118,11 +142,16 @@ def process_file(input_path: str, output_path: Optional[str] = None) -> bool:
             output_format = config_manager.get_config_value('output.format', 'txt')
         
         # Set processing options
-        options = {
-            'format': output_format,
-            'normalizers': ['whitespace', 'line_endings', 'empty_lines', 'unicode'],
-            'verbose': config_manager.get_config_value('output.verbose', False)
-        }
+        if options is None:
+            options = {}
+        
+        # Set default options if not provided
+        if 'format' not in options:
+            options['format'] = output_format
+        if 'normalizers' not in options:
+            options['normalizers'] = ['whitespace', 'line_endings', 'empty_lines', 'unicode']
+        if 'verbose' not in options:
+            options['verbose'] = config_manager.get_config_value('output.verbose', False)
         
         # Process the file using the processing pipeline
         result = processing_pipeline.process_file(input_path, output_path, options)
@@ -161,6 +190,87 @@ def process_file(input_path: str, output_path: Optional[str] = None) -> bool:
         logger.error(f"Error processing {input_path}", {'error': str(e)})
         print(f"Error processing {input_path}: {str(e)}", file=sys.stderr)
         return False
+
+
+def progress_callback(current: int, total: int, current_file: str, pbar: Optional[tqdm.tqdm] = None) -> None:
+    """
+    Callback function for progress reporting.
+    
+    Args:
+        current: Current file number.
+        total: Total number of files.
+        current_file: Path to the current file being processed.
+        pbar: Optional tqdm progress bar instance.
+    """
+    if pbar:
+        pbar.update(1)
+        pbar.set_description(f"Processing {os.path.basename(current_file)}")
+    else:
+        # Calculate percentage
+        percent = (current / total) * 100 if total > 0 else 0
+        # Simple progress output
+        sys.stdout.write(f"\rProcessing {current}/{total} files ({percent:.1f}%): {os.path.basename(current_file)}")
+        sys.stdout.flush()
+
+
+def process_directory(
+    dir_path: str, 
+    output_dir: Optional[str] = None, 
+    options: Optional[Dict[str, Any]] = None,
+    show_progress: bool = True,
+    recursive: bool = False
+) -> BatchResult:
+    """
+    Process all files in a directory.
+    
+    Args:
+        dir_path: The path to the directory to process.
+        output_dir: The directory to write output files to. If None, prints content to stdout.
+        options: Processing options. If None, default options are used.
+        show_progress: Whether to show a progress bar.
+        recursive: Whether to process directories recursively.
+        
+    Returns:
+        BatchResult object with processing results.
+    """
+    # Configure batch processor
+    batch_processor.set_max_batch_size(options.get('batch_size', 100))
+    batch_processor.set_continue_on_error(options.get('continue_on_error', True))
+    batch_processor.set_max_workers(options.get('max_workers', 4) if options.get('parallel', False) else 1)
+    
+    # Create progress callback
+    pbar = None
+    callback = None
+    
+    if show_progress:
+        def _callback(current, total, current_file):
+            progress_callback(current, total, current_file, pbar)
+        callback = _callback
+    
+    # Process batch
+    try:
+        # Start processing
+        logger.info(f"Processing directory: {dir_path}")
+        
+        # Setup progress bar if requested
+        estimated_file_count = sum(1 for _ in os.walk(dir_path) for _ in os.listdir(_[0])) if recursive else len(os.listdir(dir_path))
+        if show_progress and estimated_file_count > 0:
+            pbar = tqdm.tqdm(total=estimated_file_count, unit="file")
+        
+        # Process files
+        result = batch_processor.process_batch(
+            file_paths=dir_path, 
+            output_dir=output_dir,
+            options=options,
+            progress_callback=callback
+        )
+        
+        return result
+    
+    finally:
+        # Clean up progress bar
+        if pbar:
+            pbar.close()
 
 
 def list_normalizers() -> None:
@@ -236,47 +346,131 @@ def main() -> int:
     if args.verbose:
         config_manager.set_config_value('output.verbose', True)
     
-    # Process input
+    # Configure resource limits if specified
+    from managers.resource_monitor import resource_monitor
+    if args.max_cpu is not None:
+        resource_monitor.set_max_cpu_percent(args.max_cpu)
+    if args.max_memory is not None:
+        resource_monitor.set_max_memory_mb(args.max_memory)
+    
+    # Prepare processing options
+    options = {
+        'format': args.format,
+        'verbose': args.verbose,
+        'sanitize': args.sanitize,
+        'batch_size': args.batch_size,
+        'continue_on_error': args.continue_on_error,
+        'max_workers': args.max_workers,
+        'parallel': args.parallel,
+        'skip_security': args.skip_security,
+    }
+    
+    # Handle normalizers
+    if args.no_normalize:
+        options['normalizers'] = []
+    elif args.normalizers:
+        options['normalizers'] = args.normalizers.split(',')
+    
+    # Store options in config for other components to access
+    for key, value in options.items():
+        config_manager.set_config_value(f'processing.{key}', value)
+    
+    # Process input based on type
     if os.path.isfile(args.input):
         # Process a single file
         output_path = args.output
         
-        # Set processing options
-        options = {
-            'format': args.format,
-            'verbose': args.verbose
-        }
-        
-        # Handle normalizers
-        if args.no_normalize:
-            options['normalizers'] = []
-        elif args.normalizers:
-            options['normalizers'] = args.normalizers.split(',')
-        
-        # Store options in config
-        for key, value in options.items():
-            config_manager.set_config_value(f'processing.{key}', value)
-        
         # Process the file
-        success = process_file(args.input, output_path)
+        success = process_file(args.input, output_path, options)
         
         if not success:
             # Try a test run with different format if original failed
             logger.debug("Attempting to process with default format")
             try_options = options.copy()
             try_options['format'] = 'txt'  # Use plain text as fallback
-            success = process_file(args.input, None)  # Output to stdout
+            success = process_file(args.input, None, try_options)  # Output to stdout
         
         return 0 if success else 1
     
     elif os.path.isdir(args.input):
         # Process a directory
-        print("Directory processing not implemented yet")
-        return 1
+        logger.info(f"Processing directory: {args.input}")
+        
+        # Validate output directory
+        output_dir = args.output
+        if output_dir and not os.path.isdir(output_dir):
+            try:
+                os.makedirs(output_dir, exist_ok=True)
+                logger.info(f"Created output directory: {output_dir}")
+            except Exception as e:
+                logger.error(f"Failed to create output directory: {str(e)}")
+                print(f"Error: Failed to create output directory {output_dir}: {str(e)}", 
+                      file=sys.stderr)
+                return 1
+        
+        # Process the directory
+        result = process_directory(
+            dir_path=args.input,
+            output_dir=output_dir,
+            options=options,
+            show_progress=not args.no_progress,
+            recursive=args.recursive
+        )
+        
+        # Print summary
+        print("\nBatch Processing Summary:")
+        print(f"Total files: {result.total_files}")
+        print(f"Successful: {result.successful_files}")
+        print(f"Failed: {result.failed_files}")
+        print(f"Success rate: {(result.successful_files / result.total_files * 100) if result.total_files > 0 else 0:.1f}%")
+        print(f"Processing time: {result.processing_time_seconds:.2f} seconds")
+        
+        # Print average processing time per file if available
+        if result.total_files > 0:
+            avg_time = result.processing_time_seconds / result.total_files
+            print(f"Average processing time per file: {avg_time:.3f} seconds")
+        
+        # Print resource usage if verbose
+        if args.verbose:
+            from managers.resource_monitor import resource_monitor
+            usage = resource_monitor.get_current_usage()
+            print("\nResource Usage:")
+            print(f"CPU: {usage.get('cpu_percent', 'N/A')}%")
+            print(f"Memory: {usage.get('memory_mb', 'N/A')} MB")
+        
+        # Return success if at least one file was processed successfully
+        return 0 if result.successful_files > 0 else 1
     
     else:
-        print(f"Error: {args.input} does not exist", file=sys.stderr)
-        return 1
+        # Handle glob patterns and wildcards
+        import glob
+        matches = glob.glob(args.input, recursive=args.recursive)
+        if matches:
+            if len(matches) == 1 and os.path.isfile(matches[0]):
+                # Process as a single file
+                return process_file(matches[0], args.output, options)
+            else:
+                # Process as a batch
+                logger.info(f"Processing {len(matches)} files matching pattern: {args.input}")
+                
+                # Process using batch processor
+                result = batch_processor.process_batch(
+                    file_paths=matches,
+                    output_dir=args.output,
+                    options=options,
+                    progress_callback=None if args.no_progress else lambda c, t, f: progress_callback(c, t, f)
+                )
+                
+                # Print summary
+                print("\nBatch Processing Summary:")
+                print(f"Total files: {result.total_files}")
+                print(f"Successful: {result.successful_files}")
+                print(f"Failed: {result.failed_files}")
+                
+                return 0 if result.successful_files > 0 else 1
+        else:
+            print(f"Error: {args.input} does not exist", file=sys.stderr)
+            return 1
 
 
 if __name__ == "__main__":
