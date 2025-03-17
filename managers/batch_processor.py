@@ -66,10 +66,15 @@ class BatchProcessor:
             continue_on_error: Whether to continue processing if errors occur.
             max_workers: Maximum number of worker threads for parallel processing.
         """
+        # Import these locally to avoid circular imports
+        from managers.error_handler import error_handler as global_error_handler
+        from managers.resource_monitor import resource_monitor as global_resource_monitor
+        from managers.security_manager import security_manager as global_security_manager
+        
         self.pipeline = pipeline or processing_pipeline
-        self.error_handler = error_handler or error_handler
-        self.resource_monitor = resource_monitor or resource_monitor
-        self.security_manager = security_manager or security_manager
+        self.error_handler = error_handler or global_error_handler
+        self.resource_monitor = resource_monitor or global_resource_monitor
+        self.security_manager = security_manager or global_security_manager
         self.max_batch_size = max_batch_size
         self.continue_on_error = continue_on_error
         self.max_workers = max_workers

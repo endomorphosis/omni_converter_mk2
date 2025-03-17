@@ -5,6 +5,19 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-03-17
+
+### Added
+- Programmatic access with new PythonAPI and InterfaceFactory
+  - PythonAPI implementation for programmatic file conversion
+  - InterfaceFactory for creating different interface instances
+  - Single file and batch conversion methods
+  - Configuration management methods
+  - Comprehensive test coverage for all API methods
+  - Example scripts demonstrating API usage
+  - Detailed documentation for programmatic usage
+  - Integration with existing components (processing pipeline, batch processor, format registry)
+
 ## [1.0.0] - 2025-03-17
 
 ### Added

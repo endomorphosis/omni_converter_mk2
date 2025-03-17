@@ -39,6 +39,8 @@ cd omni_converter
 
 ## Usage
 
+### Command Line Interface
+
 ```bash
 # Run the converter on a single file
 ./start.sh my_file.html
@@ -55,6 +57,33 @@ cd omni_converter
 # Enable verbose output
 ./start.sh -v my_file.html
 ```
+
+### Python API
+
+```python
+# Import the API
+from interfaces.python_api import api
+
+# Convert a single file
+result = api.convert_file('my_file.html')
+print(f"Extracted text: {result.content}")
+
+# Process a directory of files
+batch_result = api.convert_batch('/path/to/directory', output_dir='/path/to/output')
+print(f"Processed {batch_result.total_files} files with {batch_result.successful_files} successful")
+
+# Get supported formats
+formats = api.get_supported_formats()
+print(formats)
+
+# Configure the converter
+api.set_config({
+    'output.format': 'json',
+    'processing.normalize_text': True
+})
+```
+
+For more examples, see the [examples directory](examples/).
 
 ## Supported Formats
 
@@ -77,7 +106,7 @@ Detailed documentation is available in the `docs` directory:
 
 ## Project Status
 
-The project has reached version 1.0.0, with all core features implemented. Progress details are available in the [PHASE16_README.md](PHASE16_README.md) file.
+The project has reached version 1.1.0, with all core features implemented. Progress details are available in the [PHASE16_README.md](PHASE16_README.md) file.
 
 Current implementation status:
 - ✅ Test Suite: All test components have been implemented and passed
@@ -86,7 +115,7 @@ Current implementation status:
 - ✅ Format Registry: Centralized registry for format detection and handler management
 - ✅ Core Processing Pipeline: Complete pipeline with extraction, normalization, and output formatting
 - ✅ Managers: Batch processing, resource monitoring, error handling, and security validation implemented
-- 🔄 Interfaces: Basic CLI in main.py and ConfigManager implemented, PythonAPI in planning
+- ✅ Interfaces: Complete implementation of CLI, PythonAPI, ConfigManager, and InterfaceFactory
 
 ### Format Coverage
 

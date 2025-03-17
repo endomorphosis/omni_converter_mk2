@@ -1,1 +1,1 @@
-__version__: str = "1.0.0"  # Achieved 100% format coverage with VideoHandler implementation
+__version__: str = "1.1.0"  # Added PythonAPI and InterfaceFactory for programmatic access

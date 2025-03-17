@@ -5,7 +5,7 @@ This module provides the BatchResult class for tracking the results of batch pro
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from core.processing_result import ProcessingResult
 
@@ -31,7 +31,7 @@ class BatchResult:
         self,
         results: Optional[List[ProcessingResult]] = None,
         statistics: Optional[Dict[str, Any]] = None,
-        start_time: Optional[datetime] = None
+        start_time: Optional[Union[datetime, float]] = None
     ):
         """
         Initialize a batch result.
@@ -40,10 +40,20 @@ class BatchResult:
             results: List of individual file processing results. Default is an empty list.
             statistics: Additional statistics about the batch processing. Default is an empty dict.
             start_time: Time when the batch processing started. Default is the current time.
+                Can be a datetime or a timestamp (seconds since the epoch).
         """
         self.results = results or []
         self.statistics = statistics or {}
-        self.start_time = start_time or datetime.now()
+        
+        # Handle different start_time types
+        if start_time is None:
+            self.start_time = datetime.now()
+        elif isinstance(start_time, datetime):
+            self.start_time = start_time
+        else:
+            # Assume it's a timestamp (seconds since the epoch)
+            self.start_time = datetime.fromtimestamp(start_time)
+        
         self.end_time = None
         
         # Calculate counts
