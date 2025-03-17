@@ -4,7 +4,7 @@
 - [SAD.md](SAD.md) - Architecture Implementation Details, including flowchart and class diagrams.
 - [PRD.md](PRD.md) - Product Requirements Document, including Minimum Viable Product specification
 - [PHASE16_README.md](PHASE16_README.md) - Details on Phase 16 plan for the project.
-- [TOOLS.md](claudes_toolbox/TOOLS.md) - CLI tools.
+- [TOOLS.md](claudes_toolbox/TOOLS.md) - CLI tools to help you when writing code.
 - [TESTING.md](tests/TESTING.md) - Guidelines and metrics for creating and running tests.
 
 ## Build & Run Commands

@@ -6,10 +6,10 @@ A Python-based application designed to convert various file types to plaintext f
 
 Omni-Converter is a versatile file conversion utility that handles a wide range of document types, including:
 - Text documents (HTML, XML, plain text, CSV, calendar)
-- Image files (coming soon)
+- Image files (JPEG, PNG, GIF, WebP, SVG)
+- Application files (PDF, JSON, DOCX, XLSX, ZIP)
 - Audio files (coming soon)
 - Video files (coming soon)
-- Application files (coming soon)
 
 The primary purpose is to generate training data for Large Language Models (LLMs), providing high-quality plaintext extraction from various formats.
 
@@ -17,6 +17,7 @@ The primary purpose is to generate training data for Large Language Models (LLMs
 
 - **Multi-format Support:** Convert multiple file types within a single batch
 - **Text Extraction:** Extract readable text from text-based documents
+- **Centralized Format Registry:** Unified interface for format detection and handling
 - **Batch Processing:** Process multiple files with appropriate error isolation
 - **Error Handling:** Continue processing despite individual file failures
 - **Resource Management:** Configurable limits for CPU and memory usage
@@ -54,10 +55,10 @@ cd omni_converter
 ## Supported Formats
 
 - **Text:** HTML, XML, Plain Text, CSV, Calendar (iCal)
-- **Image:** (Coming soon)
+- **Image:** JPEG, PNG, GIF, WebP, SVG
+- **Application:** PDF, JSON, DOCX, XLSX, ZIP
 - **Audio:** (Coming soon)
 - **Video:** (Coming soon)
-- **Application:** (Coming soon)
 
 ## Documentation
 
@@ -74,11 +75,11 @@ The project is currently in active development. Progress is tracked in the [PHAS
 
 Current implementation status:
 - ✅ Test Suite: All test components have been implemented
-- 🔄 Core Utilities: Configuration, logging, file system operations, format detection, and validation
-- 🔄 Format Handlers: Base handler interface and text formats (HTML, XML, plain text, CSV, calendar)
+- ✅ Core Utilities: Configuration, logging, file system operations, format detection, and validation
+- ✅ Format Handlers: Base handler interface with text, image, and application handlers implemented
 - ❌ Core Processing Pipeline: Not started
 - ❌ Managers: Not started
-- ❌ Interfaces: Not started
+- 🔄 Interfaces: Basic CLI in main.py and ConfigManager implemented
 
 ## License
 
