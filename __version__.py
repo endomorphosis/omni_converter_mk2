@@ -1,1 +1,1 @@
-__version__: str = "0.4.0"  # Added Core Processing Pipeline with normalization and output formatting
+__version__: str = "0.5.0"  # Added Manager components for batch processing, resource monitoring, and security
