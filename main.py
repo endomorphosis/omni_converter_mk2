@@ -14,6 +14,7 @@ from typing import List, Optional
 from utils.config import config_manager
 from utils.logger import logger
 from format_handlers.text_handler import text_handler
+from format_handlers.image_handler import image_handler
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -52,21 +53,29 @@ def parse_arguments() -> argparse.Namespace:
 
 def list_supported_formats() -> None:
     """List all supported formats."""
-    # Format the text handler capabilities
+    # Format the handler capabilities
     print("Omni-Converter Supported Formats:")
     print("=================================")
     print()
     
-    capabilities = text_handler.get_capabilities()
-    formats = capabilities["supported_formats"]
+    # Text formats
+    text_capabilities = text_handler.get_capabilities()
+    text_formats = text_capabilities["supported_formats"]
     
-    print(f"Text Formats ({len(formats)}):")
-    for fmt in sorted(formats):
+    print(f"Text Formats ({len(text_formats)}):")
+    for fmt in sorted(text_formats):
         print(f"  - {fmt}")
     
-    print()
-    print("Image Formats (0): Not implemented yet")
-    print("Audio Formats (0): Not implemented yet")
+    # Image formats
+    image_capabilities = image_handler.get_capabilities()
+    image_formats = image_capabilities["supported_formats"]
+    
+    print(f"\nImage Formats ({len(image_formats)}):")
+    for fmt in sorted(image_formats):
+        print(f"  - {fmt}")
+    
+    # Not implemented formats
+    print("\nAudio Formats (0): Not implemented yet")
     print("Video Formats (0): Not implemented yet")
     print("Application Formats (0): Not implemented yet")
 
@@ -78,7 +87,7 @@ def show_version() -> None:
     print("Copyright 2025")
     print("\nImplementation Status:")
     print("- Text formats: Fully implemented (HTML, XML, Plain text, CSV, Calendar)")
-    print("- Image formats: Not implemented")
+    print("- Image formats: Fully implemented (JPEG, PNG, GIF, WebP, SVG)")
     print("- Audio formats: Not implemented")
     print("- Video formats: Not implemented")
     print("- Application formats: Not implemented")
@@ -97,8 +106,28 @@ def process_file(input_path: str, output_path: Optional[str] = None) -> bool:
         True if successful, False otherwise.
     """
     try:
-        # Extract content from the file
-        content = text_handler.extract_content(input_path)
+        # Determine the appropriate handler based on file extension
+        _, ext = os.path.splitext(input_path)
+        ext = ext.lower().lstrip('.')
+        
+        # Select handler based on extension
+        handler = None
+        if ext in ['html', 'htm', 'xml', 'txt', 'text', 'csv', 'ics']:
+            handler = text_handler
+        elif ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']:
+            handler = image_handler
+        
+        # If no handler found, try each handler
+        if not handler:
+            if text_handler.can_handle(input_path):
+                handler = text_handler
+            elif image_handler.can_handle(input_path):
+                handler = image_handler
+            else:
+                raise ValueError(f"Unsupported file format: {input_path}")
+        
+        # Extract content using the selected handler
+        content = handler.extract_content(input_path)
         
         # Output the content
         if output_path:
