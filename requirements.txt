@@ -4,5 +4,7 @@ pandas
 Pillow
 psutil
 pydantic
+pydub
+pymediainfo
 python-magic
 tqdm

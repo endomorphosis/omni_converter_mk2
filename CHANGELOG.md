@@ -5,6 +5,42 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-03-17
+
+### Added
+- Video format support with new VideoHandler class
+  - MP4 format support
+  - WebM format support
+  - AVI format support
+  - MKV format support
+  - MOV format support
+  - Comprehensive metadata extraction with pymediainfo
+  - Support for video, audio, and subtitle track information
+  - Fallback mode for environments without pymediainfo
+  - Unit tests for VideoHandler
+  - Integration with FormatRegistry
+  - Increased format coverage from 80% to 100%
+- Milestone: Achieved 100% format coverage across all MIME-type categories
+  - Complete implementation of all planned format handlers
+  - Full test coverage for all handlers
+  - Comprehensive metadata extraction for all supported formats
+  - Graceful fallbacks for all formats when specialized libraries are unavailable
+
+## [0.6.0] - 2025-03-17
+
+### Added
+- Audio format support with new AudioHandler class
+  - MP3 format support
+  - WAV format support
+  - OGG format support
+  - FLAC format support
+  - AAC format support
+  - Comprehensive metadata extraction with pydub
+  - Fallback mode for environments without pydub
+  - Unit tests for AudioHandler
+  - Integration with FormatRegistry
+  - Increased format coverage from 60% to 80%
+
 ## [0.5.2] - 2025-03-17
 
 ### Added

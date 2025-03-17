@@ -14,6 +14,8 @@ from format_handlers.base_handler import FormatHandler, Content
 from format_handlers.text_handler import text_handler
 from format_handlers.image_handler import image_handler
 from format_handlers.application_handler import application_handler
+from format_handlers.audio_handler import audio_handler
+from format_handlers.video_handler import video_handler
 
 
 class FormatRegistry:
@@ -46,6 +48,12 @@ class FormatRegistry:
         
         # Register application handler
         self.register_handler(application_handler)
+        
+        # Register audio handler
+        self.register_handler(audio_handler)
+        
+        # Register video handler
+        self.register_handler(video_handler)
     
     def register_handler(self, handler: FormatHandler) -> None:
         """
@@ -136,7 +144,17 @@ class FormatRegistry:
                 'json': 'json',
                 'docx': 'docx',
                 'xlsx': 'xlsx',
-                'zip': 'zip'
+                'zip': 'zip',
+                'mp3': 'mp3',
+                'wav': 'wav', 'wave': 'wav',
+                'ogg': 'ogg', 'oga': 'ogg',
+                'flac': 'flac',
+                'aac': 'aac', 'm4a': 'aac',
+                'mp4': 'mp4', 'm4v': 'mp4',
+                'webm': 'webm',
+                'avi': 'avi',
+                'mkv': 'mkv',
+                'mov': 'mov', 'qt': 'mov'
             }
             format_name = ext_to_format.get(ext)
         

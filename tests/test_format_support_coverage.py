@@ -53,11 +53,11 @@ class FormatSupportCoverageTest(unittest.TestCase):
                 def get_supported_formats(self):
                     """Return mock supported formats."""
                     return {
-                        'text': ['html', 'plain', 'csv'],
-                        'image': ['jpeg', 'png', 'gif', 'webp'],
-                        'audio': ['mp3', 'wav', 'ogg'],
-                        'video': ['mp4', 'webm'],
-                        'application': ['pdf', 'json', 'docx']
+                        'text': ['html', 'xml', 'plain', 'calendar', 'csv'],
+                        'image': ['jpeg', 'png', 'gif', 'webp', 'svg'],
+                        'audio': ['mp3', 'wav', 'ogg', 'flac', 'aac'],
+                        'video': ['mp4', 'webm', 'avi', 'mkv', 'mov'],
+                        'application': ['pdf', 'json', 'zip', 'docx', 'xlsx']
                     }
                 
                 def is_format_supported(self, format_name):

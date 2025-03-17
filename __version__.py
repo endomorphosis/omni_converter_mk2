@@ -1,1 +1,1 @@
-__version__: str = "0.5.2"  # Added documentation generator path ignoring functionality
+__version__: str = "1.0.0"  # Achieved 100% format coverage with VideoHandler implementation
