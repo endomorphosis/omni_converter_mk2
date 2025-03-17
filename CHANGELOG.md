@@ -5,6 +5,26 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-03-16
+
+### Added
+- Complete Core Processing Pipeline
+  - ProcessingPipeline: Orchestrates the entire conversion process
+  - ContentExtractor: Extracts content using format handlers
+  - TextNormalizer: Normalizes text with whitespace, line ending, and Unicode normalization
+  - OutputFormatter: Formats text in txt, json, and markdown formats
+  - ProcessingResult: Tracks and reports detailed processing results
+- Enhanced CLI capabilities with format and normalizer options
+- Support for different output formats (txt, json, markdown)
+- Text normalization with configurable normalizers
+
+### Changed
+- Updated main.py to use full ProcessingPipeline for conversion
+- Enhanced command-line interface with new options for normalization
+- Updated IMPLEMENTATION_STATUS.md to reflect completed Core Processing components
+- Updated PHASE16_README.md with complete Core Processing Class Group
+- Reorganized next steps in documentation to focus on Manager components
+
 ## [0.3.0] - 2025-03-16
 
 ### Added

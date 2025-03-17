@@ -1,1 +1,1 @@
-__version__: str = "0.3.0"  # Added FormatRegistry for centralized format handling
+__version__: str = "0.4.0"  # Added Core Processing Pipeline with normalization and output formatting

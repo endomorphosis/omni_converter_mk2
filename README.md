@@ -77,7 +77,8 @@ Current implementation status:
 - ✅ Test Suite: All test components have been implemented
 - ✅ Core Utilities: Configuration, logging, file system operations, format detection, and validation
 - ✅ Format Handlers: Base handler interface with text, image, and application handlers implemented
-- ❌ Core Processing Pipeline: Not started
+- ✅ Format Registry: Centralized registry for format detection and handler management
+- ✅ Core Processing Pipeline: Complete pipeline with extraction, normalization, and output formatting
 - ❌ Managers: Not started
 - 🔄 Interfaces: Basic CLI in main.py and ConfigManager implemented
 
