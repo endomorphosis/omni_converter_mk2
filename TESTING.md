@@ -5,8 +5,13 @@
 - Include focused regression tests for critical functionality
 - Conduct limited user acceptance testing with internal stakeholders
 - Document all test results for analysis and future enhancement
+- Docstrings for all tests must be verbose.
 
-## 1. Format Support Coverage (5 formats per category, 80% use case coverage)
+## 1. Format Support Coverage
+
+### Target
+- 5 formats per category
+- 80% use case coverage
 
 ### Formula
 $\text{Coverage Factor} = \frac{\text{Number of Supported Formats}}{\text{Total Formats in Test Dataset}} \geq 0.8$
@@ -22,7 +27,10 @@ Where:
 - Include basic edge cases (password protection, non-English text) but limit scope
 - Track format failures in early deployment to identify gaps in coverage
 
-## 2. Processing Success Rate (95% of valid files)
+## 2. Processing Success Rate
+
+### Target:
+95% of valid files
 
 ### Formula
 $\text{Success Rate} = \frac{\text{Number of Successfully Processed Files}}{\text{Number of Valid Files in Supported Formats}} \geq 0.95$
@@ -43,7 +51,11 @@ Where:
 - Include 10-15 deliberately corrupted files for error handling validation
 - Use synthetic datasets initially, moving to real data when available
 
-## 3. Resource Utilization (< 6GB RAM, < 80% CPU)
+## 3. Resource Utilization
+
+### Target
+- < 6GB RAM
+- < 80% CPU
 
 ### Formula
 $\text{Peak Memory Usage} < 6\text{GB}$
@@ -60,7 +72,14 @@ Where:
 - Run shortened duration tests (1-2 hours) instead of 24+ hours
 - Test primarily on development hardware, with limited tests on minimum spec machine
 
-## 4. Processing Speed (100 text documents per minute, 10 audio files per minute, 10 video files per minute, 10 application files per minute, 1 video file per minute)
+## 4. Processing Speed
+
+### Target
+- 100 text documents per minute
+- 10 audio files per minute
+- 10 video files per minute
+- 10 application files per minute
+- 1 video file per minute
 
 ### Formula
 $\text{Processing Speed (Text)} \geq \frac{100\text{Files}}{\text{minute}}$ for Text Documents
@@ -87,7 +106,10 @@ Where:
 - Test with a small mixed-format dataset (10-15 files of different types)
 - Limit concurrent processing tests to what development hardware can support
 
-## 5. Error Handling Effectiveness (100% reliability with 30% corrupt files)
+## 5. Error Handling Effectiveness
+
+### Target
+- 100% reliability for 30% corrupt files
 
 ### Formula
 $\text{Batch Reliability} = \frac{\text{Number of Batch Jobs Completed}}{\text{Total Number of Files in Batch}} = 1.0$ 
@@ -105,7 +127,10 @@ Where:
 - Include basic recovery testing for the most common failure scenarios
 - Verify batch processing continues after encountering corrupt files
 
-## 6. Security Effectiveness (100% prevention of code execution)
+## 6. Security Effectiveness 
+
+### Target
+100% prevention of code execution
 
 ### Formula
 $\text{Security Effectiveness} = \frac{\text{Number of Prevented Execution Attempts}}{\text{Number of Malicious Execution Attempts}} = 1.0$
@@ -121,7 +146,10 @@ Where:
 - Implement fundamental sandbox validation
 - Focus on file type validation and content sanitization testing
 
-## 7. Text Quality for LLM Training (90% text preservation)
+## 7. Text Quality for LLM Training
+
+### Target
+90% text preservation
 
 ### Formula
 $\text{Text Quality Factor (Text)} = \alpha \cdot {BLEU_{text}} + \beta \cdot {ROUGE\text{-}L_{text}} + \gamma \cdot {\text{Structural Preservation}_{text}} \geq 0.9$

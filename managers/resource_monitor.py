@@ -7,13 +7,13 @@ This module provides the ResourceMonitor class for monitoring and managing syste
 import os
 import time
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-try:
-    import psutil
-    HAS_PSUTIL = True
-except ImportError:
-    HAS_PSUTIL = False
+
+# NOTE Claude, psutil is *definitely* available. It's in requirements.txt.
+import psutil
+HAS_PSUTIL = True
+
 
 from utils.logger import logger
 

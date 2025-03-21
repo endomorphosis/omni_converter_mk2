@@ -1,3 +1,4 @@
+anthropic
 duckdb
 numpy
 pandas
@@ -6,5 +7,12 @@ psutil
 pydantic
 pydub
 pymediainfo
+PyPDF2
+python-docx
 python-magic
+pytesseract
+reportlab
+openai
+openai-whisper
+openpyxl
 tqdm

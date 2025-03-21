@@ -113,7 +113,7 @@ class ApplicationHandler(BaseFormatHandler):
     
     def _parse_pdf(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
-        Parse PDF content.
+        Parse PDF content using the PDF processor.
         
         Args:
             data: The PDF binary data.
@@ -122,28 +122,12 @@ class ApplicationHandler(BaseFormatHandler):
         Returns:
             A tuple of (text content, metadata, sections).
         """
-        # Note: In a real implementation, use a proper PDF parsing library like PyPDF2 or pdfminer
-        # This is a placeholder implementation
+        from format_handlers.processors.pdf_processor import pdf_processor
         
-        # For this placeholder, we'll just return some basic info
-        metadata = {
-            'format': 'pdf',
-            'file_size': len(data),
-            'content_type': 'application/pdf'
-        }
-        
-        # Create placeholder text
-        text = "[PDF Content Extraction Placeholder]\n\n"
-        text += f"This is a PDF document with {len(data)} bytes of data.\n"
-        text += "In a full implementation, text would be extracted using a PDF parsing library.\n"
-        
-        # Create basic sections
-        sections = [{
-            'type': 'document_info',
-            'content': 'PDF Document'
-        }]
-        
-        return text, metadata, sections
+        if pdf_processor.can_process("pdf"):
+            return pdf_processor.process_document(data, options)
+        else:
+            raise ValueError("PDF processing is not available")
     
     def _parse_json(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
@@ -198,7 +182,7 @@ class ApplicationHandler(BaseFormatHandler):
     
     def _parse_docx(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
-        Parse DOCX content.
+        Parse DOCX content using the DOCX processor.
         
         Args:
             data: The DOCX binary data.
@@ -207,61 +191,62 @@ class ApplicationHandler(BaseFormatHandler):
         Returns:
             A tuple of (text content, metadata, sections).
         """
-        # Note: In a real implementation, use a proper DOCX parsing library like python-docx
-        # This is a placeholder implementation
+        from format_handlers.processors.docx_processor import docx_processor
         
-        # We can extract some basic info from the DOCX (which is a ZIP file)
-        try:
-            docx_file = BytesIO(data)
-            with zipfile.ZipFile(docx_file) as zip_ref:
-                file_list = zip_ref.namelist()
+        if docx_processor.can_process("docx"):
+            return docx_processor.process_document(data, options)
+        else:
+            # Fallback to basic ZIP-based extraction if python-docx is not available
+            try:
+                docx_file = BytesIO(data)
+                with zipfile.ZipFile(docx_file) as zip_ref:
+                    file_list = zip_ref.namelist()
+                    
+                    # Extract content types
+                    content_types = []
+                    for filename in file_list:
+                        if filename.endswith('.xml'):
+                            content_types.append(filename)
+                    
+                    # Attempt to extract document.xml if it exists
+                    doc_text = ""
+                    if 'word/document.xml' in file_list:
+                        doc_content = zip_ref.read('word/document.xml')
+                        # Simplified XML content extraction
+                        doc_text = doc_content.decode('utf-8', errors='ignore')
+                        doc_text = doc_text.replace('<w:p>', '\n\n').replace('<w:t>', ' ').replace('</w:t>', '')
+                        # Remove all XML tags
+                        import re
+                        doc_text = re.sub(r'<[^>]+>', '', doc_text)
+                        # Normalize whitespace
+                        doc_text = re.sub(r'\s+', ' ', doc_text).strip()
                 
-                # Extract content types
-                content_types = []
-                for filename in file_list:
-                    if filename.endswith('.xml'):
-                        content_types.append(filename)
+                metadata = {
+                    'format': 'docx',
+                    'content_type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'file_count': len(file_list),
+                    'xml_files': content_types
+                }
                 
-                # Attempt to extract document.xml if it exists
-                doc_text = ""
-                if 'word/document.xml' in file_list:
-                    doc_content = zip_ref.read('word/document.xml')
-                    # In a real implementation, parse this XML properly
-                    doc_text = doc_content.decode('utf-8', errors='ignore')
-                    # Simplified XML content extraction
-                    doc_text = doc_text.replace('<w:p>', '\n\n').replace('<w:t>', ' ').replace('</w:t>', '')
-                    # Remove all XML tags
-                    import re
-                    doc_text = re.sub(r'<[^>]+>', '', doc_text)
-                    # Normalize whitespace
-                    doc_text = re.sub(r'\s+', ' ', doc_text).strip()
-            
-            metadata = {
-                'format': 'docx',
-                'content_type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'file_count': len(file_list),
-                'xml_files': content_types
-            }
-            
-            # Create text content
-            if doc_text:
-                text = doc_text
-            else:
-                text = "[DOCX Content Extraction Placeholder]\n\n"
-                text += f"This is a DOCX document with {len(file_list)} internal files.\n"
-                text += "In a full implementation, text would be extracted using a DOCX parsing library.\n"
-            
-            # Create sections
-            sections = [{
-                'type': 'document_content',
-                'content': text
-            }]
-            
-            return text, metadata, sections
-            
-        except zipfile.BadZipFile:
-            logger.warning("DOCX parsing failed: Not a valid DOCX file")
-            return "[Invalid DOCX file]", {'format': 'docx', 'is_valid': False}, []
+                # Create text content
+                if doc_text:
+                    text = doc_text
+                else:
+                    text = "[DOCX Content Extraction Placeholder]\n\n"
+                    text += f"This is a DOCX document with {len(file_list)} internal files.\n"
+                    text += "For better results, install python-docx.\n"
+                
+                # Create sections
+                sections = [{
+                    'type': 'document_content',
+                    'content': text
+                }]
+                
+                return text, metadata, sections
+                
+            except zipfile.BadZipFile:
+                logger.warning("DOCX parsing failed: Not a valid DOCX file")
+                return "[Invalid DOCX file]", {'format': 'docx', 'is_valid': False}, []
     
     def _parse_xlsx(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """

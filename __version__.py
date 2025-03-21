@@ -1,1 +1,1 @@
-__version__: str = "1.1.0"  # Added PythonAPI and InterfaceFactory for programmatic access
+__version__: str = "1.4.0"  # Added DOCX processor with python-docx

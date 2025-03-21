@@ -14,6 +14,7 @@ from utils.filesystem import FileSystem
 from utils.logger import logger
 from utils.format_detector import format_detector
 from format_handlers.base_handler import BaseFormatHandler, Content
+from format_handlers.processors.audio_processor import whisper_processor
 
 # Import pydub for audio processing (will be installed via requirements.txt)
 try:
@@ -91,6 +92,29 @@ class AudioHandler(BaseFormatHandler):
         logger.debug(f"Extracting content from {format_name} audio file: {file_path}")
         
         try:
+            # Read the file data
+            file_content = FileSystem.read_file(file_path, 'rb')
+            file_data = file_content.get_as_binary()
+            
+            # First try to use the Whisper processor if available
+            if whisper_processor.can_process(format_name):
+                try:
+                    text, metadata, sections = whisper_processor.process_audio(file_data, format_name, options)
+                    
+                    # Create content object
+                    content = Content(
+                        text=text,
+                        metadata=metadata,
+                        sections=sections,
+                        source_format=format_name,
+                        source_path=file_path
+                    )
+                    
+                    return content
+                except Exception as e:
+                    logger.warning(f"Whisper processor failed, falling back to basic extraction: {str(e)}")
+                    # Fall back to the next method
+            
             # Extract metadata using mediainfo if pydub is available
             if PYDUB_AVAILABLE:
                 text, metadata, sections = self._extract_with_pydub(file_path, format_name)

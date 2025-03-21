@@ -18,6 +18,7 @@ from utils.filesystem import FileSystem
 from utils.logger import logger
 from utils.format_detector import format_detector
 from format_handlers.base_handler import BaseFormatHandler, Content
+from format_handlers.processors.ocr_processor import ocr_processor
 
 
 class ImageHandler(BaseFormatHandler):
@@ -40,7 +41,7 @@ class ImageHandler(BaseFormatHandler):
                 'category': 'image',
                 'preserves_structure': False,
                 'extracts_metadata': True,
-                'supports_ocr': 'basic'
+                'supports_ocr': True if ocr_processor.get_supported_formats() else 'basic'
             }
         )
     
@@ -137,12 +138,55 @@ class ImageHandler(BaseFormatHandler):
                         'content': exif_data
                     })
                 
-                # Add a placeholder for the OCR section
-                # In a real implementation, this would use a proper OCR system
-                sections.append({
-                    'type': 'ocr_text',
-                    'content': "OCR text extraction not implemented in this version."
-                })
+                # Add OCR section using the OCR processor if available
+                ocr_text = None
+                if ocr_processor.can_process(format_name):
+                    try:
+                        # Read file as binary for OCR processing
+                        file_data = FileSystem.read_file(file_path, 'rb').get_as_binary()
+                        
+                        # Process with OCR
+                        ocr_options = {
+                            'language': options.get('language', 'eng'),
+                            'include_boxes': options.get('include_text_boxes', False)
+                        }
+                        
+                        # Extract text with OCR
+                        ocr_text = ocr_processor.extract_text(file_data, ocr_options)
+                        
+                        # Add OCR text to the content
+                        if ocr_text:
+                            text_content.append("\nOCR Text:")
+                            text_content.append(ocr_text)
+                            
+                            # Add OCR text to sections
+                            sections.append({
+                                'type': 'ocr_text',
+                                'content': ocr_text
+                            })
+                            
+                            # Try to extract additional features if requested
+                            if options.get('extract_features', False):
+                                try:
+                                    features = ocr_processor.extract_features(
+                                        file_data, 
+                                        {**ocr_options, 'include_boxes': True}
+                                    )
+                                    sections.extend(features)
+                                except Exception as e:
+                                    logger.warning(f"Failed to extract image features: {str(e)}")
+                    except Exception as e:
+                        logger.warning(f"OCR processing failed: {str(e)}")
+                        sections.append({
+                            'type': 'ocr_text',
+                            'content': f"OCR processing failed: {str(e)}"
+                        })
+                else:
+                    # Add a placeholder if OCR is not available
+                    sections.append({
+                        'type': 'ocr_text',
+                        'content': "OCR text extraction not available for this format."
+                    })
                 
                 # Create content object
                 content = Content(
