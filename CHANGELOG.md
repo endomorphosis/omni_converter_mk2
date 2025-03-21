@@ -5,6 +5,70 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2025-03-21
+
+### Fixed
+- Fixed application handler test failures
+  - Improved test file creation for PDF, DOCX, and XLSX formats
+  - Updated tests to handle realistic file processing scenarios
+  - Added proper document structure for Office document tests
+  - Adjusted test assertions to accommodate processing variations
+  - Fixed XLSX test file with proper shared strings handling
+
+## [1.5.4] - 2025-03-21
+
+### Added
+- Regenerated comprehensive test documentation
+  - Used documentation generator tool to create updated test documentation
+  - Created tests_updated folder with latest test documentation
+  - Generated detailed documentation for all test modules, classes, and methods
+  - Improved navigability with proper cross-linking between test files
+
+### Fixed
+- Fixed multiple issues in audio processor tests
+  - Corrected mock implementations for audio segment handling
+  - Improved test assertions to match actual output formats
+  - Added proper handling for tag data in metadata tests
+  - Fixed test_extract_waveform to properly handle slice operations
+  - Fixed test_process_audio to correctly match transcription output
+
+## [1.5.3] - 2025-03-21
+
+### Fixed
+- Fixed bug in DOCX processor where non-numeric heading levels were causing errors
+  - Improved heading level parsing to handle custom or non-standard heading styles
+  - Added fallback to default level 1 when heading format is unexpected
+  - Enhanced error handling for robust processing of a wider variety of DOCX files
+  - Fixed failing tests in the test_docx_processor.py suite
+
+- Fixed type issue in Python API for resource limits
+  - Ensured proper type handling for resource limit parameters in convert_batch method
+  - Updated test to pass appropriate parameter types
+
+## [1.5.2] - 2025-03-21
+
+### Changed
+- Reorganized documentation folder for improved navigation and maintenance
+  - Moved all documentation files to their respective subfolders
+  - Grouped test documentation by component type (handlers, processors, managers, etc.)
+  - Updated index files with comprehensive navigation structure
+  - Created dedicated README with overview of documentation organization
+  - Ensured latest versions of documentation files are preserved
+
+## [1.5.1] - 2025-03-21
+
+### Changed
+- Enhanced test documentation with comprehensive docstrings
+  - Updated test_text_handler.py with detailed method docstrings
+  - Updated test_image_handler.py with detailed method docstrings
+  - Updated test_audio_handler.py with detailed method docstrings
+  - Updated test_video_handler.py with detailed method docstrings
+  - Updated test_base_processor.py with detailed method docstrings
+  - Updated test_python_api.py with detailed method docstrings
+  - Updated test_interface_factory.py with detailed method docstrings
+- Improved code readability and maintainability with clearer test descriptions
+- Enhanced developer experience with more descriptive test failure messages
+
 ## [1.5.0] - 2025-03-21
 
 ### Added

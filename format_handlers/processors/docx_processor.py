@@ -250,7 +250,7 @@ class DocxProcessor(DocumentProcessor):
                         structure.append({
                             "type": "section",
                             "heading": current_heading,
-                            "level": int(current_heading[0]),
+                            "level": int(current_heading.split(':')[0].replace('Heading', '')) if current_heading[0].isdigit() else 1,
                             "content": "\n".join(heading_content)
                         })
                     

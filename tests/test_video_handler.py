@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
 Tests for the VideoHandler class.
+
+This module provides comprehensive tests for the VideoHandler class, which is responsible
+for processing various video file formats (MP4, WebM, AVI, MKV, MOV). The tests verify
+that the handler can correctly identify supported formats, extract metadata from video files,
+and process video content both with and without the optional pymediainfo library for
+enhanced video analysis and track information extraction.
 """
 
 import os
@@ -12,10 +18,26 @@ from format_handlers.base_handler import Content
 
 
 class TestVideoHandler(unittest.TestCase):
-    """Tests for VideoHandler."""
+    """
+    Test suite for the VideoHandler class.
+    
+    This test class verifies that the VideoHandler correctly processes video files,
+    extracts metadata (such as duration, resolution, bitrate, codec information),
+    and provides appropriate textual representation of video content. The tests are
+    designed to work with both the enhanced functionality when pymediainfo is available
+    and the basic functionality when it's not. Tests also verify proper handling of
+    multiple tracks (video, audio, subtitles) when present in the video file.
+    """
     
     def setUp(self):
-        """Set up for tests."""
+        """
+        Set up test environment before each test.
+        
+        Creates a VideoHandler instance and ensures the test directory exists.
+        Also creates a mock video file for testing if it doesn't already exist.
+        This ensures each test has access to necessary resources without requiring
+        actual video files to be committed to the repository.
+        """
         self.handler = VideoHandler()
         
         # Create test directory if it doesn't exist
@@ -29,7 +51,14 @@ class TestVideoHandler(unittest.TestCase):
                 f.write(b"MOCK VIDEO FILE")
     
     def test_init(self):
-        """Test initialization."""
+        """
+        Test proper initialization of the VideoHandler.
+        
+        Verifies that the VideoHandler correctly initializes with the expected
+        handler name, supported formats (MP4, WebM, AVI, MKV, MOV), and capabilities
+        (category = video, preserves_structure = False, extracts_metadata = True,
+        supports_transcription = False, extracts_thumbnails = False).
+        """
         self.assertEqual(self.handler.handler_name, "VideoHandler")
         self.assertEqual(self.handler.supported_formats, {"mp4", "webm", "avi", "mkv", "mov"})
         self.assertEqual(self.handler.capabilities['category'], "video")
@@ -39,7 +68,13 @@ class TestVideoHandler(unittest.TestCase):
         self.assertFalse(self.handler.capabilities['extracts_thumbnails'])
     
     def test_can_handle(self):
-        """Test can_handle method."""
+        """
+        Test the can_handle method for format detection.
+        
+        Verifies that the VideoHandler correctly identifies files of supported formats
+        (MP4, WebM, AVI, MKV, MOV) and rejects unsupported formats. Tests both the
+        explicit format specification and format detection from file extension.
+        """
         # Test with format name
         self.assertTrue(self.handler.can_handle("dummy_path.mp4", "mp4"))
         self.assertTrue(self.handler.can_handle("dummy_path.webm", "webm"))
@@ -54,7 +89,14 @@ class TestVideoHandler(unittest.TestCase):
     @patch('format_handlers.video_handler.format_detector')
     @patch('os.path.getsize')
     def test_extract_basic(self, mock_getsize, mock_detector):
-        """Test extraction without mediainfo."""
+        """
+        Test basic video content extraction without the pymediainfo library.
+        
+        Verifies that the VideoHandler can extract basic information from video files
+        even when the pymediainfo library is not available. Tests the fallback mechanism
+        that provides limited metadata (format, file size) and basic content structure.
+        Uses mocking to simulate file properties and format detection.
+        """
         # Setup mocks
         mock_detector.detect_format.return_value = ("mp4", "video/mp4")
         mock_getsize.return_value = 12345678
@@ -80,7 +122,21 @@ class TestVideoHandler(unittest.TestCase):
     @unittest.skipIf(not MEDIAINFO_AVAILABLE, "pymediainfo not available")
     @patch('pymediainfo.MediaInfo.parse')
     def test_extract_with_mediainfo(self, mock_mediainfo_parse):
-        """Test extraction with mediainfo."""
+        """
+        Test enhanced video content extraction with the pymediainfo library.
+        
+        Verifies that the VideoHandler can extract comprehensive information from video files
+        when the pymediainfo library is available. Tests the extraction of detailed video properties
+        including multiple tracks (video, audio, subtitles), duration, resolution, codecs, and
+        other technical metadata. Also checks that content is properly structured into separate
+        sections for general information, video tracks, audio tracks, and subtitle tracks.
+        
+        This test simulates a video file with multiple tracks to verify proper handling of
+        complex video files with varied content types. Uses mocking to simulate media info
+        track data for each track type.
+        
+        This test is skipped if pymediainfo is not available in the environment.
+        """
         # Skip if mediainfo is not installed
         if not MEDIAINFO_AVAILABLE:
             self.skipTest("pymediainfo not available")
@@ -178,7 +234,14 @@ class TestVideoHandler(unittest.TestCase):
                 self.assertIn('thumbnail', section_types)
     
     def test_format_file_size(self):
-        """Test file size formatting."""
+        """
+        Test the _format_file_size helper method for human-readable file sizes.
+        
+        Verifies that the VideoHandler correctly formats byte counts into human-readable
+        file size strings with appropriate units (B, KB, MB, GB, TB). Tests a range of
+        sizes to ensure proper handling of different magnitude values and correct
+        unit conversion and rounding.
+        """
         self.assertEqual(self.handler._format_file_size(1000), "1000.00 B")
         self.assertEqual(self.handler._format_file_size(1500), "1.46 KB")
         self.assertEqual(self.handler._format_file_size(1500000), "1.43 MB")

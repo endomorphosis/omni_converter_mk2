@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
 Tests for the AudioHandler class.
+
+This module provides comprehensive tests for the AudioHandler class, which is responsible
+for processing various audio file formats (MP3, WAV, OGG, FLAC, AAC). The tests verify
+that the handler can correctly identify supported formats, extract metadata, and process
+audio content both with and without the optional pydub library for enhanced audio analysis.
 """
 
 import os
@@ -12,10 +17,24 @@ from format_handlers.base_handler import Content
 
 
 class TestAudioHandler(unittest.TestCase):
-    """Tests for AudioHandler."""
+    """
+    Test suite for the AudioHandler class.
+    
+    This test class verifies that the AudioHandler correctly processes audio files,
+    extracts metadata (such as duration, bitrate, artist, title), and provides appropriate
+    textual representation of audio content. The tests are designed to work with both the
+    enhanced functionality when pydub is available and the basic functionality when it's not.
+    """
     
     def setUp(self):
-        """Set up for tests."""
+        """
+        Set up test environment before each test.
+        
+        Creates an AudioHandler instance and ensures the test directory exists.
+        Also creates a mock audio file for testing if it doesn't already exist.
+        This ensures each test has access to necessary resources without requiring
+        actual audio files to be committed to the repository.
+        """
         self.handler = AudioHandler()
         
         # Create test directory if it doesn't exist
@@ -29,7 +48,14 @@ class TestAudioHandler(unittest.TestCase):
                 f.write(b"MOCK AUDIO FILE")
     
     def test_init(self):
-        """Test initialization."""
+        """
+        Test proper initialization of the AudioHandler.
+        
+        Verifies that the AudioHandler correctly initializes with the expected
+        handler name, supported formats (MP3, WAV, OGG, FLAC, AAC), and capabilities
+        (category = audio, preserves_structure = False, extracts_metadata = True,
+        supports_transcription = False).
+        """
         self.assertEqual(self.handler.handler_name, "AudioHandler")
         self.assertEqual(self.handler.supported_formats, {"mp3", "wav", "ogg", "flac", "aac"})
         self.assertEqual(self.handler.capabilities['category'], "audio")
@@ -38,7 +64,13 @@ class TestAudioHandler(unittest.TestCase):
         self.assertFalse(self.handler.capabilities['supports_transcription'])
     
     def test_can_handle(self):
-        """Test can_handle method."""
+        """
+        Test the can_handle method for format detection.
+        
+        Verifies that the AudioHandler correctly identifies files of supported formats
+        (MP3, WAV, OGG, FLAC, AAC) and rejects unsupported formats. Tests both the
+        explicit format specification and format detection from file extension.
+        """
         # Test with format name
         self.assertTrue(self.handler.can_handle("dummy_path.mp3", "mp3"))
         self.assertTrue(self.handler.can_handle("dummy_path.wav", "wav"))
@@ -53,7 +85,14 @@ class TestAudioHandler(unittest.TestCase):
     @patch('format_handlers.audio_handler.format_detector')
     @patch('os.path.getsize')
     def test_extract_basic(self, mock_getsize, mock_detector):
-        """Test extraction without pydub."""
+        """
+        Test basic audio content extraction without the pydub library.
+        
+        Verifies that the AudioHandler can extract basic information from audio files
+        even when the pydub library is not available. Tests the fallback mechanism that
+        provides limited metadata (format, file size) and basic content structure.
+        Uses mocking to simulate file properties and format detection.
+        """
         # Setup mocks
         mock_detector.detect_format.return_value = ("mp3", "audio/mpeg")
         mock_getsize.return_value = 12345
@@ -80,7 +119,17 @@ class TestAudioHandler(unittest.TestCase):
     @patch('format_handlers.audio_handler.mediainfo')
     @patch('format_handlers.audio_handler.AudioSegment')
     def test_extract_with_pydub(self, mock_AudioSegment, mock_mediainfo):
-        """Test extraction with pydub."""
+        """
+        Test enhanced audio content extraction with the pydub library.
+        
+        Verifies that the AudioHandler can extract comprehensive information from audio files
+        when the pydub library is available. Tests the extraction of detailed audio properties
+        (channels, sample width, frame rate, loudness) and metadata tags (title, artist, album).
+        Also checks that content is properly structured into audio_info, metadata, and waveform
+        sections. Uses mocking to simulate audio segment properties and mediainfo results.
+        
+        This test is skipped if pydub is not available in the environment.
+        """
         # Skip if pydub is not installed
         if not PYDUB_AVAILABLE:
             self.skipTest("pydub not available")

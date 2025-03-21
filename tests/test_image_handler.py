@@ -1,7 +1,10 @@
 """
 Test the image format handler.
 
-This module tests the image format handler functionality.
+This module provides comprehensive tests for the ImageHandler class, which is responsible
+for processing various image file formats (JPEG, PNG, GIF, WebP, SVG). The tests verify 
+that the handler can correctly identify supported formats, extract image properties, 
+parse metadata, and extract text content from vector formats like SVG.
 """
 
 import os
@@ -16,10 +19,24 @@ from format_handlers.image_handler import ImageHandler
 
 
 class TestImageHandler(unittest.TestCase):
-    """Test the image format handler."""
+    """
+    Test suite for the ImageHandler class.
+    
+    This test class verifies that the ImageHandler correctly processes and extracts
+    content from different image file formats, including JPEG, PNG, GIF, WebP, and SVG.
+    Tests cover format detection, image property extraction, metadata parsing, and
+    text content extraction capabilities for formats that support embedded text.
+    """
     
     def setUp(self):
-        """Set up the test environment."""
+        """
+        Set up the test environment before each test.
+        
+        Creates an ImageHandler instance and a temporary directory to store test files.
+        The test files are generated with known properties for predictable test results.
+        Different image formats (JPEG, PNG, GIF, WebP, SVG) are created with controlled
+        dimensions and content.
+        """
         self.handler = ImageHandler()
         self.test_dir = tempfile.mkdtemp()
         
@@ -27,7 +44,12 @@ class TestImageHandler(unittest.TestCase):
         self.test_files = self._create_test_files()
     
     def tearDown(self):
-        """Clean up after the test."""
+        """
+        Clean up after each test.
+        
+        Removes all test image files created during setup and the temporary directory
+        to ensure a clean state for subsequent tests.
+        """
         for file_path in self.test_files.values():
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -37,10 +59,14 @@ class TestImageHandler(unittest.TestCase):
     
     def _create_test_files(self) -> Dict[str, str]:
         """
-        Create test files for different image formats.
+        Create test files for different image formats with predetermined properties.
+        
+        Creates five different image files (JPEG, PNG, GIF, WebP, SVG) with known
+        dimensions, color properties, and content to ensure consistent and predictable
+        test results. Each file is created in the temporary test directory.
         
         Returns:
-            A dictionary mapping format names to file paths.
+            Dict[str, str]: A dictionary mapping format names to absolute file paths.
         """
         files = {}
         
@@ -85,12 +111,24 @@ class TestImageHandler(unittest.TestCase):
         return files
     
     def test_supported_formats(self):
-        """Test that the handler supports the expected formats."""
+        """
+        Test that the ImageHandler supports the expected image formats.
+        
+        Verifies that the ImageHandler correctly reports its supported formats,
+        which should include JPEG, PNG, GIF, WebP, and SVG formats. This ensures
+        the handler's format detection capabilities function properly.
+        """
         expected_formats = {"jpeg", "png", "gif", "webp", "svg"}
         self.assertEqual(self.handler.supported_formats, expected_formats)
     
     def test_capabilities(self):
-        """Test that the handler reports its capabilities correctly."""
+        """
+        Test that the ImageHandler reports its capabilities correctly.
+        
+        Verifies that the handler provides accurate information about its name,
+        supported formats, and category through the get_capabilities() method.
+        This ensures the handler properly identifies itself within the format registry system.
+        """
         capabilities = self.handler.get_capabilities()
         self.assertEqual(capabilities["handler_name"], "ImageHandler")
         self.assertEqual(set(capabilities["supported_formats"]), 
@@ -98,14 +136,27 @@ class TestImageHandler(unittest.TestCase):
         self.assertEqual(capabilities["category"], "image")
     
     def test_can_handle(self):
-        """Test that the handler correctly identifies supported files."""
+        """
+        Test that the ImageHandler correctly identifies supported files.
+        
+        Verifies that the can_handle() method correctly identifies files of supported formats
+        (JPEG, PNG, GIF, WebP, SVG) both with and without explicitly specifying the format.
+        This ensures proper file format detection functionality.
+        """
         for format_name, file_path in self.test_files.items():
             with self.subTest(format=format_name):
                 self.assertTrue(self.handler.can_handle(file_path))
                 self.assertTrue(self.handler.can_handle(file_path, format_name))
     
     def test_extract_jpeg(self):
-        """Test JPEG content extraction."""
+        """
+        Test JPEG image content extraction functionality.
+        
+        Verifies that the ImageHandler can correctly extract content from a JPEG image file,
+        including image dimensions, color mode, and other relevant properties. The test checks
+        that the handler generates appropriate textual representation of the image and
+        extracts accurate metadata about the image dimensions and format.
+        """
         content = self.handler.extract_content(self.test_files["jpeg"])
         
         # Check basic content properties
@@ -126,7 +177,14 @@ class TestImageHandler(unittest.TestCase):
         self.assertEqual(content.sections[0]["type"], "image_info")
     
     def test_extract_png(self):
-        """Test PNG content extraction."""
+        """
+        Test PNG image content extraction functionality.
+        
+        Verifies that the ImageHandler can correctly extract content from a PNG image file,
+        including image dimensions, color mode (RGBA), transparency information, and other
+        relevant properties. The test ensures that PNG-specific features like alpha channel
+        transparency are correctly identified and included in the metadata.
+        """
         content = self.handler.extract_content(self.test_files["png"])
         
         # Check basic content properties
@@ -148,7 +206,14 @@ class TestImageHandler(unittest.TestCase):
         self.assertEqual(content.sections[0]["type"], "image_info")
     
     def test_extract_gif(self):
-        """Test GIF content extraction."""
+        """
+        Test GIF image content extraction functionality.
+        
+        Verifies that the ImageHandler can correctly extract content from a GIF image file,
+        including image dimensions, color information, and other relevant properties.
+        The test ensures that the handler generates an appropriate textual representation
+        of the GIF image and extracts accurate metadata about its features.
+        """
         content = self.handler.extract_content(self.test_files["gif"])
         
         # Check basic content properties
@@ -169,7 +234,15 @@ class TestImageHandler(unittest.TestCase):
         self.assertEqual(content.sections[0]["type"], "image_info")
     
     def test_extract_webp(self):
-        """Test WebP content extraction."""
+        """
+        Test WebP image content extraction functionality.
+        
+        Verifies that the ImageHandler can correctly extract content from a WebP image file,
+        including image dimensions, color information, and other relevant properties.
+        The test ensures that WebP-specific features are correctly identified and included
+        in the metadata, and that the handler generates an appropriate textual
+        representation of the image.
+        """
         content = self.handler.extract_content(self.test_files["webp"])
         
         # Check basic content properties
@@ -190,7 +263,15 @@ class TestImageHandler(unittest.TestCase):
         self.assertEqual(content.sections[0]["type"], "image_info")
     
     def test_extract_svg(self):
-        """Test SVG content extraction."""
+        """
+        Test SVG image content extraction functionality.
+        
+        Verifies that the ImageHandler can correctly extract content from an SVG vector image file,
+        including image dimensions, embedded text content, and metadata like title and description.
+        This test is particularly important as SVG is different from other image formats by
+        containing parseable text content and XML-based structure. The test ensures that both
+        the image information and the text content are properly extracted.
+        """
         content = self.handler.extract_content(self.test_files["svg"])
         
         # Check basic content properties

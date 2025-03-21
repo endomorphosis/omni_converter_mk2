@@ -1,7 +1,11 @@
 """
 Test the text format handler.
 
-This module tests the text format handler functionality.
+This module provides comprehensive tests for the TextHandler class, which is responsible
+for processing various text-based file formats (HTML, XML, plain text, calendar, CSV).
+The tests verify that the handler can correctly identify supported formats, extract
+text content, parse metadata, and organize content into appropriate sections based
+on the source format structure.
 """
 
 import os
@@ -14,10 +18,22 @@ from format_handlers.text_handler import TextHandler
 
 
 class TestTextHandler(unittest.TestCase):
-    """Test the text format handler."""
+    """
+    Test suite for the TextHandler class.
+    
+    This test class verifies that the TextHandler correctly processes and extracts
+    content from different text-based file formats, including HTML, XML, plain text,
+    calendar (ICS), and CSV files. Tests cover format detection, content extraction,
+    metadata parsing, and section organization capabilities.
+    """
     
     def setUp(self):
-        """Set up the test environment."""
+        """
+        Set up the test environment before each test.
+        
+        Creates a TextHandler instance and a temporary directory to store test files.
+        The test files are generated with known content for predictable test results.
+        """
         self.handler = TextHandler()
         self.test_dir = tempfile.mkdtemp()
         
@@ -25,7 +41,12 @@ class TestTextHandler(unittest.TestCase):
         self.test_files = self._create_test_files()
     
     def tearDown(self):
-        """Clean up after the test."""
+        """
+        Clean up after each test.
+        
+        Removes all test files created during setup and the temporary directory
+        to ensure a clean state for subsequent tests.
+        """
         for file_path in self.test_files.values():
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -35,10 +56,14 @@ class TestTextHandler(unittest.TestCase):
     
     def _create_test_files(self) -> Dict[str, str]:
         """
-        Create test files for different text formats.
+        Create test files for different text formats with predetermined content.
+        
+        Creates five different text-based files (HTML, XML, plain text, ICS calendar,
+        and CSV) with known content structure to ensure consistent and predictable
+        test results. Each file is created in the temporary test directory.
         
         Returns:
-            A dictionary mapping format names to file paths.
+            Dict[str, str]: A dictionary mapping format names to absolute file paths.
         """
         files = {}
         
@@ -147,12 +172,24 @@ class TestTextHandler(unittest.TestCase):
         return files
     
     def test_supported_formats(self):
-        """Test that the handler supports the expected formats."""
+        """
+        Test that the TextHandler supports the expected text formats.
+        
+        Verifies that the TextHandler correctly reports its supported formats,
+        which should include HTML, XML, plain text, calendar (ICS), and CSV formats.
+        This ensures the handler's format detection capabilities function properly.
+        """
         expected_formats = {"html", "xml", "plain", "calendar", "csv"}
         self.assertEqual(self.handler.supported_formats, expected_formats)
     
     def test_capabilities(self):
-        """Test that the handler reports its capabilities correctly."""
+        """
+        Test that the TextHandler reports its capabilities correctly.
+        
+        Verifies that the handler provides accurate information about its name,
+        supported formats, and category through the get_capabilities() method.
+        This ensures the handler properly identifies itself within the format registry system.
+        """
         capabilities = self.handler.get_capabilities()
         self.assertEqual(capabilities["handler_name"], "TextHandler")
         self.assertEqual(set(capabilities["supported_formats"]), 
@@ -160,14 +197,28 @@ class TestTextHandler(unittest.TestCase):
         self.assertEqual(capabilities["category"], "text")
     
     def test_can_handle(self):
-        """Test that the handler correctly identifies supported files."""
+        """
+        Test that the TextHandler correctly identifies supported files.
+        
+        Verifies that the can_handle() method correctly identifies files of supported formats
+        (HTML, XML, plain text, calendar, CSV) both with and without explicitly specifying
+        the format. This ensures proper file format detection functionality.
+        """
         for format_name, file_path in self.test_files.items():
             with self.subTest(format=format_name):
                 self.assertTrue(self.handler.can_handle(file_path))
                 self.assertTrue(self.handler.can_handle(file_path, format_name))
     
     def test_extract_html(self):
-        """Test HTML content extraction."""
+        """
+        Test HTML content extraction functionality.
+        
+        Verifies that the TextHandler can correctly extract content from an HTML file,
+        including the main text content, metadata (like the title), and properly
+        organized sections. The test checks that the content is properly stripped of
+        HTML tags while preserving the text structure and that metadata is correctly
+        identified from HTML elements like <title> and <meta> tags.
+        """
         content = self.handler.extract_content(self.test_files["html"])
         
         # Check basic content properties
@@ -187,7 +238,15 @@ class TestTextHandler(unittest.TestCase):
         self.assertGreaterEqual(len(content.sections), 1)
     
     def test_extract_xml(self):
-        """Test XML content extraction."""
+        """
+        Test XML content extraction functionality.
+        
+        Verifies that the TextHandler can correctly extract content from an XML file,
+        including the text content, metadata (like root element information), and 
+        properly organized sections. The test ensures that XML structure is properly 
+        parsed and that text content is extracted in a meaningful way that preserves
+        the hierarchical structure of the original XML document.
+        """
         content = self.handler.extract_content(self.test_files["xml"])
         
         # Check basic content properties
@@ -208,7 +267,15 @@ class TestTextHandler(unittest.TestCase):
         self.assertGreaterEqual(len(content.sections), 1)
     
     def test_extract_plain_text(self):
-        """Test plain text content extraction."""
+        """
+        Test plain text content extraction functionality.
+        
+        Verifies that the TextHandler can correctly extract content from a plain text file,
+        preserving the line structure, paragraphs, and other textual elements. The test
+        checks that the handler correctly identifies metadata (like line count) and
+        organizes the content into appropriate sections while maintaining the original
+        text formatting.
+        """
         content = self.handler.extract_content(self.test_files["plain"])
         
         # Check basic content properties
@@ -229,7 +296,15 @@ class TestTextHandler(unittest.TestCase):
         self.assertEqual(content.sections[0]["type"], "text")
     
     def test_extract_calendar(self):
-        """Test calendar content extraction."""
+        """
+        Test calendar (ICS) content extraction functionality.
+        
+        Verifies that the TextHandler can correctly extract content from an ICS calendar file,
+        including event details (summaries, descriptions, dates), metadata (like event count),
+        and section organization. The test ensures that calendar events are properly parsed
+        and formatted into human-readable text while preserving the essential structured
+        information from the original calendar file.
+        """
         content = self.handler.extract_content(self.test_files["calendar"])
         
         # Check basic content properties
@@ -251,7 +326,15 @@ class TestTextHandler(unittest.TestCase):
         self.assertEqual(content.sections[1]["type"], "event")
     
     def test_extract_csv(self):
-        """Test CSV content extraction."""
+        """
+        Test CSV content extraction functionality.
+        
+        Verifies that the TextHandler can correctly extract content from a CSV file,
+        including the tabular data, metadata (like row and column counts), and proper
+        sectioning of header and data rows. The test ensures that the CSV structure is
+        preserved in a human-readable format with appropriate separators while maintaining
+        the relationship between header fields and data values.
+        """
         content = self.handler.extract_content(self.test_files["csv"])
         
         # Check basic content properties

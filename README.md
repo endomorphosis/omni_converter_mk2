@@ -97,12 +97,13 @@ For more examples, see the [examples directory](examples/).
 
 ## Documentation
 
-Detailed documentation is available in the `docs` directory:
-- [Core Documentation](docs/index.md) - Main documentation index
+Detailed documentation is available in the top level directory and the `documentation` directory:
 - [System Architecture](SAD.md) - Architecture and implementation details
 - [Product Requirements](PRD.md) - Product requirements specification
 - [Phase 16 Implementation Plan](PHASE16_README.md) - Current implementation phase details
 - [Implementation Status](IMPLEMENTATION_STATUS.md) - Detailed implementation status report
+- [Core Documentation](documentation/index.md) - Main documentation index
+
 
 ## Project Status
 
