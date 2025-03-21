@@ -250,7 +250,7 @@ class ApplicationHandler(BaseFormatHandler):
     
     def _parse_xlsx(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
-        Parse XLSX content.
+        Parse XLSX content using the XLSX processor.
         
         Args:
             data: The XLSX binary data.
@@ -259,48 +259,50 @@ class ApplicationHandler(BaseFormatHandler):
         Returns:
             A tuple of (text content, metadata, sections).
         """
-        # Note: In a real implementation, use a proper XLSX parsing library like openpyxl
-        # This is a placeholder implementation
+        from format_handlers.processors.xlsx_processor import xlsx_processor
         
-        # We can extract some basic info from the XLSX (which is a ZIP file)
-        try:
-            xlsx_file = BytesIO(data)
-            with zipfile.ZipFile(xlsx_file) as zip_ref:
-                file_list = zip_ref.namelist()
+        if xlsx_processor.can_process("xlsx"):
+            return xlsx_processor.process_document(data, options)
+        else:
+            # Fallback to basic ZIP-based extraction if openpyxl is not available
+            try:
+                xlsx_file = BytesIO(data)
+                with zipfile.ZipFile(xlsx_file) as zip_ref:
+                    file_list = zip_ref.namelist()
+                    
+                    # Extract sheet names if possible
+                    sheets = []
+                    for filename in file_list:
+                        if filename.startswith('xl/worksheets/sheet') and filename.endswith('.xml'):
+                            sheet_name = filename.split('/')[-1].replace('.xml', '')
+                            sheets.append(sheet_name)
                 
-                # Extract sheet names if possible
-                sheets = []
-                for filename in file_list:
-                    if filename.startswith('xl/worksheets/sheet') and filename.endswith('.xml'):
-                        sheet_name = filename.split('/')[-1].replace('.xml', '')
-                        sheets.append(sheet_name)
-            
-            metadata = {
-                'format': 'xlsx',
-                'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'file_count': len(file_list),
-                'sheets': sheets
-            }
-            
-            # Create placeholder text
-            text = "[XLSX Content Extraction Placeholder]\n\n"
-            text += f"This is an XLSX document with {len(sheets)} sheets.\n"
-            text += "In a full implementation, text would be extracted using an XLSX parsing library.\n"
-            
-            # Create sections
-            sections = []
-            for sheet in sheets:
-                sections.append({
-                    'type': 'spreadsheet',
-                    'sheet_name': sheet,
-                    'content': f"Content from sheet {sheet}"
-                })
-            
-            return text, metadata, sections
-            
-        except zipfile.BadZipFile:
-            logger.warning("XLSX parsing failed: Not a valid XLSX file")
-            return "[Invalid XLSX file]", {'format': 'xlsx', 'is_valid': False}, []
+                metadata = {
+                    'format': 'xlsx',
+                    'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'file_count': len(file_list),
+                    'sheets': sheets
+                }
+                
+                # Create placeholder text
+                text = "[XLSX Content Extraction Placeholder]\n\n"
+                text += f"This is an XLSX document with {len(sheets)} sheets.\n"
+                text += "For better results, install openpyxl.\n"
+                
+                # Create sections
+                sections = []
+                for sheet in sheets:
+                    sections.append({
+                        'type': 'spreadsheet',
+                        'sheet_name': sheet,
+                        'content': f"Content from sheet {sheet}"
+                    })
+                
+                return text, metadata, sections
+                
+            except zipfile.BadZipFile:
+                logger.warning("XLSX parsing failed: Not a valid XLSX file")
+                return "[Invalid XLSX file]", {'format': 'xlsx', 'is_valid': False}, []
     
     def _parse_zip(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """

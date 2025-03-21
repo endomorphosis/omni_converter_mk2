@@ -5,6 +5,36 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-03-21
+
+### Added
+- XLSX processor implementation using openpyxl
+  - Added XlsxProcessor with full XLSX parsing capabilities
+  - Added text extraction from worksheet cells with proper formatting
+  - Added metadata extraction including title, creator, and document properties
+  - Added structure extraction for sheets, including dimensions and sample data
+  - Added support for multiple sheets in a workbook
+  - Added comprehensive test coverage for all features
+- Enhanced application handler to use XLSX processor
+  - Integrated XLSX processor into the application handler pipeline
+  - Added graceful fallback when openpyxl is not available
+  - Preserved backward compatibility with existing code
+- Updated project documentation
+  - Added documentation for XLSX processor architecture
+  - Updated implementation status to reflect XLSX completion
+  - Updated dummy_implementations.md to reflect completed XLSX parsing
+
+### Changed
+- Refactored ApplicationHandler to use the processor architecture for XLSX files
+- Updated documentation to reflect new XLSX capabilities
+- Enhanced error handling for XLSX processing
+
+### Technical Details
+- Extended dependency checking for openpyxl library
+- Added support for cell formatting with proper data types
+- Implemented sheet dimension analysis
+- Enhanced fallback ZIP-based extraction when library is not available
+
 ## [1.4.0] - 2025-03-21
 
 ### Added
