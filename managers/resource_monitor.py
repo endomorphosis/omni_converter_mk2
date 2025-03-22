@@ -37,7 +37,7 @@ class ResourceMonitor:
     def __init__(
         self,
         cpu_limit: float = 90.0,
-        memory_limit: int = 1024,  # in MB
+        memory_limit: int = 6144,  # in MB (6GB)
         monitoring_interval: float = 1.0
     ):
         """
@@ -160,13 +160,39 @@ class ResourceMonitor:
         # Get current usage
         usage = self.get_current_usage()
         
+        # Log detailed memory information for debugging purposes
+        if HAS_PSUTIL:
+            try:
+                # Get process memory info
+                process = psutil.Process(os.getpid())
+                mem_info = process.memory_info()
+                
+                # Log detailed memory usage
+                logger.debug(
+                    f"Memory usage details: "
+                    f"RSS={mem_info.rss/1024/1024:.1f}MB, "
+                    f"VMS={mem_info.vms/1024/1024:.1f}MB, "
+                    f"Shared={getattr(mem_info, 'shared', 0)/1024/1024:.1f}MB, "
+                    f"System={psutil.virtual_memory().percent:.1f}%, "
+                    f"Limit={self.memory_limit}MB"
+                )
+                
+                # Check for memory leak indicators
+                if usage.get("memory", 0) > (self.memory_limit * 0.8):
+                    logger.warning(
+                        f"Memory usage approaching limit: {usage.get('memory', 0):.1f}MB/{self.memory_limit}MB "
+                        f"({100 * usage.get('memory', 0)/self.memory_limit:.1f}%)"
+                    )
+            except Exception as e:
+                logger.warning(f"Error getting detailed memory info: {str(e)}")
+        
         # Check CPU usage
         if usage.get("cpu", 0) > self.cpu_limit:
             return False, f"CPU usage too high: {usage.get('cpu', 0):.1f}% > {self.cpu_limit:.1f}%"
         
         # Check memory usage
         if usage.get("memory", 0) > self.memory_limit:
-            return False, f"Memory usage too high: {usage.get('memory', 0):.1f} MB > {self.memory_limit} MB"
+            return False, f"Memory usage too high: {usage.get('memory', 0):.1f}MB > {self.memory_limit}MB"
         
         return True, None
     

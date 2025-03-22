@@ -125,18 +125,22 @@ class ResourceUtilizationTest(unittest.TestCase):
         peak_memory_gb = 0
         peak_cpu_percent = 0
         
+        # Get our process
+        process = psutil.Process(os.getpid())
+        
         # Convert to int for range function, ensure at least 5 samples
         steps = max(5, min(20, int(duration_seconds)))
         interval = duration_seconds / steps
         
         # Monitor resources over the specified duration
         for _ in range(steps):
-            # Get current memory usage in GB
-            memory_info = psutil.virtual_memory()
-            current_memory_used_gb = memory_info.used / (1024 ** 3)
+            # Get current memory usage in GB for THIS PROCESS ONLY
+            memory_info = process.memory_info()
+            # Use RSS (Resident Set Size) which is actual physical memory used
+            current_memory_used_gb = memory_info.rss / (1024 ** 3)
             
-            # Get current CPU usage percentage
-            current_cpu_percent = psutil.cpu_percent(interval=0.1)
+            # Get current CPU usage percentage for THIS PROCESS ONLY
+            current_cpu_percent = process.cpu_percent(interval=0.1)
             
             # Update peaks
             peak_memory_gb = max(peak_memory_gb, current_memory_used_gb)

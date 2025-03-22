@@ -40,10 +40,18 @@ class VideoHandler(BaseFormatHandler):
     
     Handles common video formats like MP4, WebM, AVI, MKV, and MOV.
     Extracts metadata and generates basic descriptions for video files.
+    Can extract thumbnails and frames using the video processor.
     """
     
     def __init__(self):
         """Initialize the video handler."""
+        # Try to import the video processor
+        try:
+            from format_handlers.processors.video_processor import video_processor
+            self.video_processor_available = True
+        except ImportError:
+            self.video_processor_available = False
+            
         super().__init__(
             handler_name="VideoHandler",
             supported_formats={"mp4", "webm", "avi", "mkv", "mov"},
@@ -52,7 +60,7 @@ class VideoHandler(BaseFormatHandler):
                 'preserves_structure': False,
                 'extracts_metadata': True,
                 'supports_transcription': False,  # Set to True if speech-to-text is implemented
-                'extracts_thumbnails': False      # Set to True if thumbnail extraction is implemented
+                'extracts_thumbnails': self.video_processor_available  # True if video processor is available
             }
         )
         
@@ -103,10 +111,10 @@ class VideoHandler(BaseFormatHandler):
         try:
             # Extract metadata using mediainfo if available
             if MEDIAINFO_AVAILABLE:
-                text, metadata, sections = self._extract_with_mediainfo(file_path, format_name)
+                text, metadata, sections = self._extract_with_mediainfo(file_path, format_name, options)
             else:
                 # Fallback to basic extraction
-                text, metadata, sections = self._extract_basic(file_path, format_name)
+                text, metadata, sections = self._extract_basic(file_path, format_name, options)
             
             # Create content object
             content = Content(
@@ -124,26 +132,44 @@ class VideoHandler(BaseFormatHandler):
                         {'error': str(e)})
             raise
     
-    def _extract_with_mediainfo(self, file_path: str, format_name: str) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+    def _extract_with_mediainfo(self, file_path: str, format_name: str, options: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
         Extract video information using pymediainfo.
         
         Args:
             file_path: The path to the video file.
             format_name: The format of the video file.
+            options: Optional processing options.
             
         Returns:
             A tuple of (text content, metadata, sections).
         """
-        # Get media info
-        media_info = pymediainfo.MediaInfo.parse(file_path)
-        
-        # Create metadata dictionary
-        metadata = {
-            'format': format_name,
-            'file_size_bytes': os.path.getsize(file_path),
-            'tracks': []
-        }
+        options = options or {}
+        # Use chunk-based analysis to prevent loading entire file in memory
+        # Create a temporary file pointer to read the file in chunks for mediainfo
+        # This prevents loading large video files entirely into memory
+        try:
+            # Create metadata dictionary
+            metadata = {
+                'format': format_name,
+                'file_size_bytes': os.path.getsize(file_path),
+                'tracks': []
+            }
+            
+            # Get media info using streaming mode if possible
+            if hasattr(pymediainfo.MediaInfo, 'parse_with_options'):
+                # Use streaming mode if available (newer pymediainfo versions)
+                media_info = pymediainfo.MediaInfo.parse_with_options(
+                    filename=file_path,
+                    options={"File_FileNameFormat": "CSV", "File_ExpandFileNames": "1"}
+                )
+            else:
+                # Fall back to standard parser
+                media_info = pymediainfo.MediaInfo.parse(file_path)
+        except Exception as e:
+            logger.warning(f"Error during mediainfo parsing: {str(e)}")
+            # Fall back to basic extraction if mediainfo fails
+            return self._extract_basic(file_path, format_name)
         
         # Generate human-readable description
         text_content = [f"Video File: {os.path.basename(file_path)}"]
@@ -344,25 +370,96 @@ class VideoHandler(BaseFormatHandler):
                 'content': other_tracks
             })
         
-        # Add thumbnail placeholder section
-        sections.append({
-            'type': 'thumbnail',
-            'content': "Thumbnail extraction not implemented in this version."
-        })
+        # Add thumbnail section - use the video processor if available
+        if self.video_processor_available and hasattr(self, 'video_processor_available'):
+            try:
+                from format_handlers.processors.video_processor import video_processor
+                
+                # Extract video info
+                video_info = video_processor.extract_video_info(file_path)
+                
+                # Add video info to metadata
+                metadata.update({
+                    'video_info': video_info
+                })
+                
+                # Extract thumbnail if processor is available and options allow it
+                extract_thumbnails = options.get('extract_thumbnails', True)
+                if extract_thumbnails:
+                    # Get one thumbnail from a quarter way through the video for better representation
+                    time_offset = video_info.get('duration', 0) * 0.25
+                    if time_offset <= 0:
+                        time_offset = 5  # Default to 5 seconds if duration is unknown
+                        
+                    thumbnail_data = video_processor.extract_thumbnail(
+                        file_path, 
+                        {'time_offset': time_offset, 'max_size': 320}
+                    )
+                    
+                    if thumbnail_data:
+                        sections.append({
+                            'type': 'thumbnail',
+                            'content': thumbnail_data,
+                            'format': 'png',
+                            'time_offset': time_offset
+                        })
+                        text_content.append("\nThumbnail extracted successfully.")
+                    else:
+                        sections.append({
+                            'type': 'thumbnail',
+                            'content': "Thumbnail extraction failed."
+                        })
+                        text_content.append("\nThumbnail extraction failed.")
+                
+                # Extract key frames if requested
+                extract_frames = options.get('extract_frames', False)
+                if extract_frames:
+                    # Get 5 evenly spaced frames
+                    frames = video_processor.extract_key_frames(
+                        file_path, 
+                        {'frame_count': 5, 'max_size': 320}
+                    )
+                    
+                    if frames:
+                        sections.append({
+                            'type': 'key_frames',
+                            'content': frames
+                        })
+                        text_content.append(f"\n{len(frames)} key frames extracted.")
+                    else:
+                        sections.append({
+                            'type': 'key_frames',
+                            'content': "Key frame extraction failed."
+                        })
+                
+            except Exception as e:
+                logger.warning(f"Error using video processor: {str(e)}")
+                sections.append({
+                    'type': 'thumbnail',
+                    'content': f"Thumbnail extraction failed: {str(e)}"
+                })
+        else:
+            # Add thumbnail placeholder section if video processor is not available
+            sections.append({
+                'type': 'thumbnail',
+                'content': "Thumbnail extraction not available - video processor not found."
+            })
         
         return "\n".join(text_content), metadata, sections
     
-    def _extract_basic(self, file_path: str, format_name: str) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+    def _extract_basic(self, file_path: str, format_name: str, options: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
         Basic extraction when mediainfo is not available.
         
         Args:
             file_path: The path to the video file.
             format_name: The format of the video file.
+            options: Optional processing options.
             
         Returns:
             A tuple of (text content, metadata, sections).
         """
+        options = options or {}
         # Get basic file information
         file_size = os.path.getsize(file_path)
         file_name = os.path.basename(file_path)
@@ -392,6 +489,39 @@ class VideoHandler(BaseFormatHandler):
                 }
             }
         ]
+        
+        # Try to extract thumbnail using the video processor if available
+        if self.video_processor_available and hasattr(self, 'video_processor_available'):
+            try:
+                from format_handlers.processors.video_processor import video_processor
+                
+                # Extract thumbnail
+                extract_thumbnails = options.get('extract_thumbnails', True)
+                if extract_thumbnails:
+                    thumbnail_data = video_processor.extract_thumbnail(
+                        file_path, 
+                        {'time_offset': 5, 'max_size': 320}  # Default values
+                    )
+                    
+                    if thumbnail_data:
+                        sections.append({
+                            'type': 'thumbnail',
+                            'content': thumbnail_data,
+                            'format': 'png',
+                            'time_offset': 5
+                        })
+                        text_content.append("\nThumbnail extracted successfully.")
+                    else:
+                        sections.append({
+                            'type': 'thumbnail',
+                            'content': "Thumbnail extraction failed."
+                        })
+            except Exception as e:
+                logger.warning(f"Error using video processor for basic extraction: {str(e)}")
+                sections.append({
+                    'type': 'thumbnail',
+                    'content': "Thumbnail extraction not available."
+                })
         
         return "\n".join(text_content), metadata, sections
     

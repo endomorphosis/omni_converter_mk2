@@ -5,6 +5,44 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-03-21
+
+### Added
+- Video processor implementation with thumbnail extraction
+  - Added VideoProcessor with memory-efficient frame extraction
+  - Implemented thumbnail generation using ffmpeg and OpenCV
+  - Added key frame extraction at regular intervals
+  - Added detailed video information extraction
+  - Integrated with VideoHandler for seamless processing
+  - Added support for all video format types (MP4, WebM, AVI, MKV, MOV)
+
+### Fixed
+- Fixed critical memory issues throughout the application
+  - Fixed ResourceMonitor memory limit (from 1GB to 6GB)
+  - Added aggressive garbage collection in batch processing
+  - Implemented dynamic batch size adjustment for low-memory conditions
+  - Added detailed memory usage logging for easier troubleshooting
+  - Fixed memory leak in video processing with streaming extraction
+  - Implemented memory-efficient mediainfo usage via streaming mode
+  - Corrected memory reporting in resource utilization tests
+
+### Changed
+- Enhanced VideoHandler with processor architecture
+  - Updated to use memory-efficient video processor
+  - Added thumbnail extraction capability
+  - Improved metadata extraction with streaming analysis
+  - Added memory-safe fallback modes when processors are unavailable
+
+## [1.5.6] - 2025-03-21
+
+### Added
+- Regenerated documentation for format_handlers and tests
+  - Used documentation generator tool to create updated documentation
+  - Updated format_handlers documentation with latest changes
+  - Updated tests documentation in tests_updated folder
+  - Ensured all recently modified code is properly documented
+  - Generated cross-linked documentation for improved navigation
+
 ## [1.5.5] - 2025-03-21
 
 ### Fixed

@@ -127,9 +127,23 @@ class PythonAPI:
         # Configure resource limits if specified
         if ("max_cpu" in options and options["max_cpu"] is not None) or \
            ("max_memory" in options and options["max_memory"] is not None):
+            # Get memory limit in MB, ensure it's properly converted from GB if needed
+            memory_limit = options.get("max_memory")
+            if memory_limit is not None:
+                # Verify it's a reasonable value (between 1024MB and 32GB)
+                if memory_limit < 1024:  # Less than 1GB, might be in GB units
+                    memory_limit *= 1024  # Convert to MB
+                
+                # Cap at a reasonable maximum to prevent excessive values
+                max_reasonable_memory = 32 * 1024  # 32GB
+                if memory_limit > max_reasonable_memory:
+                    logger.warning(f"Memory limit of {memory_limit}MB exceeds maximum reasonable value. "
+                                  f"Capping at {max_reasonable_memory}MB")
+                    memory_limit = max_reasonable_memory
+            
             self.resource_monitor.set_resource_limits(
                 cpu_limit=options.get("max_cpu"),
-                memory_limit=options.get("max_memory")
+                memory_limit=memory_limit
             )
         
         # Process the batch

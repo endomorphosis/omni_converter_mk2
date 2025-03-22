@@ -107,14 +107,37 @@ The PDF processor (`processors/pdf_processor.py`) provides full functionality:
 ## 4. Video Handler
 
 In `video_handler.py`:
-- Thumbnail extraction is not implemented:
+- ✅ **IMPLEMENTED**: Thumbnail extraction using the VideoProcessor:
   ```python
-  # Add thumbnail placeholder section
-  sections.append({
-      'type': 'thumbnail',
-      'content': "Thumbnail extraction not implemented in this version."
-  })
+  # Extract thumbnail if processor is available and options allow it
+  extract_thumbnails = options.get('extract_thumbnails', True)
+  if extract_thumbnails:
+      # Get one thumbnail from a quarter way through the video for better representation
+      time_offset = video_info.get('duration', 0) * 0.25
+      if time_offset <= 0:
+          time_offset = 5  # Default to 5 seconds if duration is unknown
+          
+      thumbnail_data = video_processor.extract_thumbnail(
+          file_path, 
+          {'time_offset': time_offset, 'max_size': 320}
+      )
+      
+      if thumbnail_data:
+          sections.append({
+              'type': 'thumbnail',
+              'content': thumbnail_data,
+              'format': 'png',
+              'time_offset': time_offset
+          })
+          text_content.append("\nThumbnail extracted successfully.")
   ```
+  
+The video processor (`format_handlers/processors/video_processor.py`) provides full functionality:
+- Memory-efficient thumbnail extraction using ffmpeg
+- Key frame extraction at regular intervals
+- Video information extraction
+- Fallback using OpenCV when ffmpeg is not available
+- Buffer management and explicit cleanup
 
 ## 5. Audio Handler
 
@@ -164,6 +187,9 @@ Here's a summary of the implementation status for the previously identified dumm
 | OCR for Images | Identify presence of text | ❌ Not implemented |
 | DOCX Parsing | Document extraction | ✅ Implemented |
 | XLSX Parsing | Spreadsheet extraction | ✅ Implemented |
+| Video Parsing | Thumbnail extraction | ✅ Implemented |
+| Video Parsing | Key frame extraction | ✅ Implemented |
+| Video Parsing | Video information extraction | ✅ Implemented |
 | Video Parsing | Audio extraction from video, with timestamps | ❌ Not implemented |
 | Video Parsing | Video summarization, with timestamps | ❌ Not implemented |
 | Video Parsing | Contextual summarization based on extracted audio and video summary | ❌ Not implemented |
@@ -172,27 +198,44 @@ Here's a summary of the implementation status for the previously identified dumm
 
 Based on the status of implementations, these would be high-value enhancements for future versions:
 
-1. **Thumbnail Extraction for Video**: Add support for extracting thumbnails from video files.
+1. **Audio Extraction from Video**: Implement extraction of audio tracks from video files and transcribe them using the existing Whisper processor.
 
-2. **Video Processing**: Implement audio extraction and summarization features for video files.
+2. **Video Content Summarization**: Add capabilities to summarize video content based on visual features.
+
+3. **Performance Optimizations**: Enhance the processing speed of video, audio, and application file processing.
 
 These enhancements align with the "Next Steps" mentioned in the IMPLEMENTATION_STATUS.md file, particularly:
-- Implementing thumbnail extraction for VideoHandler
-- Implementing video processing capabilities with frame extraction
+- Implementing speech-to-text integration for video files
+- Optimizing video processing speed
+- Implementing parallel processing for media files
 
 ## Completed Enhancements
 
 Recent enhancements that have been implemented:
 
-1. **OCR for Image Handler**: ✅ Implemented a proper OCR system using PyTesseract for extracting text from images.
+1. **Video Thumbnail Extraction**: ✅ Implemented memory-efficient thumbnail and frame extraction with:
+   - Memory-safe frame extraction using ffmpeg and OpenCV
+   - Key frame extraction at regular intervals
+   - Video metadata extraction including duration, dimensions, codec info
+   - Graceful fallbacks when libraries are not available
+   - Buffer management and explicit cleanup
 
-2. **DOCX Parsing**: ✅ Implemented proper DOCX parsing using python-docx with:
+2. **Memory Usage Optimizations**: ✅ Implemented comprehensive memory management with:
+   - Fixed ResourceMonitor initialization to use proper memory limits
+   - Added automatic garbage collection after batch processing
+   - Implemented dynamic batch size adjustment based on memory availability
+   - Enhanced detailed memory usage logging and monitoring
+   - Fixed memory reporting in resource utilization tests
+
+3. **OCR for Image Handler**: ✅ Implemented a proper OCR system using PyTesseract for extracting text from images.
+
+4. **DOCX Parsing**: ✅ Implemented proper DOCX parsing using python-docx with:
    - Text extraction from paragraphs and tables
    - Metadata extraction (title, author, creation date, etc.)
    - Structure extraction (headings, sections, tables)
    - Graceful fallback when python-docx is not available
    
-3. **XLSX Parsing**: ✅ Implemented proper XLSX parsing using openpyxl with:
+5. **XLSX Parsing**: ✅ Implemented proper XLSX parsing using openpyxl with:
    - Text extraction from worksheets with cell data
    - Metadata extraction (title, creator, properties)
    - Structure extraction (sheets, sample data, dimensions)
@@ -214,7 +257,8 @@ format_handlers/
 │   ├── docx_processor.py        # DOCX processor implementation using python-docx
 │   ├── xlsx_processor.py        # XLSX processor implementation using openpyxl
 │   ├── ocr_processor.py         # OCR processor implementation using PyTesseract
-│   └── audio_processor.py       # Audio processor with Whisper speech-to-text
+│   ├── audio_processor.py       # Audio processor with Whisper speech-to-text
+│   └── video_processor.py       # Video processor with thumbnail extraction
 └── ... (existing handlers)
 ```
 

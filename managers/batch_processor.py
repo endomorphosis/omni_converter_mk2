@@ -140,7 +140,26 @@ class BatchProcessor:
                 resources_available, reason = self.resource_monitor.is_resource_available()
                 if not resources_available:
                     logger.warning(f"Insufficient resources: {reason}")
-                    # We'll still try to process the files, but log the warning
+                    
+                    # Force memory cleanup before continuing
+                    try:
+                        import gc
+                        # Force a full collection cycle
+                        gc.collect(2)
+                        
+                        # Check if resources are now available
+                        resources_available, reason = self.resource_monitor.is_resource_available()
+                        if resources_available:
+                            logger.info("Resource constraints resolved after garbage collection")
+                        else:
+                            # Still insufficient resources, consider reducing batch size
+                            reduced_batch_size = max(1, len(chunk) // 2)
+                            if reduced_batch_size < len(chunk):
+                                logger.warning(f"Reducing batch size from {len(chunk)} to {reduced_batch_size} due to resource constraints")
+                                chunk = chunk[:reduced_batch_size]
+                    except ImportError:
+                        # Continue with warning if gc module not available
+                        logger.warning("Could not perform memory cleanup, continuing with caution")
                 
                 # Process the chunk
                 chunk_results = self._process_chunk(
@@ -151,6 +170,15 @@ class BatchProcessor:
                 # Add results to batch result
                 for result in chunk_results:
                     batch_result.add_result(result)
+                
+                # Perform explicit garbage collection after processing chunk
+                try:
+                    import gc
+                    # Force collection to clean up memory
+                    gc.collect()
+                    logger.debug(f"Garbage collection performed after processing chunk of {len(chunk)} files")
+                except ImportError:
+                    logger.debug("gc module not available, skipping explicit garbage collection")
                 
                 # Check if we should stop due to errors
                 if not self.continue_on_error and batch_result.failed_files > 0:

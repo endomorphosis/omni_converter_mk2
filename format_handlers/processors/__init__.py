@@ -13,6 +13,7 @@ Available processors:
 - Audio Processor: Implementation using Whisper for speech-to-text
 - Image Processor: Interface for image processors
 - OCR Processor: Implementation using PyTesseract for OCR
+- Video Processor: Implementation for video thumbnail extraction and frame processing
 """
 
 # Import processors for easy access
@@ -38,5 +39,10 @@ except ImportError:
 
 try:
     from format_handlers.processors.ocr_processor import ocr_processor
+except ImportError:
+    pass
+    
+try:
+    from format_handlers.processors.video_processor import video_processor
 except ImportError:
     pass
