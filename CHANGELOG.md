@@ -5,6 +5,50 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-03-22
+
+### Added
+- Implemented refactoring of core classes to dataclasses and Pydantic models
+  - Refactored ProcessingResult to dataclass for simplified instantiation and better equality comparisons
+  - Refactored FormattedOutput to dataclass for cleaner code and automatic special methods
+  - Refactored BatchResult to dataclass with post_init initialization for calculated fields
+  - Refactored Content to Pydantic model with validation and serialization capabilities
+  - Refactored NormalizedContent to extend the Pydantic Content model
+  - Added new ValidationResult Pydantic model with comprehensive validation capabilities
+  - Created test_validation_result.py with full test coverage for the new ValidationResult class
+  - Regenerated documentation for all refactored classes
+
+### Changed
+- Updated to_dict() methods to use Pydantic's model_dump() for Pydantic models
+- Preserved backward compatibility with all existing code
+- Enhanced type checking with proper annotations and defaults
+- Improved error handling with validation in Pydantic models
+
+### Technical Details
+- Used field(default_factory=list/dict) for proper mutable default values in dataclasses
+- Used Pydantic Field(default_factory=list/dict) for validation
+- Configured Pydantic models with proper Config class options
+- Ensured datetime serialization is consistent with previous implementation
+- Maintained all existing methods to preserve API compatibility
+
+## [1.7.0] - 2025-03-22
+
+### Added
+- Added comprehensive test suite for future refactoring to dataclasses and Pydantic models
+  - Added test_dataclass_refactoring.py with tests for ProcessingResult, BatchResult, and FormattedOutput
+  - Added test_pydantic_refactoring.py with tests for Content, NormalizedContent, and a new ValidationResult
+  - Added test_refactoring_integration.py to verify integration with other components
+  - Generated detailed documentation for all refactoring tests
+  - Added new refactoring tests section in documentation/tests/ directory
+  - Updated main tests index to include refactoring tests
+
+### Technical Details
+- Tests verify functionality preservation when refactoring traditional classes to dataclasses
+- Tests ensure compatibility with different versions of Pydantic (v1 and v2)
+- Integration tests validate interactions with ProcessingPipeline, OutputFormatter, and TextNormalizer
+- Added tests for validation benefits provided by Pydantic models
+- Ensured tests run successfully in the current environment
+
 ## [1.6.0] - 2025-03-21
 
 ### Added

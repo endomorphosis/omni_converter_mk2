@@ -7,6 +7,7 @@ into different output formats.
 
 import json
 import os
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from format_handlers.base_handler import Content
@@ -14,6 +15,7 @@ from core.text_normalizer import NormalizedContent
 from utils.logger import logger
 
 
+@dataclass
 class FormattedOutput:
     """
     Formatted output for writing to a file or displaying.
@@ -27,27 +29,10 @@ class FormattedOutput:
         metadata (Dict[str, Any]): Metadata about the output.
         output_path (str): The path where the output will be written.
     """
-    
-    def __init__(
-        self,
-        content: str,
-        format: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        output_path: Optional[str] = None
-    ):
-        """
-        Initialize formatted output.
-        
-        Args:
-            content: The formatted content.
-            format: The format of the output.
-            metadata: Metadata about the output.
-            output_path: The path where the output will be written.
-        """
-        self.content = content
-        self.format = format
-        self.metadata = metadata or {}
-        self.output_path = output_path or ""
+    content: str
+    format: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    output_path: str = ""
     
     def to_dict(self) -> Dict[str, Any]:
         """

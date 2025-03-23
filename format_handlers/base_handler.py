@@ -8,8 +8,10 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Union
 
+from pydantic import BaseModel, Field
 
-class Content:
+
+class Content(BaseModel):
     """
     Content extracted from a file.
     
@@ -21,31 +23,12 @@ class Content:
         source_path (str): The path to the source file.
         extraction_time (datetime): The time the content was extracted.
     """
-    
-    def __init__(
-        self, 
-        text: str, 
-        metadata: Optional[Dict[str, Any]] = None,
-        sections: Optional[List[Dict[str, Any]]] = None,
-        source_format: Optional[str] = None,
-        source_path: Optional[str] = None
-    ):
-        """
-        Initialize content.
-        
-        Args:
-            text: The extracted text content.
-            metadata: Metadata about the content.
-            sections: Sections of the content (if applicable).
-            source_format: The format of the source file.
-            source_path: The path to the source file.
-        """
-        self.text = text
-        self.metadata = metadata or {}
-        self.sections = sections or []
-        self.source_format = source_format or ""
-        self.source_path = source_path or ""
-        self.extraction_time = datetime.now()
+    text: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    sections: List[Dict[str, Any]] = Field(default_factory=list)
+    source_format: str = ""
+    source_path: str = ""
+    extraction_time: datetime = Field(default_factory=datetime.now)
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -54,14 +37,14 @@ class Content:
         Returns:
             A dictionary representation of the content.
         """
-        return {
-            'text': self.text,
-            'metadata': self.metadata,
-            'sections': self.sections,
-            'source_format': self.source_format,
-            'source_path': self.source_path,
-            'extraction_time': self.extraction_time.isoformat()
-        }
+        # Use Pydantic's model_dump with custom handling for datetime
+        data = self.model_dump()
+        data['extraction_time'] = self.extraction_time.isoformat()
+        return data
+    
+    class Config:
+        """Pydantic configuration."""
+        arbitrary_types_allowed = True
 
 
 class FormatHandler(ABC):

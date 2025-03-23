@@ -1,1 +1,1 @@
-__version__: str = "1.4.0"  # Added DOCX processor with python-docx
+__version__: str = "1.8.0"  # Implemented refactoring of core classes to dataclasses and Pydantic models

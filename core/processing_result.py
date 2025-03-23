@@ -4,10 +4,12 @@ Processing result module for the Omni-Converter.
 This module provides the ProcessingResult class for tracking the result of processing a file.
 """
 
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
+@dataclass
 class ProcessingResult:
     """
     Result of processing a file.
@@ -25,37 +27,14 @@ class ProcessingResult:
         content_hash (str): Hash of the content for verification.
         timestamp (datetime): Time when the processing was completed.
     """
-    
-    def __init__(
-        self,
-        success: bool,
-        file_path: str,
-        output_path: Optional[str] = None,
-        format: Optional[str] = None,
-        errors: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        content_hash: Optional[str] = None
-    ):
-        """
-        Initialize a processing result.
-        
-        Args:
-            success: Whether the processing was successful.
-            file_path: The path to the input file.
-            output_path: The path to the output file.
-            format: The detected format of the input file.
-            errors: List of errors encountered during processing.
-            metadata: Metadata about the processing.
-            content_hash: Hash of the content for verification.
-        """
-        self.success = success
-        self.file_path = file_path
-        self.output_path = output_path or ""
-        self.format = format or ""
-        self.errors = errors or []
-        self.metadata = metadata or {}
-        self.content_hash = content_hash or ""
-        self.timestamp = datetime.now()
+    success: bool
+    file_path: str
+    output_path: str = ""
+    format: str = ""
+    errors: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    content_hash: str = ""
+    timestamp: datetime = field(default_factory=datetime.now)
     
     def add_error(self, error: str) -> None:
         """

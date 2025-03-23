@@ -4,12 +4,14 @@ Batch result module for the Omni-Converter.
 This module provides the BatchResult class for tracking the results of batch processing operations.
 """
 
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from core.processing_result import ProcessingResult
 
 
+@dataclass
 class BatchResult:
     """
     Result of batch processing multiple files.
@@ -26,35 +28,18 @@ class BatchResult:
         start_time (datetime): Time when the batch processing started.
         end_time (datetime): Time when the batch processing ended.
     """
+    results: List[ProcessingResult] = field(default_factory=list)
+    statistics: Dict[str, Any] = field(default_factory=dict)
+    start_time: datetime = field(default_factory=datetime.now)
+    end_time: Optional[datetime] = None
+    total_files: int = field(init=False)
+    successful_files: int = field(init=False)
+    failed_files: int = field(init=False)
     
-    def __init__(
-        self,
-        results: Optional[List[ProcessingResult]] = None,
-        statistics: Optional[Dict[str, Any]] = None,
-        start_time: Optional[Union[datetime, float]] = None
-    ):
-        """
-        Initialize a batch result.
-        
-        Args:
-            results: List of individual file processing results. Default is an empty list.
-            statistics: Additional statistics about the batch processing. Default is an empty dict.
-            start_time: Time when the batch processing started. Default is the current time.
-                Can be a datetime or a timestamp (seconds since the epoch).
-        """
-        self.results = results or []
-        self.statistics = statistics or {}
-        
-        # Handle different start_time types
-        if start_time is None:
-            self.start_time = datetime.now()
-        elif isinstance(start_time, datetime):
-            self.start_time = start_time
-        else:
-            # Assume it's a timestamp (seconds since the epoch)
-            self.start_time = datetime.fromtimestamp(start_time)
-        
-        self.end_time = None
+    def __post_init__(self):
+        # Handle start_time if it's a timestamp
+        if not isinstance(self.start_time, datetime):
+            self.start_time = datetime.fromtimestamp(self.start_time)
         
         # Calculate counts
         self.total_files = len(self.results)

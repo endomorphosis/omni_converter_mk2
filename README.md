@@ -1,4 +1,6 @@
-# Omni-Converter v1.0.0
+# Omni-Converter
+# Version: 1.7.0
+# Authors: Claude 3.7 Sonnet, Kyle Rose
 
 A Python-based application designed to convert various file types to plaintext for Large Language Model (LLM) training data preparation.
 
@@ -107,7 +109,7 @@ Detailed documentation is available in the top level directory and the `document
 
 ## Project Status
 
-The project has reached version 1.1.0, with all core features implemented. Progress details are available in the [PHASE16_README.md](PHASE16_README.md) file.
+The project has reached version 1.7.0, with all core features implemented. Progress details are available in the [PHASE16_README.md](PHASE16_README.md) file and [CHANGELOG](CHANGELOG.md).
 
 Current implementation status:
 - ✅ Test Suite: All test components have been implemented and passed

@@ -7,6 +7,8 @@ This module provides the TextNormalizer class for normalizing text content.
 import re
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from pydantic import Field
+
 from format_handlers.base_handler import Content
 from utils.logger import logger
 
@@ -20,29 +22,7 @@ class NormalizedContent(Content):
     Attributes:
         normalized_by (List[str]): List of normalizers applied to the content.
     """
-    
-    def __init__(
-        self,
-        text: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        sections: Optional[List[Dict[str, Any]]] = None,
-        source_format: Optional[str] = None,
-        source_path: Optional[str] = None,
-        normalized_by: Optional[List[str]] = None
-    ):
-        """
-        Initialize normalized content.
-        
-        Args:
-            text: The normalized text content.
-            metadata: Metadata about the content.
-            sections: Sections of the content (if applicable).
-            source_format: The format of the source file.
-            source_path: The path to the source file.
-            normalized_by: List of normalizers applied to the content.
-        """
-        super().__init__(text, metadata, sections, source_format, source_path)
-        self.normalized_by = normalized_by or []
+    normalized_by: List[str] = Field(default_factory=list)
     
     def to_dict(self) -> Dict[str, Any]:
         """

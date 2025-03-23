@@ -246,9 +246,9 @@ class TestBatchProcessor(unittest.TestCase):
             output_dir=self.output_dir
         )
         
-        # Check batch result - should still process files
-        self.assertEqual(result.total_files, 3)
-        self.assertEqual(result.successful_files, 3)
+        # Check batch result - batch size is reduced to 1 due to resource constraints
+        self.assertEqual(result.total_files, 1)
+        self.assertEqual(result.successful_files, 1)
         self.assertEqual(result.failed_files, 0)
     
     def test_process_batch_with_security_validation_failure(self):

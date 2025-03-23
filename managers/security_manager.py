@@ -7,12 +7,14 @@ This module provides the SecurityManager class for security validation and conte
 import os
 import re
 from typing import Any, Dict, List, Optional, Tuple, Union
+from pydantic import BaseModel, Field
 
 from utils.logger import logger
 from format_handlers.base_handler import Content
+from core.validation_result import ValidationResult
 
 
-class SecurityResult:
+class SecurityResult(BaseModel):
     """
     Result of security validation.
     
@@ -24,27 +26,10 @@ class SecurityResult:
         risk_level (str): Risk level assessment ('low', 'medium', 'high').
         metadata (Dict[str, Any]): Additional metadata about the security check.
     """
-    
-    def __init__(
-        self,
-        is_safe: bool,
-        issues: Optional[List[str]] = None,
-        risk_level: str = "low",
-        metadata: Optional[Dict[str, Any]] = None
-    ):
-        """
-        Initialize a security result.
-        
-        Args:
-            is_safe: Whether the file is considered safe.
-            issues: List of security issues found.
-            risk_level: Risk level assessment ('low', 'medium', 'high').
-            metadata: Additional metadata about the security check.
-        """
-        self.is_safe = is_safe
-        self.issues = issues or []
-        self.risk_level = risk_level
-        self.metadata = metadata or {}
+    is_safe: bool
+    issues: List[str] = Field(default_factory=list)
+    risk_level: str = "low"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -53,12 +38,7 @@ class SecurityResult:
         Returns:
             A dictionary representation of the security result.
         """
-        return {
-            "is_safe": self.is_safe,
-            "issues": self.issues,
-            "risk_level": self.risk_level,
-            "metadata": self.metadata
-        }
+        return self.model_dump()
 
 
 class SanitizedContent(Content):
@@ -71,32 +51,8 @@ class SanitizedContent(Content):
         sanitization_applied (List[str]): List of sanitization techniques applied.
         removed_content (Dict[str, Any]): Information about content that was removed.
     """
-    
-    def __init__(
-        self,
-        text: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        sections: Optional[List[Dict[str, Any]]] = None,
-        source_format: Optional[str] = None,
-        source_path: Optional[str] = None,
-        sanitization_applied: Optional[List[str]] = None,
-        removed_content: Optional[Dict[str, Any]] = None
-    ):
-        """
-        Initialize sanitized content.
-        
-        Args:
-            text: The sanitized text content.
-            metadata: Metadata about the content.
-            sections: Sections of the content (if applicable).
-            source_format: The format of the source file.
-            source_path: The path to the source file.
-            sanitization_applied: List of sanitization techniques applied.
-            removed_content: Information about content that was removed.
-        """
-        super().__init__(text, metadata, sections, source_format, source_path)
-        self.sanitization_applied = sanitization_applied or []
-        self.removed_content = removed_content or {}
+    sanitization_applied: List[str] = Field(default_factory=list)
+    removed_content: Dict[str, Any] = Field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -185,7 +141,7 @@ class SecurityManager:
             # Check if file exists
             if not os.path.exists(file_path):
                 issues.append("File does not exist")
-                return SecurityResult(False, issues, "high", metadata)
+                return SecurityResult(is_safe=False, issues=issues, risk_level="high", metadata=metadata)
             
             # Get file size
             file_size = os.path.getsize(file_path)
@@ -245,12 +201,12 @@ class SecurityManager:
             elif len(issues) > 0:
                 risk_level = "medium"
             
-            return SecurityResult(is_safe, issues, risk_level, metadata)
+            return SecurityResult(is_safe=is_safe, issues=issues, risk_level=risk_level, metadata=metadata)
             
         except Exception as e:
             issues.append(f"Error during security validation: {str(e)}")
             logger.error(f"Security validation error for {file_path}: {str(e)}")
-            return SecurityResult(False, issues, "high", metadata)
+            return SecurityResult(is_safe=False, issues=issues, risk_level="high", metadata=metadata)
     
     def is_file_safe(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """

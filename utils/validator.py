@@ -11,82 +11,7 @@ from utils.config import config_manager
 from utils.filesystem import FileInfo, FileSystem
 from utils.format_detector import format_detector
 from utils.logger import logger
-
-
-class ValidationResult:
-    """
-    Result of a validation operation.
-    
-    Attributes:
-        is_valid (bool): Whether the validation passed.
-        errors (list): List of validation errors.
-        warnings (list): List of validation warnings.
-        metadata (dict): Additional metadata about the validation.
-    """
-    
-    def __init__(
-        self, 
-        is_valid: bool = True, 
-        errors: Optional[List[str]] = None,
-        warnings: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ):
-        """
-        Initialize a validation result.
-        
-        Args:
-            is_valid: Whether the validation passed.
-            errors: List of validation errors.
-            warnings: List of validation warnings.
-            metadata: Additional metadata about the validation.
-        """
-        self.is_valid = is_valid
-        self.errors = errors or []
-        self.warnings = warnings or []
-        self.metadata = metadata or {}
-    
-    def add_error(self, error: str) -> None:
-        """
-        Add an error to the validation result.
-        
-        Args:
-            error: The error message.
-        """
-        self.errors.append(error)
-        self.is_valid = False
-    
-    def add_warning(self, warning: str) -> None:
-        """
-        Add a warning to the validation result.
-        
-        Args:
-            warning: The warning message.
-        """
-        self.warnings.append(warning)
-    
-    def add_metadata(self, key: str, value: Any) -> None:
-        """
-        Add metadata to the validation result.
-        
-        Args:
-            key: The metadata key.
-            value: The metadata value.
-        """
-        self.metadata[key] = value
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to a dictionary.
-        
-        Returns:
-            A dictionary representation of the validation result.
-        """
-        return {
-            'is_valid': self.is_valid,
-            'errors': self.errors,
-            'warnings': self.warnings,
-            'metadata': self.metadata
-        }
+from core.validation_result import ValidationResult
 
 
 class BasicValidator:
@@ -157,8 +82,8 @@ class BasicValidator:
                     result.add_error(f"Unable to detect format for file: {file_path}")
                     return result
                 
-                result.add_metadata('format', format_name)
-                result.add_metadata('category', category)
+                result.add_context('format', format_name)
+                result.add_context('category', category)
             else:
                 # Check if provided format is supported
                 category = format_detector.get_format_category(format_name)
@@ -166,8 +91,8 @@ class BasicValidator:
                     result.add_error(f"Format '{format_name}' is not supported")
                     return result
                 
-                result.add_metadata('format', format_name)
-                result.add_metadata('category', category)
+                result.add_context('format', format_name)
+                result.add_context('category', category)
             
             # Check if format is allowed
             allowed_formats = self.validation_rules['allowed_formats']
@@ -182,9 +107,9 @@ class BasicValidator:
                 return result
             
             # Add file metadata to result
-            result.add_metadata('file_size', file_info.size)
-            result.add_metadata('mime_type', file_info.mime_type)
-            result.add_metadata('extension', file_info.extension)
+            result.add_context('file_size', file_info.size)
+            result.add_context('mime_type', file_info.mime_type)
+            result.add_context('extension', file_info.extension)
             
             # All checks passed
             result.is_valid = True

@@ -2,6 +2,31 @@
 
 This document lists implementations in the format handlers, noting which have been fully implemented and which remain as dummy implementations to be enhanced in future versions.
 
+## Implementation Status
+
+| Component | Feature | Status |
+|-----------|---------|--------|
+| PDF Parsing | Full text extraction | ✅ Implemented |
+| PDF Parsing | Metadata extraction | ✅ Implemented |
+| PDF Parsing | Structure extraction | ✅ Implemented |
+| Speech-to-Text | Audio transcription | ✅ Implemented |
+| Speech-to-Text | Timestamp segmentation | ✅ Implemented |
+| OCR for Images | Text extraction from images | ✅ Implemented |
+| OCR for Images | Identify presence of text | ❌ Not implemented |
+| DOCX Parsing | Document extraction | ✅ Implemented |
+| XLSX Parsing | Spreadsheet extraction | ✅ Implemented |
+| XLSX Parsing | Identify presence of non-textual elements | ❌ Not implemented |
+| XLSX Parsing | Extract image elements | ❌ Not implemented |
+| Video Parsing | Thumbnail extraction | ✅ Implemented |
+| Video Parsing | Key frame extraction | ✅ Implemented |
+| Video Parsing | Video information extraction | ✅ Implemented |
+| Video Parsing | Audio extraction from video, with timestamps | ❌ Not implemented |
+| Video Parsing | Video summarization, with timestamps | ❌ Not implemented |
+| Video Parsing | Contextualized summarization based on transcribed audio and video summaries | ❌ Not implemented |
+| Image Parsing | Summarize content from images | ❌ Not implemented |
+| Image Parsing | Contextualized summarization based on OCR-extracted text and image summarization | ❌ Not implemented |
+
+
 ## 1. Base Handler
 
 In `base_handler.py`:
@@ -171,28 +196,6 @@ The Whisper audio processor (`processors/audio_processor.py`) provides full func
 - Waveform extraction for visualization
 - Comprehensive metadata extraction
 - Proper error handling and dependency checking
-
-## Implementation Status
-
-Here's a summary of the implementation status for the previously identified dummy implementations:
-
-| Component | Feature | Status |
-|-----------|---------|--------|
-| PDF Parsing | Full text extraction | ✅ Implemented |
-| PDF Parsing | Metadata extraction | ✅ Implemented |
-| PDF Parsing | Structure extraction | ✅ Implemented |
-| Speech-to-Text | Audio transcription | ✅ Implemented |
-| Speech-to-Text | Timestamp segmentation | ✅ Implemented |
-| OCR for Images | Text extraction from images | ✅ Implemented |
-| OCR for Images | Identify presence of text | ❌ Not implemented |
-| DOCX Parsing | Document extraction | ✅ Implemented |
-| XLSX Parsing | Spreadsheet extraction | ✅ Implemented |
-| Video Parsing | Thumbnail extraction | ✅ Implemented |
-| Video Parsing | Key frame extraction | ✅ Implemented |
-| Video Parsing | Video information extraction | ✅ Implemented |
-| Video Parsing | Audio extraction from video, with timestamps | ❌ Not implemented |
-| Video Parsing | Video summarization, with timestamps | ❌ Not implemented |
-| Video Parsing | Contextual summarization based on extracted audio and video summary | ❌ Not implemented |
 
 ## Remaining Enhancements
 
