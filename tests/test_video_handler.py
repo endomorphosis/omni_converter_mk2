@@ -57,7 +57,7 @@ class TestVideoHandler(unittest.TestCase):
         Verifies that the VideoHandler correctly initializes with the expected
         handler name, supported formats (MP4, WebM, AVI, MKV, MOV), and capabilities
         (category = video, preserves_structure = False, extracts_metadata = True,
-        supports_transcription = False, extracts_thumbnails = False).
+        supports_transcription = False, extracts_thumbnails depends on video_processor_available).
         """
         self.assertEqual(self.handler.handler_name, "VideoHandler")
         self.assertEqual(self.handler.supported_formats, {"mp4", "webm", "avi", "mkv", "mov"})
@@ -65,7 +65,9 @@ class TestVideoHandler(unittest.TestCase):
         self.assertFalse(self.handler.capabilities['preserves_structure'])
         self.assertTrue(self.handler.capabilities['extracts_metadata'])
         self.assertFalse(self.handler.capabilities['supports_transcription'])
-        self.assertFalse(self.handler.capabilities['extracts_thumbnails'])
+        # Capability now depends on video_processor_available
+        self.assertEqual(self.handler.capabilities['extracts_thumbnails'], 
+                         self.handler.video_processor_available)
     
     def test_can_handle(self):
         """
@@ -96,6 +98,9 @@ class TestVideoHandler(unittest.TestCase):
         even when the pymediainfo library is not available. Tests the fallback mechanism
         that provides limited metadata (format, file size) and basic content structure.
         Uses mocking to simulate file properties and format detection.
+        
+        Note that this test now checks for at least one section (video_info) but may have more
+        sections (such as a thumbnail section) depending on whether the video processor is available.
         """
         # Setup mocks
         mock_detector.detect_format.return_value = ("mp4", "video/mp4")
@@ -115,9 +120,10 @@ class TestVideoHandler(unittest.TestCase):
             self.assertEqual(content.metadata['format'], "mp4")
             self.assertEqual(content.metadata['file_size_bytes'], 12345678)
             
-            # Verify sections
-            self.assertEqual(len(content.sections), 1)
+            # Verify there's at least a video_info section
+            self.assertGreaterEqual(len(content.sections), 1)
             self.assertEqual(content.sections[0]['type'], "video_info")
+            # The sections length can be more than 1 if thumbnail extraction is enabled
     
     @unittest.skipIf(not MEDIAINFO_AVAILABLE, "pymediainfo not available")
     @patch('pymediainfo.MediaInfo.parse')

@@ -5,6 +5,22 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2025-03-23
+
+### Added
+- Enabled thumbnail extraction capability in VideoHandler
+  - Added integration with video_processor.py for thumbnail generation
+  - Implemented automatic feature detection based on processor availability
+  - Added support for thumbnail extraction in both basic and enhanced extraction modes
+  - Updated tests to dynamically check for thumbnail capabilities
+  - Enhanced documentation to reflect new functionality
+  - Marked all related tasks as complete in IMPLEMENTATION_STATUS.md
+
+### Changed
+- Updated VideoHandler documentation with enhanced descriptions
+- Improved test resilience to accommodate feature presence without breaking tests
+- Updated IMPLEMENTATION_STATUS.md to mark video_processor implementation as complete
+
 ## [1.8.0] - 2025-03-22
 
 ### Added

@@ -103,8 +103,6 @@ def list_supported_formats() -> None:
         for fmt in sorted(formats):
             print(f"  - {fmt}")
         print()
-    
-    # All categories are now implemented
 
 
 def show_version() -> None:

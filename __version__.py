@@ -1,1 +1,1 @@
-__version__: str = "1.8.0"  # Implemented refactoring of core classes to dataclasses and Pydantic models
+__version__: str = "1.9.0"  # Enabled thumbnail extraction capability in VideoHandler

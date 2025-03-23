@@ -4,11 +4,14 @@ Application format handlers for the Omni-Converter.
 This module provides handlers for application-based formats like PDF, JSON, DOCX, XLSX, and ZIP.
 """
 
+
 import os
 import json
 import zipfile
 from io import BytesIO, StringIO
+import re
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
 
 from utils.filesystem import FileSystem
 from utils.logger import logger
@@ -216,7 +219,6 @@ class ApplicationHandler(BaseFormatHandler):
                         doc_text = doc_content.decode('utf-8', errors='ignore')
                         doc_text = doc_text.replace('<w:p>', '\n\n').replace('<w:t>', ' ').replace('</w:t>', '')
                         # Remove all XML tags
-                        import re
                         doc_text = re.sub(r'<[^>]+>', '', doc_text)
                         # Normalize whitespace
                         doc_text = re.sub(r'\s+', ' ', doc_text).strip()

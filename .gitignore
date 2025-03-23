@@ -4,6 +4,7 @@ claudes_toolbox/
 .docignore
 documentation/
 
+
 # Config files
 private_config.yaml
 configs.yaml

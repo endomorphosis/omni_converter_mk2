@@ -44,6 +44,11 @@ source venv/bin/activate && python -m unittest tests.test_filename.TestClassName
 - **Line length**: 100 characters maximum
 - **File organization**: Module docstring first, imports second, constants third, then classes/functions
 
+## Feature Implementation Guidelines
+- **NEVER REMOVE FEATURES**: Once a feature has been implemented, NEVER remove it, even if it causes test failures. Instead, modify the code and/or tests to ensure both the feature and tests work correctly together.
+- **Maintain compatibility**: When updating code, ensure backward compatibility is maintained.
+- **Test adaptation**: When a feature or capability changes, adapt tests to match the new functionality rather than removing the feature to match existing tests.
+
 ## Project Structure
 - Main converter in root directory
 - Modular tools in claudes_toolbox/

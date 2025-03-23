@@ -431,7 +431,7 @@ class BatchProcessor:
                 file_format = result.format
                 format_handler = None
                 
-                # Additional sanitization can be applied here if needed
+                # Additional sanitization can be applied here if needed TODO 
                 pass
             
             return result
