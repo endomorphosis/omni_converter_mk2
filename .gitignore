@@ -3,6 +3,8 @@ _Claude_ignore_this_folder_please/
 claudes_toolbox/
 .docignore
 documentation/
+test_files/*
+!TEST_FILES.md
 
 
 # Config files

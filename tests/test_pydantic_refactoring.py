@@ -15,8 +15,7 @@ from typing import Dict, Any, List, Optional
 # Install pydantic to perform validation-specific tests
 try:
     import pydantic
-    from pydantic import BaseModel, Field
-    from pydantic.error_wrappers import ValidationError
+    from pydantic import BaseModel, Field, ValidationError
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
@@ -152,15 +151,7 @@ class TestContentPydanticModel(unittest.TestCase):
     
     def test_validation_benefits(self):
         """Test the additional validation benefits of the Pydantic model."""
-        # Skip test if Pydantic version is 2.0+ which handles validation differently
-        try:
-            import pydantic
-            major_version = int(pydantic.__version__.split('.')[0])
-            if major_version >= 2:
-                self.skipTest("Pydantic v2+ has different validation behavior")
-        except (ImportError, ValueError, IndexError):
-            pass  # Continue with test if we can't determine version
-            
+
         # Test required field validation
         with self.assertRaises(ValidationError):
             ContentModel()  # Missing required 'text' field

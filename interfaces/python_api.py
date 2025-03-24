@@ -9,6 +9,7 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from utils.config import config_manager
+from utils.logger import logger
 from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
 from core.processing_result import ProcessingResult

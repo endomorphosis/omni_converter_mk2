@@ -12,10 +12,10 @@ This package contains test modules for each aspect of the converter:
 """
 
 # Import test modules for easier access
-from .test_format_support_coverage import FormatSupportCoverageTest
-from .test_processing_success_rate import ProcessingSuccessRateTest
-from .test_resource_utilization import ResourceUtilizationTest
-from .test_processing_speed import ProcessingSpeedTest
-from .test_error_handling import ErrorHandlingTest
-from .test_security_effectiveness import SecurityEffectivenessTest
-from .test_text_quality import TextQualityTest
+from .test_skeleton_format_support_coverage import FormatSupportCoverageTest
+from .test_skeleton_processing_success_rate import ProcessingSuccessRateTest
+from .test_skeleton_resource_utilization import ResourceUtilizationTest
+from .test_skeleton_processing_speed import ProcessingSpeedTest
+from .test_skeleton_error_handling import ErrorHandlingTest
+from .test_skeleton_security_effectiveness import SecurityEffectivenessTest
+from .test_skeleton_text_quality import TextQualityTest

@@ -121,9 +121,9 @@ class TextHandler(BaseFormatHandler):
             options: Parsing options.
             
         Returns:
-            A tuple of (text content, metadata, sections).
+            A tuple of (text content, metadata, sections). 
         """
-        # Basic HTML parsing - in a real implementation, use a proper HTML parser like BeautifulSoup
+        # Basic HTML parsing - in a real implementation, use a proper HTML parser like BeautifulSoup #TODO
         # This is a simplified version for demonstration purposes
         
         # Extract title
@@ -151,7 +151,7 @@ class TextHandler(BaseFormatHandler):
         # Normalize whitespace
         text = re.sub(r'\s+', ' ', text).strip()
         
-        # Split into sections (just a simple example - real implementation would be more sophisticated)
+        # Split into sections (just a simple example - real implementation would be more sophisticated) # TODO
         sections = []
         if title:
             sections.append({

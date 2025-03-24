@@ -1,12 +1,5 @@
 # Omni-Converter - Testing Guidelines
 
-## General Testing Approach
-- Implement basic CI for automated testing with streamlined test suites
-- Include focused regression tests for critical functionality
-- Conduct limited user acceptance testing with internal stakeholders
-- Document all test results for analysis and future enhancement
-- Docstrings for all tests must be verbose.
-
 ## 1. Format Support Coverage
 
 ### Target

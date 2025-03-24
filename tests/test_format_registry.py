@@ -26,14 +26,16 @@ class MockHandler(FormatHandler):
         if format_name:
             return format_name in self.formats
         return any(f in file_path for f in self.formats)
-    
+
     def extract_content(self, file_path, options=None):
         """Extract content from a file."""
-        return Content(f"Mock content from {file_path}", 
-                      {"format": file_path.split(".")[-1]},
-                      [],
-                      file_path.split(".")[-1],
-                      file_path)
+        return Content(
+            text=f"Mock content from {file_path}", 
+            metadata={"format": file_path.split(".")[-1]},
+            sections=[],
+            source_format=file_path.split(".")[-1],
+            source_path=file_path
+        )
     
     def get_capabilities(self):
         """Get the capabilities of this handler."""

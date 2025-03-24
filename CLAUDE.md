@@ -50,6 +50,17 @@ source venv/bin/activate && python -m unittest tests.test_filename.TestClassName
 - **Line length**: 100 characters maximum
 - **File organization**: Module docstring first, imports second, constants third, then classes/functions
 
+
+## General Testing Approach
+- Implement basic CI for automated testing with streamlined test suites
+- Include focused regression tests for critical functionality
+- Conduct limited user acceptance testing with internal stakeholders
+- Document all test results for analysis and future enhancement
+- Docstrings for all tests must be verbose.
+- Label files with skeleton tests or integration test scaffolds as `test_skeleton_{test_name}.py`
+- Document all placeholder implementations in the files docstring.
+
+
 ## Feature Implementation Guidelines
 - **NEVER REMOVE FEATURES**: Once a feature has been implemented, NEVER remove it, even if it causes test failures. Instead, modify the code and/or tests to ensure both the feature and tests work correctly together.
 - **Maintain compatibility**: When updating code, ensure backward compatibility is maintained.
