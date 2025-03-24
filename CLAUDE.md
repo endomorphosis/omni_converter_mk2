@@ -3,11 +3,17 @@
 ### Documentation
 - [SAD.md](SAD.md) - Architecture Implementation Details, including flowchart and class diagrams.
 - [PRD.md](PRD.md) - Product Requirements Document, including Minimum Viable Product specification.
-- [PHASE16_README.md](PHASE16_README.md) - Details on Phase 16 plan for the project.
+- [PHASE16_README.md](PHASE16_README.md) - Details on the current status and future of the project.
 - [TOOLS.md](claudes_toolbox/TOOLS.md) - CLI tools to help you when writing code.
 - [TESTING.md](TESTING.md) - Guidelines and metrics for creating and running tests.
 - [CHANGELOG](CHANGELOG.md) - Record of changes made to the program and to tests.
-- [dummy_implementations](dummy_implementations) - Record of dummy implementations and their implementation status.
+
+
+## Project Structure
+- Main converter in root directory
+- Extra command line utilities in claudes_toolbox/
+- Tests in tests/ directory matching the module structure
+- Documentation for modules and tests in documentation/ directory matching the module structure.
 
 ## Build & Run Commands
 ```bash
@@ -28,8 +34,8 @@ source venv/bin/activate && python -m unittest tests.test_filename.TestClassName
 ```
 
 ## Available Tools in /claudes_toolbox
-- documentation_generator: Documentation Generator automatically extracts code structure, docstrings, and type annotations from Python source code to produce comprehensive documentation in Markdown format. It supports multiple docstring styles (Google, NumPy, and reStructuredText) and preserves type hints from source code annotations.
-- 
+- documentation_generator:  A command-line utility that automatically extracts code structure, docstrings, and type annotations from Python source code to produce comprehensive documentation in Markdown format. It supports multiple docstring styles (Google, NumPy, and reStructuredText) and preserves type hints from source code annotations.
+- codebase_search: A command-line utility that efficiently searches codebases for specific keywords or patterns, providing clear and structured results.
 
 ## Code Style Guidelines
 - **Docstrings**: Verbose, Google-style docstrings with types, parameters, returns, and examples. This includes tests.
@@ -49,12 +55,7 @@ source venv/bin/activate && python -m unittest tests.test_filename.TestClassName
 - **Maintain compatibility**: When updating code, ensure backward compatibility is maintained.
 - **Test adaptation**: When a feature or capability changes, adapt tests to match the new functionality rather than removing the feature to match existing tests.
 
-## Project Structure
-- Main converter in root directory
-- Modular tools in claudes_toolbox/
-- Tests in tests/ directory matching the module structure
-- Documentation in documentation/ directory matching the module structure.
-
+# Restrictions
 ## Access Restrictions
 - Do NOT access or read any files in the _Claude_ignore_this_folder_please/ directory
 - This directory contains internal formulas and data that should be ignored by Claude

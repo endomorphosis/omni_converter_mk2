@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated VideoHandler documentation with enhanced descriptions
 - Improved test resilience to accommodate feature presence without breaking tests
 - Updated IMPLEMENTATION_STATUS.md to mark video_processor implementation as complete
+- Consolidated misc. documentation in top-level directory into ROADMAP.md
 
 ## [1.8.0] - 2025-03-22
 
