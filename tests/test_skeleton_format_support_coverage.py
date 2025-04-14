@@ -10,6 +10,10 @@ import json
 import unittest
 from datetime import datetime
 
+from utils.format_detector import format_detector
+from format_handlers.format_registry import format_registry
+from core.content_extractor import ContentExtractor
+
 
 class FormatSupportCoverageTest(unittest.TestCase):
     """Test case for format support coverage across different file types."""
@@ -39,48 +43,30 @@ class FormatSupportCoverageTest(unittest.TestCase):
                 'coverage_percentage': 0
             }
         }
+        
+        # Initialize the extractor for capabilities testing
+        self.extractor = ContentExtractor()
 
     def test_format_support_coverage(self):
         """Test if the required number of formats are supported in each category."""
-        # Import here to prevent circular imports
         try:
-            # This would be the actual import in a real implementation
-            # from omni_converter import FormatDetector
-            # detector = FormatDetector()
-            
-            # Mock implementation for demonstration
-            class MockFormatDetector:
-                def get_supported_formats(self):
-                    """Return mock supported formats."""
-                    return {
-                        'text': ['html', 'xml', 'plain', 'calendar', 'csv'],
-                        'image': ['jpeg', 'png', 'gif', 'webp', 'svg'],
-                        'audio': ['mp3', 'wav', 'ogg', 'flac', 'aac'],
-                        'video': ['mp4', 'webm', 'avi', 'mkv', 'mov'],
-                        'application': ['pdf', 'json', 'zip', 'docx', 'xlsx']
-                    }
-                
-                def is_format_supported(self, format_name):
-                    """Check if a format is supported."""
-                    supported = self.get_supported_formats()
-                    for category in supported:
-                        if format_name in supported[category]:
-                            return True
-                    return False
-            
-            detector = MockFormatDetector()
+            # Get the supported formats from the format registry
+            formats_by_category = format_registry.get_formats_by_category()
             
             # Test each category
             total_formats = 0
             total_supported = 0
             
             for category, formats in self.formats_to_test.items():
-                supported_formats = [fmt for fmt in formats if detector.is_format_supported(fmt)]
+                # Get the supported formats for this category
+                supported_in_category = formats_by_category.get(category, [])
+                supported_formats = [fmt for fmt in formats if fmt in supported_in_category]
+                
                 total_formats += len(formats)
                 total_supported += len(supported_formats)
                 
                 # Calculate coverage for this category
-                coverage_percentage = (len(supported_formats) / len(formats)) * 100
+                coverage_percentage = (len(supported_formats) / len(formats)) * 100 if formats else 0
                 meets_requirement = len(supported_formats) >= 5
                 
                 # Store results for this category
@@ -101,12 +87,11 @@ class FormatSupportCoverageTest(unittest.TestCase):
                 print(f"Meets requirement (≥5 formats): {meets_requirement}")
                 
                 # Assert that at least 5 formats are supported in this category
-                # Comment this out for now since our mock only supports some formats
-                # self.assertGreaterEqual(len(supported_formats), 5, 
-                #                        f"Category {category} must support at least 5 formats")
+                self.assertGreaterEqual(len(supported_formats), 5, 
+                                      f"Category {category} must support at least 5 formats")
             
             # Calculate overall coverage
-            overall_coverage = (total_supported / total_formats) * 100
+            overall_coverage = (total_supported / total_formats) * 100 if total_formats else 0
             
             # Store overall results
             self.results['overall'] = {
@@ -124,9 +109,11 @@ class FormatSupportCoverageTest(unittest.TestCase):
             print(f"Meets requirement (≥80% coverage): {overall_coverage >= 80}")
             
             # Assert that overall coverage is at least 80%
-            # Comment this out for now since our mock only supports some formats
-            # self.assertGreaterEqual(overall_coverage, 80, 
-            #                        "Overall format coverage must be at least 80%")
+            self.assertGreaterEqual(overall_coverage, 80, 
+                                  "Overall format coverage must be at least 80%")
+            
+            # Additional test for format detector
+            self.verify_format_detector_consistency()
             
         except ImportError as e:
             print(f"Failed to import required modules: {e}")
@@ -136,6 +123,30 @@ class FormatSupportCoverageTest(unittest.TestCase):
             print(f"Unexpected error during testing: {e}")
             self.results['error'] = str(e)
             self.fail(f"Error: {e}")
+
+    def verify_format_detector_consistency(self):
+        """Verify that the format detector and registry are consistent."""
+        # Get formats from extractor capabilities
+        extractor_capabilities = self.extractor.get_extraction_capabilities()
+        supported_formats = extractor_capabilities.get('supported_formats', [])
+        
+        # Check each format is recognized by the format detector
+        unrecognized_formats = []
+        for format_name in supported_formats:
+            if not format_detector.is_format_supported(format_name):
+                unrecognized_formats.append(format_name)
+        
+        if unrecognized_formats:
+            self.fail(f"Format detector does not recognize formats: {unrecognized_formats}")
+        
+        # Get format registry capabilities
+        registry_formats = format_registry.get_supported_formats()
+        
+        # Check for consistency between extractor and registry
+        if sorted(supported_formats) != sorted(registry_formats):
+            self.fail("Inconsistency between extractor supported formats and registry formats")
+            
+        print("\nFormat Detector and Registry are consistent.")
 
     def tearDown(self):
         """Save test results to a JSON file."""

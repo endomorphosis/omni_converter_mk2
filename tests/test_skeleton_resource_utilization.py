@@ -10,12 +10,19 @@ import json
 import time
 import unittest
 import platform
+import tempfile
 import multiprocessing
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 
 # Import psutil for actual resource monitoring
 import psutil
+
+from core.processing_pipeline import processing_pipeline
+from managers.batch_processor import batch_processor
+from managers.resource_monitor import resource_monitor
+from utils.format_detector import format_detector
+from utils.config import config_manager
 
 
 class ResourceUtilizationTest(unittest.TestCase):
@@ -24,14 +31,20 @@ class ResourceUtilizationTest(unittest.TestCase):
     def setUp(self):
         """Set up test case with necessary data structures."""
         # Define the test batches with different file types and sizes
-        self.test_batches = self._create_mock_test_batches()
+        self.test_batches = self._create_test_batches()
         
-        # Resource limits from the requirements
-        self.memory_limit_gb = 6  # 6GB RAM limit
-        self.cpu_limit_percent = 80  # 80% CPU utilization limit
+        # Get resource limits from config
+        self.memory_limit_gb = config_manager.get_config_value('resources.memory_limit_gb', 6)
+        self.cpu_limit_percent = config_manager.get_config_value('resources.cpu_limit_percent', 80)
         
         # Create the results directory if it doesn't exist
         os.makedirs('tests/collected_results', exist_ok=True)
+        
+        # Create temp directory for output
+        self.temp_output_dir = tempfile.mkdtemp()
+        
+        # Set up resource monitor
+        self.resource_monitor = resource_monitor
         
         # Results will be stored here
         self.results = {
@@ -63,101 +76,127 @@ class ResourceUtilizationTest(unittest.TestCase):
         }
         return system_info
 
-    def _create_mock_test_batches(self) -> List[Dict[str, Any]]:
-        """Create mock test batch data.
+    def _create_test_batches(self) -> List[Dict[str, Any]]:
+        """Create test batch data.
         
         Returns:
             List of dictionaries representing test batches
         """
+        # Define test files directory
+        test_files_dir = os.path.join('test_files')
+        
         # Create different batches representing different workloads
-        batches = [
-            {
+        batches = []
+        
+        # Small Text Batch
+        text_files = self._find_files_of_category(test_files_dir, 'text', ['html', 'xml', 'txt', 'csv', 'ics'])
+        if text_files:
+            batches.append({
                 'name': 'Small Text Batch',
-                'description': '100 small text files (1KB each)',
-                'files': [{'category': 'text', 'size_kb': 1} for _ in range(100)],
+                'description': f'{len(text_files)} text files',
+                'files': text_files,
                 'expected_memory_gb': 0.2,
                 'expected_cpu_percent': 20
-            },
-            {
+            })
+        
+        # Mixed Media Batch
+        image_files = self._find_files_of_category(test_files_dir, 'image', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])
+        audio_files = self._find_files_of_category(test_files_dir, 'audio', ['mp3', 'wav', 'ogg', 'flac', 'aac'])
+        video_files = self._find_files_of_category(test_files_dir, 'video', ['mp4', 'webm', 'avi', 'mkv', 'mov'])
+        
+        mixed_files = image_files + audio_files + video_files
+        if mixed_files:
+            batches.append({
                 'name': 'Mixed Media Batch',
-                'description': '10 images, 5 audio files, 2 videos',
-                'files': (
-                    [{'category': 'image', 'size_kb': 500} for _ in range(10)] +
-                    [{'category': 'audio', 'size_kb': 2000} for _ in range(5)] +
-                    [{'category': 'video', 'size_kb': 10000} for _ in range(2)]
-                ),
+                'description': f'{len(image_files)} images, {len(audio_files)} audio files, {len(video_files)} videos',
+                'files': mixed_files,
                 'expected_memory_gb': 1.5,
                 'expected_cpu_percent': 60
-            },
-            {
-                'name': 'Large Application Batch',
-                'description': '20 PDF files (5MB each)',
-                'files': [{'category': 'application', 'size_kb': 5000} for _ in range(20)],
-                'expected_memory_gb': 3.0,
-                'expected_cpu_percent': 70
-            },
-            {
-                'name': 'Stress Test Batch',
-                'description': 'Large mixed batch to approach resource limits',
-                'files': (
-                    [{'category': 'text', 'size_kb': 1} for _ in range(200)] +
-                    [{'category': 'image', 'size_kb': 1000} for _ in range(20)] +
-                    [{'category': 'audio', 'size_kb': 3000} for _ in range(10)] +
-                    [{'category': 'video', 'size_kb': 20000} for _ in range(3)] +
-                    [{'category': 'application', 'size_kb': 8000} for _ in range(15)]
-                ),
-                'expected_memory_gb': 5.5,
-                'expected_cpu_percent': 90
-            }
-        ]
+            })
+        
+        # Application Batch
+        app_files = self._find_files_of_category(test_files_dir, 'application', ['pdf', 'json', 'zip', 'docx', 'xlsx'])
+        if app_files:
+            batches.append({
+                'name': 'Application Files Batch',
+                'description': f'{len(app_files)} application files',
+                'files': app_files,
+                'expected_memory_gb': 1.0,
+                'expected_cpu_percent': 40
+            })
+        
+        # If we don't have any real test files, create a synthetic batch for testing
+        if not batches:
+            batches.append({
+                'name': 'Synthetic Test Batch',
+                'description': 'Synthetic batch for testing resource monitoring',
+                'files': [{'category': 'text', 'size_kb': 1, 'synthetic': True} for _ in range(10)],
+                'expected_memory_gb': 0.1,
+                'expected_cpu_percent': 10
+            })
+        
         return batches
 
-    def _monitor_resource_usage(self, duration_seconds: float) -> Tuple[float, float]:
-        """Monitor actual resource usage during processing using psutil.
+    def _find_files_of_category(self, test_files_dir: str, category: str, extensions: List[str]) -> List[Dict[str, Any]]:
+        """Find test files of a specific category.
         
         Args:
-            duration_seconds: How long to monitor for
+            test_files_dir: Path to test files directory
+            category: File category (text, image, etc.)
+            extensions: List of file extensions to look for
             
         Returns:
-            Tuple of peak memory usage (GB) and peak CPU percentage
+            List of dictionaries with file information
         """
-        # Initialize peak values
-        peak_memory_gb = 0
-        peak_cpu_percent = 0
+        files = []
         
-        # Get our process
-        process = psutil.Process(os.getpid())
+        # Check if category directory exists
+        category_dir = os.path.join(test_files_dir, category)
+        if os.path.exists(category_dir) and os.path.isdir(category_dir):
+            # Look for files in the category directory
+            for file_name in os.listdir(category_dir):
+                file_path = os.path.join(category_dir, file_name)
+                if os.path.isfile(file_path):
+                    # Check if the file has one of the specified extensions
+                    _, ext = os.path.splitext(file_name)
+                    if ext.lower().lstrip('.') in extensions:
+                        # Get file size in KB
+                        size_kb = os.path.getsize(file_path) / 1024
+                        
+                        files.append({
+                            'file_name': file_name,
+                            'file_path': file_path,
+                            'category': category,
+                            'size_kb': size_kb,
+                            'synthetic': False
+                        })
         
-        # Convert to int for range function, ensure at least 5 samples
-        steps = max(5, min(20, int(duration_seconds)))
-        interval = duration_seconds / steps
+        # Also check the main test_files directory
+        if os.path.exists(test_files_dir) and os.path.isdir(test_files_dir):
+            for file_name in os.listdir(test_files_dir):
+                file_path = os.path.join(test_files_dir, file_name)
+                if os.path.isfile(file_path):
+                    # Check if the file has one of the specified extensions
+                    _, ext = os.path.splitext(file_name)
+                    if ext.lower().lstrip('.') in extensions:
+                        # Get file size in KB
+                        size_kb = os.path.getsize(file_path) / 1024
+                        
+                        files.append({
+                            'file_name': file_name,
+                            'file_path': file_path,
+                            'category': category,
+                            'size_kb': size_kb,
+                            'synthetic': False
+                        })
         
-        # Monitor resources over the specified duration
-        for _ in range(steps):
-            # Get current memory usage in GB for THIS PROCESS ONLY
-            memory_info = process.memory_info()
-            # Use RSS (Resident Set Size) which is actual physical memory used
-            current_memory_used_gb = memory_info.rss / (1024 ** 3)
-            
-            # Get current CPU usage percentage for THIS PROCESS ONLY
-            current_cpu_percent = process.cpu_percent(interval=0.1)
-            
-            # Update peaks
-            peak_memory_gb = max(peak_memory_gb, current_memory_used_gb)
-            peak_cpu_percent = max(peak_cpu_percent, current_cpu_percent)
-            
-            # Sleep for a short interval
-            time.sleep(interval)
-        
-        return peak_memory_gb, peak_cpu_percent
+        return files
 
     def test_resource_utilization(self):
         """Test resource utilization during file processing."""
         try:
-            # This would be the actual import in a real implementation
-            # from omni_converter import BatchProcessor, ResourceMonitor
-            # processor = BatchProcessor()
-            # monitor = ResourceMonitor()
+            # Start resource monitoring
+            self.resource_monitor.start_monitoring()
             
             # Track overall peak values
             overall_peak_memory_gb = 0
@@ -167,23 +206,49 @@ class ResourceUtilizationTest(unittest.TestCase):
             for i, batch in enumerate(self.test_batches):
                 print(f"\nBatch {i+1}: {batch['name']}")
                 print(f"Description: {batch['description']}")
-                print(f"Files: {len(batch['files'])} files of various types and sizes")
+                print(f"Files: {len(batch['files'])} files")
                 
-                # In a real implementation, this would process actual files
-                # and measure real resource usage
+                # Skip empty batches
+                if not batch['files']:
+                    print("Skipping empty batch")
+                    continue
                 
-                # Simulate resource monitoring during batch processing
-                # The duration would be based on the batch size and complexity
-                # Here we use a simplified approach
-                duration_seconds = 2 * len(batch['files']) / 100
-                duration_seconds = max(1, min(10, duration_seconds))  # Between 1 and 10 seconds
+                # Reset the resource monitor's statistics
+                initial_usage = self.resource_monitor.get_current_usage()
                 
-                # Monitor resource usage
-                peak_memory_gb, peak_cpu_percent = self._monitor_resource_usage(duration_seconds)
+                # If we have real files, process them with the batch processor
+                if not batch.get('synthetic', False) and not batch['files'][0].get('synthetic', False):
+                    real_files = [f['file_path'] for f in batch['files']]
+                    
+                    # Process the batch
+                    print(f"Processing {len(real_files)} files...")
+                    
+                    # Process the batch using the batch processor
+                    batch_processor.process_batch(
+                        real_files,
+                        self.temp_output_dir,
+                        {'format': 'txt'},
+                        progress_callback=lambda current, total, file: print(f"Processing {current}/{total}: {os.path.basename(file)}", end="\r")
+                    )
+                else:
+                    # For synthetic batches, simulate processing by using memory and CPU
+                    print("Simulating batch processing...")
+                    self._simulate_batch_processing(batch)
                 
-                # In a full implementation, the following might be used:
-                # processor.process_batch(batch['files'])
-                # peak_memory_gb, peak_cpu_percent = monitor.get_peak_usage()
+                # Get resource usage after processing
+                current_usage = self.resource_monitor.get_current_usage()
+                peak_memory_gb = current_usage.get('memory', 0) / 1024  # Convert MB to GB
+                peak_cpu_percent = current_usage.get('cpu', 0)
+                
+                # For more accurate memory measurement, also check process directly
+                try:
+                    process = psutil.Process(os.getpid())
+                    memory_info = process.memory_info()
+                    process_memory_gb = memory_info.rss / (1024 ** 3)
+                    if process_memory_gb > peak_memory_gb:
+                        peak_memory_gb = process_memory_gb
+                except Exception as e:
+                    print(f"Warning: Could not get process memory: {str(e)}")
                 
                 # Check if usage is within limits
                 within_memory_limit = peak_memory_gb < self.memory_limit_gb
@@ -210,6 +275,16 @@ class ResourceUtilizationTest(unittest.TestCase):
                 print(f"Peak CPU usage: {peak_cpu_percent:.2f}% (Limit: {self.cpu_limit_percent}%)")
                 print(f"Within memory limit: {within_memory_limit}")
                 print(f"Within CPU limit: {within_cpu_limit}")
+                
+                # Force garbage collection to clean up between batches
+                try:
+                    import gc
+                    gc.collect()
+                except ImportError:
+                    pass
+            
+            # Stop resource monitoring
+            self.resource_monitor.stop_monitoring()
             
             # Store overall results
             overall_within_memory_limit = overall_peak_memory_gb < self.memory_limit_gb
@@ -232,11 +307,10 @@ class ResourceUtilizationTest(unittest.TestCase):
             print(f"Overall within CPU limit: {overall_within_cpu_limit}")
             
             # Assert that resource usage is within limits
-            # Comment this out for now since our mock might not meet the requirements
-            # self.assertLess(overall_peak_memory_gb, self.memory_limit_gb, 
-            #               f"Memory usage ({overall_peak_memory_gb:.2f} GB) exceeds limit ({self.memory_limit_gb} GB)")
-            # self.assertLess(overall_peak_cpu_percent, self.cpu_limit_percent, 
-            #               f"CPU usage ({overall_peak_cpu_percent:.2f}%) exceeds limit ({self.cpu_limit_percent}%)")
+            self.assertLess(overall_peak_memory_gb, self.memory_limit_gb, 
+                          f"Memory usage ({overall_peak_memory_gb:.2f} GB) exceeds limit ({self.memory_limit_gb} GB)")
+            self.assertLess(overall_peak_cpu_percent, self.cpu_limit_percent, 
+                          f"CPU usage ({overall_peak_cpu_percent:.2f}%) exceeds limit ({self.cpu_limit_percent}%)")
             
         except ImportError as e:
             print(f"Failed to import required modules: {e}")
@@ -246,14 +320,73 @@ class ResourceUtilizationTest(unittest.TestCase):
             print(f"Unexpected error during testing: {e}")
             self.results['error'] = str(e)
             self.fail(f"Error: {e}")
+        finally:
+            # Make sure to stop monitoring
+            self.resource_monitor.stop_monitoring()
+
+    def _simulate_batch_processing(self, batch: Dict[str, Any]) -> None:
+        """
+        Simulate batch processing to test resource monitoring.
+        
+        Args:
+            batch: Batch information
+        """
+        # Simulate processing by allocating memory and using CPU
+        total_files = len(batch['files'])
+        
+        print(f"Simulating processing of {total_files} files...")
+        
+        # Create some objects to use memory
+        memory_objects = []
+        
+        # Process each simulated file
+        for i, file_info in enumerate(batch['files']):
+            print(f"Simulating file {i+1}/{total_files}: {file_info.get('file_name', f'synthetic_{i}')}")
+            
+            # Simulate memory usage
+            size_kb = file_info.get('size_kb', 1)
+            # Allocate a small fraction of the "file size" to memory to avoid OOM
+            memory_chunk = bytearray(int(size_kb * 10))  # Scaled down for safety
+            memory_objects.append(memory_chunk)
+            
+            # Simulate CPU usage
+            start_time = time.time()
+            while time.time() - start_time < 0.1:  # Short CPU burst
+                # Do something CPU-intensive
+                for _ in range(10000):
+                    _ = 3.1415 ** 2.7182
+            
+            # Check current usage
+            current_usage = self.resource_monitor.get_current_usage()
+            memory_mb = current_usage.get('memory', 0)
+            cpu_percent = current_usage.get('cpu', 0)
+            
+            print(f"Current usage - Memory: {memory_mb:.2f} MB, CPU: {cpu_percent:.2f}%")
+            
+            # Sleep briefly to allow resource monitor to take measurements
+            time.sleep(0.05)
+        
+        # Hold the allocated memory briefly
+        time.sleep(0.5)
+        
+        # Clear memory objects to release memory
+        memory_objects.clear()
 
     def tearDown(self):
-        """Save test results to a JSON file."""
+        """Save test results to a JSON file and clean up."""
         # Save results to JSON file
         output_file = os.path.join('tests', 'collected_results', 'resource_utilization.json')
         with open(output_file, 'w') as f:
             json.dump(self.results, f, indent=2)
         print(f"\nTest results saved to {output_file}")
+        
+        # Clean up temporary directory
+        if self.temp_output_dir and os.path.exists(self.temp_output_dir):
+            import shutil
+            try:
+                shutil.rmtree(self.temp_output_dir)
+            except Exception as e:
+                print(f"Warning: Failed to remove temporary directory: {str(e)}")
 
 
 if __name__ == '__main__':
