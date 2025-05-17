@@ -249,7 +249,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
                     
                     except Exception as e:
                         # Handle processing errors
-                        print(f"  {file_data['file_name']}: FAILED (Exception: {str(e)})")
+                        print(f"  {file_data['file_name']}: FAILED (Exception: {e})")
                         category_results.append({
                             'file_name': file_data['file_name'],
                             'format': file_data['format'],
@@ -347,7 +347,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
                         'category': file_data['category'],
                         'corrupt_type': file_data['corrupt_type'],
                         'success': False,
-                        'error': str(e)
+                        'error': e
                     })
             
             # Add simulated results for sample invalid files
@@ -422,7 +422,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
             try:
                 shutil.rmtree(self.temp_output_dir)
             except Exception as e:
-                print(f"Warning: Failed to remove temporary directory: {str(e)}")
+                print(f"Warning: Failed to remove temporary directory: {e}")
 
 
 if __name__ == '__main__':

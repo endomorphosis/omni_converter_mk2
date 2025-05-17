@@ -30,7 +30,7 @@ class BaseProcessor(ABC):
         pass
     
     @abstractmethod
-    def get_supported_formats(self) -> List[str]:
+    def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
         

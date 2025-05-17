@@ -14,6 +14,33 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union, BinaryIO
 
 
+import pydantic
+
+def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
+    """
+    Determine the MIME type of a file.
+    
+    Args:
+        file_path: The path to the file.
+        
+    Returns:
+        The MIME type of the file.
+    """
+    match path_or_bytes:
+        case str():
+            try:
+                return magic.from_file(path_or_bytes, mime=True)
+            except Exception:
+                return mimetypes.guess_type(path_or_bytes)[0] or 'application/octet-stream'
+        case bytes():
+            try:
+                return magic.from_buffer(path_or_bytes, mime=True)
+            except (ImportError, Exception):
+                return 'application/octet-stream'
+        case _:
+            return None
+
+
 class FileInfo:
     """
     Information about a file.
@@ -40,18 +67,14 @@ class FileInfo:
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"File not found: {path}")
-        
+
         self.path = os.path.abspath(path)
         self.size = os.path.getsize(path)
         self.modified_time = datetime.fromtimestamp(os.path.getmtime(path))
-        
+
         # Determine MIME type using python-magic
-        try:
-            self.mime_type = magic.from_file(path, mime=True)
-        except Exception:
-            # Fall back to mimetypes if magic fails
-            self.mime_type, _ = mimetypes.guess_type(path) or ('application/octet-stream', None)
-        
+        self.mime_type = _determine_mime_type(path)
+
         self.extension = os.path.splitext(path)[1].lstrip('.')
         self.is_readable = os.access(path, os.R_OK)
         self.is_writable = os.access(path, os.W_OK)
@@ -85,7 +108,6 @@ class FileContent:
         size (int): The size of the content in bytes.
         mime_type (str): The MIME type of the content.
     """
-    
     def __init__(
         self, 
         raw_content: bytes, 
@@ -137,7 +159,8 @@ class FileContent:
                 return self.text_content
         return self.text_content
     
-    def get_as_binary(self) -> bytes:
+    @property
+    def as_binary(self) -> bytes:
         """
         Get the content as binary.
         

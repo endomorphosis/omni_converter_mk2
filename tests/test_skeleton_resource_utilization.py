@@ -22,7 +22,7 @@ from core.processing_pipeline import processing_pipeline
 from managers.batch_processor import batch_processor
 from managers.resource_monitor import resource_monitor
 from utils.format_detector import format_detector
-from utils.config import config_manager
+from utils.configs import configs
 
 
 class ResourceUtilizationTest(unittest.TestCase):
@@ -34,8 +34,8 @@ class ResourceUtilizationTest(unittest.TestCase):
         self.test_batches = self._create_test_batches()
         
         # Get resource limits from config
-        self.memory_limit_gb = config_manager.get_config_value('resources.memory_limit_gb', 6)
-        self.cpu_limit_percent = config_manager.get_config_value('resources.cpu_limit_percent', 80)
+        self.memory_limit_gb = configs.get_config_value('resources.memory_limit_gb', 6)
+        self.cpu_limit_percent = configs.get_config_value('resources.cpu_limit_percent', 80)
         
         # Create the results directory if it doesn't exist
         os.makedirs('tests/collected_results', exist_ok=True)
@@ -248,7 +248,7 @@ class ResourceUtilizationTest(unittest.TestCase):
                     if process_memory_gb > peak_memory_gb:
                         peak_memory_gb = process_memory_gb
                 except Exception as e:
-                    print(f"Warning: Could not get process memory: {str(e)}")
+                    print(f"Warning: Could not get process memory: {e}")
                 
                 # Check if usage is within limits
                 within_memory_limit = peak_memory_gb < self.memory_limit_gb
@@ -386,7 +386,7 @@ class ResourceUtilizationTest(unittest.TestCase):
             try:
                 shutil.rmtree(self.temp_output_dir)
             except Exception as e:
-                print(f"Warning: Failed to remove temporary directory: {str(e)}")
+                print(f"Warning: Failed to remove temporary directory: {e}")
 
 
 if __name__ == '__main__':

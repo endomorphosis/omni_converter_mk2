@@ -6,6 +6,7 @@ This module tests the application format handler functionality.
 
 import os
 import json
+import logging
 import unittest
 import tempfile
 import zipfile
@@ -13,7 +14,9 @@ from typing import Dict, Any
 from io import BytesIO
 
 from utils.filesystem import FileSystem
+from utils.logger import test_logger
 from format_handlers.application_handler import ApplicationHandler
+
 
 
 class TestApplicationHandler(unittest.TestCase):
@@ -229,9 +232,10 @@ startxref
         """Test that the handler correctly identifies supported files."""
         for format_name, file_path in self.test_files.items():
             with self.subTest(format=format_name):
+                test_logger.debug(f"Testing can_handle from '{type(self.handler)}' for '{file_path}'")
                 self.assertTrue(self.handler.can_handle(file_path))
                 self.assertTrue(self.handler.can_handle(file_path, format_name))
-    
+
     def test_extract_json(self):
         """Test JSON content extraction."""
         content = self.handler.extract_content(self.test_files["json"])

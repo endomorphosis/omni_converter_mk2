@@ -111,8 +111,8 @@ class TestWhisperAudioProcessor(unittest.TestCase):
         self.assertFalse(self.processor.can_process(""))
     
     def test_get_supported_formats(self):
-        """Test the get_supported_formats method."""
-        formats = self.processor.get_supported_formats()
+        """Test the supported_formats method."""
+        formats = self.processor.supported_formats
         self.assertEqual(len(formats), 6)  # mp3, wav, ogg, flac, aac, m4a
         self.assertIn("mp3", formats)
         self.assertIn("wav", formats)
@@ -435,7 +435,7 @@ This is a transcribed speech.
         processor = WhisperAudioProcessor()
         
         # Check that it correctly reports no supported formats
-        self.assertEqual(processor.get_supported_formats(), [])
+        self.assertEqual(processor.supported_formats, [])
         self.assertFalse(processor.can_process("wav"))
         
         # Check that processor info shows unavailability

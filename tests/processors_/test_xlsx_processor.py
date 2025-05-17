@@ -69,8 +69,8 @@ class TestXlsxProcessor(unittest.TestCase):
         self.assertFalse(self.processor.can_process("pdf"))
     
     def test_get_supported_formats(self):
-        """Test the get_supported_formats method."""
-        formats = self.processor.get_supported_formats()
+        """Test the supported_formats method."""
+        formats = self.processor.supported_formats
         self.assertIn("xlsx", formats)
         self.assertEqual(len(formats), 1)
     
@@ -168,10 +168,10 @@ class TestXlsxProcessor(unittest.TestCase):
         self.assertIn("Second Sheet", sheet_names)
     
     @patch('format_handlers.processors.xlsx_processor.OPENPYXL_AVAILABLE', False)
-    @patch('format_handlers.processors.xlsx_processor.XlsxProcessor.get_supported_formats')
+    @patch('format_handlers.processors.xlsx_processor.XlsxProcessor.supported_formats')
     def test_unavailable_processor(self, mock_get_supported_formats):
         """Test behavior when openpyxl is not available."""
-        # Mock the get_supported_formats method to return an empty list
+        # Mock the supported_formats method to return an empty list
         mock_get_supported_formats.return_value = []
         
         # Create a new processor instance with the patched flag

@@ -42,7 +42,7 @@ class VideoProcessor:
     
     def __init__(self):
         """Initialize the video processor."""
-        self.supported_formats = {'mp4', 'webm', 'avi', 'mkv', 'mov'}
+        self._supported_formats = {'mp4', 'webm', 'avi', 'mkv', 'mov'}
     
     def can_process(self, format_name: str) -> bool:
         """
@@ -55,7 +55,18 @@ class VideoProcessor:
             True if the format is supported, False otherwise.
         """
         return format_name in self.supported_formats and (HAS_PIL or HAS_CV2)
-    
+
+    @property
+    def supported_formats(self) -> List[str]:
+        """
+        Get the list of formats supported by this processor.
+        # TODO Add in support to check if ffmpeg is installed.
+        
+        Returns:
+            A list of format names supported by this processor.
+        """
+        return self._supported_formats
+
     def extract_thumbnail(self, file_path: str, options: Optional[Dict[str, Any]] = None) -> Optional[bytes]:
         """
         Extract a thumbnail from a video file using memory-efficient methods.
@@ -119,7 +130,7 @@ class VideoProcessor:
             return thumbnail_data
             
         except (subprocess.SubprocessError, OSError) as e:
-            logger.error(f"Error extracting thumbnail: {str(e)}")
+            logger.error(f"Error extracting thumbnail: {e}")
             
             # Try OpenCV as a fallback if available
             if HAS_CV2:
@@ -127,7 +138,7 @@ class VideoProcessor:
             return None
             
         except Exception as e:
-            logger.error(f"Unexpected error extracting thumbnail: {str(e)}")
+            logger.error(f"Unexpected error extracting thumbnail: {e}")
             return None
     
     def _extract_thumbnail_cv2(self, file_path: str, time_offset: float, max_size: int) -> Optional[bytes]:
@@ -195,7 +206,7 @@ class VideoProcessor:
             return buffer.tobytes()
             
         except Exception as e:
-            logger.error(f"Error extracting thumbnail with OpenCV: {str(e)}")
+            logger.error(f"Error extracting thumbnail with OpenCV: {e}")
             return None
     
     def extract_frame_at_time(self, file_path: str, time_position: float, 
@@ -286,11 +297,11 @@ class VideoProcessor:
             return frames
             
         except (subprocess.SubprocessError, OSError) as e:
-            logger.error(f"Error extracting key frames: {str(e)}")
+            logger.error(f"Error extracting key frames: {e}")
             return []
             
         except Exception as e:
-            logger.error(f"Unexpected error extracting key frames: {str(e)}")
+            logger.error(f"Unexpected error extracting key frames: {e}")
             return []
     
     def extract_video_info(self, file_path: str) -> Dict[str, Any]:
@@ -390,11 +401,11 @@ class VideoProcessor:
             return info
             
         except (subprocess.SubprocessError, OSError) as e:
-            logger.error(f"Error extracting video info: {str(e)}")
+            logger.error(f"Error extracting video info: {e}")
             return info
             
         except Exception as e:
-            logger.error(f"Unexpected error extracting video info: {str(e)}")
+            logger.error(f"Unexpected error extracting video info: {e}")
             return info
 
 

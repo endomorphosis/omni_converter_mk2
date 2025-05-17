@@ -3,12 +3,17 @@ Base handler interface for the Omni-Converter.
 
 This module provides the base interface and abstract classes for format handlers.
 """
-
 from abc import ABC, abstractmethod
 from datetime import datetime
+import logging
 from typing import Any, Dict, List, Optional, Set, Union
 
+
 from pydantic import BaseModel, Field
+from pydantic.types import PastDatetime
+
+
+from utils.logger import logger
 
 
 class Content(BaseModel):
@@ -28,7 +33,7 @@ class Content(BaseModel):
     sections: List[Dict[str, Any]] = Field(default_factory=list)
     source_format: str = ""
     source_path: str = ""
-    extraction_time: datetime = Field(default_factory=datetime.now)
+    extraction_time: PastDatetime = Field(default_factory=datetime.now)
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -114,8 +119,8 @@ class BaseFormatHandler(FormatHandler):
     def __init__(
         self,
         handler_name: str,
-        supported_formats: Optional[Set[str]] = None,
-        capabilities: Optional[Dict[str, Any]] = None
+        supported_formats: Optional[Set[str]] = set(),
+        capabilities: Optional[Dict[str, Any]] = {}
     ):
         """
         Initialize a format handler.
@@ -126,8 +131,8 @@ class BaseFormatHandler(FormatHandler):
             capabilities: Capabilities of this handler.
         """
         self.handler_name = handler_name
-        self.supported_formats = supported_formats or set()
-        self.capabilities = capabilities or {}
+        self.supported_formats = supported_formats
+        self.capabilities = capabilities
     
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -140,11 +145,16 @@ class BaseFormatHandler(FormatHandler):
         Returns:
             True if this handler can process the file, False otherwise.
         """
+        
         # If format is provided, check if it's supported
+        logger.debug(f"Checking if handler '{self.handler_name}' can handle file: {file_path}\nformat_name: {format_name}")
         if format_name:
+            # If format is provided, check against supported formats
+            logger.debug(f"Handler '{self.handler_name}' supports formats: {self.supported_formats}")
             return format_name in self.supported_formats
         
         # Otherwise, validate input and try to determine format
+        logger.debug(f"Name not provided. Validating input for handler '{self.handler_name}'")
         return self.validate_input(file_path)
     
     def extract_content(self, file_path: str, options: Optional[Dict[str, Any]] = None) -> Content:
@@ -194,13 +204,17 @@ class BaseFormatHandler(FormatHandler):
         Returns:
             True if the file is valid for this handler, False otherwise.
         """
+        # TODO - Implement format detection logic
         # This is a basic implementation, subclasses should override
         from utils.format_detector import format_detector
+        logger.debug(f"Validating input '{file_path}' for handler '{self.handler_name}'")
         
         try:
+            logger.debug(f"Detecting format for file: {file_path}")
             format_name, _ = format_detector.detect_format(file_path)
             return format_name in self.supported_formats
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Error detecting format for file '{file_path}': {e}")
             return False
     
     @abstractmethod

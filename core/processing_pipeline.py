@@ -195,7 +195,7 @@ class ProcessingPipeline:
                     output_path
                 )
             except ValueError as e:
-                logger.warning(f"Format error: {str(e)}, falling back to txt format")
+                logger.warning(f"Format error: {e}, falling back to txt format")
                 # Fall back to txt format if the specified format fails
                 formatted_output = self.formatter.format_output(
                     normalized_content,
@@ -237,7 +237,7 @@ class ProcessingPipeline:
             return result
             
         except Exception as e:
-            logger.error(f"Error processing {file_path}: {str(e)}", {'error': str(e)})
+            logger.error(f"Error processing {file_path}: {e}", {'error': str(e)})
             
             # Create failure result
             result = ProcessingResult(
@@ -293,7 +293,7 @@ class ProcessingPipeline:
             try:
                 listener(event, data)
             except Exception as e:
-                logger.error(f"Error in listener: {str(e)}")
+                logger.error(f"Error in listener: {e}")
 
 
 # Global pipeline instance

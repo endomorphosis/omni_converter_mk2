@@ -167,7 +167,7 @@ class VideoHandler(BaseFormatHandler):
                 # Fall back to standard parser
                 media_info = pymediainfo.MediaInfo.parse(file_path)
         except Exception as e:
-            logger.warning(f"Error during mediainfo parsing: {str(e)}")
+            logger.warning(f"Error during mediainfo parsing: {e}")
             # Fall back to basic extraction if mediainfo fails
             return self._extract_basic(file_path, format_name)
         
@@ -433,7 +433,7 @@ class VideoHandler(BaseFormatHandler):
                         })
                 
             except Exception as e:
-                logger.warning(f"Error using video processor: {str(e)}")
+                logger.warning(f"Error using video processor: {e}")
                 sections.append({
                     'type': 'thumbnail',
                     'content': f"Thumbnail extraction failed: {str(e)}"
@@ -517,7 +517,7 @@ class VideoHandler(BaseFormatHandler):
                             'content': "Thumbnail extraction failed."
                         })
             except Exception as e:
-                logger.warning(f"Error using video processor for basic extraction: {str(e)}")
+                logger.warning(f"Error using video processor for basic extraction: {e}")
                 sections.append({
                     'type': 'thumbnail',
                     'content': "Thumbnail extraction not available."

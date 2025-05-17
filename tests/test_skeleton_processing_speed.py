@@ -197,7 +197,7 @@ class ProcessingSpeedTest(unittest.TestCase):
                 )
                 success = result.success
             except Exception as e:
-                print(f"Error processing {file_data['file_name']}: {str(e)}")
+                print(f"Error processing {file_data['file_name']}: {e}")
                 success = False
             
             file_end_time = time.time()
@@ -350,7 +350,7 @@ class ProcessingSpeedTest(unittest.TestCase):
             try:
                 shutil.rmtree(self.temp_output_dir)
             except Exception as e:
-                print(f"Warning: Failed to clean up temporary directory: {str(e)}")
+                print(f"Warning: Failed to clean up temporary directory: {e}")
 
 
 if __name__ == '__main__':

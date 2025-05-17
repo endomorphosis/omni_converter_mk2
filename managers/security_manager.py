@@ -204,8 +204,8 @@ class SecurityManager:
             return SecurityResult(is_safe=is_safe, issues=issues, risk_level=risk_level, metadata=metadata)
             
         except Exception as e:
-            issues.append(f"Error during security validation: {str(e)}")
-            logger.error(f"Security validation error for {file_path}: {str(e)}")
+            issues.append(f"Error during security validation: {e}")
+            logger.error(f"Security validation error for {file_path}: {e}")
             return SecurityResult(is_safe=False, issues=issues, risk_level="high", metadata=metadata)
     
     def is_file_safe(self, file_path: str, format_name: Optional[str] = None) -> bool:

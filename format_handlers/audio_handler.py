@@ -94,7 +94,7 @@ class AudioHandler(BaseFormatHandler):
         try:
             # Read the file data
             file_content = FileSystem.read_file(file_path, 'rb')
-            file_data = file_content.get_as_binary()
+            file_data = file_content.as_binary
             
             # First try to use the Whisper processor if available
             if whisper_processor.can_process(format_name):
@@ -112,7 +112,7 @@ class AudioHandler(BaseFormatHandler):
                     
                     return content
                 except Exception as e:
-                    logger.warning(f"Whisper processor failed, falling back to basic extraction: {str(e)}")
+                    logger.warning(f"Whisper processor failed, falling back to basic extraction: {e}")
                     # Fall back to the next method
             
             # Extract metadata using mediainfo if pydub is available
@@ -135,7 +135,7 @@ class AudioHandler(BaseFormatHandler):
             
         except Exception as e:
             logger.error(f"Error extracting content from {format_name} audio file: {file_path}", 
-                        {'error': str(e)})
+                        {'error': e})
             raise
     
     def _extract_with_pydub(self, file_path: str, format_name: str) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:

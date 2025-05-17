@@ -116,7 +116,7 @@ class BatchProcessor:
                 os.makedirs(output_dir, exist_ok=True)
                 logger.info(f"Created output directory: {output_dir}")
             except Exception as e:
-                error_message = f"Failed to create output directory {output_dir}: {str(e)}"
+                error_message = f"Failed to create output directory {output_dir}: {e}"
                 logger.error(error_message)
                 raise ValueError(error_message)
         
@@ -311,7 +311,7 @@ class BatchProcessor:
                         
                 except Exception as e:
                     # Handle errors
-                    logger.error(f"Error processing {file_path}: {str(e)}")
+                    logger.error(f"Error processing {file_path}: {e}")
                     error_result = ProcessingResult(
                         success=False,
                         file_path=file_path,
@@ -373,7 +373,7 @@ class BatchProcessor:
                     
             except Exception as e:
                 # Handle errors
-                logger.error(f"Error processing {path}: {str(e)}")
+                logger.error(f"Error processing {path}: {e}")
                 error_result = ProcessingResult(
                     success=False,
                     file_path=path,

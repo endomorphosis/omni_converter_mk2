@@ -93,8 +93,8 @@ class TestPyTesseractProcessor(unittest.TestCase):
         self.assertFalse(self.processor.can_process(""))
     
     def test_get_supported_formats(self):
-        """Test the get_supported_formats method."""
-        formats = self.processor.get_supported_formats()
+        """Test the supported_formats method."""
+        formats = self.processor.supported_formats
         self.assertIn("png", formats)
         self.assertIn("jpg", formats)
         self.assertIn("jpeg", formats)
@@ -231,7 +231,7 @@ class TestPyTesseractProcessor(unittest.TestCase):
         processor = PyTesseractProcessor()
         
         # Check that it correctly reports no supported formats
-        self.assertEqual(processor.get_supported_formats(), [])
+        self.assertEqual(processor.supported_formats, [])
         self.assertFalse(processor.can_process("png"))
         
         # Check that all methods raise ValueError

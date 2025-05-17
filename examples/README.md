@@ -68,7 +68,7 @@ failed_files = result.get_failed_files()
 from interfaces.python_api import api
 
 # Get supported formats
-formats = api.get_supported_formats()
+formats = api.supported_formats
 print(formats)
 
 # Get current configuration
@@ -92,10 +92,10 @@ from interfaces.interface_factory import interface_factory
 api = interface_factory.create_api()
 
 # Get the configuration manager
-config_manager = interface_factory.get_config_manager()
+configs = interface_factory.get_config_manager()
 
 # Set configuration
-config_manager.set_config_value('output.format', 'json')
+configs.set_config_value('output.format', 'json')
 
 # Use the API
 result = api.convert_file("/path/to/file.pdf")

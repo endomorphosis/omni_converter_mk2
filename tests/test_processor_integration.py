@@ -91,7 +91,7 @@ class TestProcessorIntegration(unittest.TestCase):
             # Save the image to a temporary file
             img.save(self.image_file)
         except Exception as e:
-            self.skipTest(f"Could not create test image: {str(e)}")
+            self.skipTest(f"Could not create test image: {e}")
     
     @patch('format_handlers.processors.pdf_processor.PyPDF2Processor.process_document')
     @patch('format_handlers.processors.pdf_processor.pdf_processor.can_process')
@@ -294,7 +294,7 @@ class TestProcessorIntegration(unittest.TestCase):
             self.assertGreater(len(ocr_text), 0)
             
         except Exception as e:
-            self.skipTest(f"Real OCR test failed: {str(e)}")
+            self.skipTest(f"Real OCR test failed: {e}")
     
     @patch('format_handlers.processors.docx_processor.docx_processor.process_document')
     @patch('format_handlers.processors.docx_processor.docx_processor.can_process')
@@ -381,7 +381,7 @@ class TestProcessorIntegration(unittest.TestCase):
             self.assertIn("test document created", content.text)
             
         except Exception as e:
-            self.skipTest(f"Real DOCX test failed: {str(e)}")
+            self.skipTest(f"Real DOCX test failed: {e}")
 
 
 if __name__ == "__main__":

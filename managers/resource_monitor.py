@@ -106,7 +106,7 @@ class ResourceMonitor:
                 
                 time.sleep(self.monitoring_interval)
             except Exception as e:
-                logger.error(f"Error in resource monitoring: {str(e)}")
+                logger.error(f"Error in resource monitoring: {e}")
                 time.sleep(self.monitoring_interval * 2)  # Back off on error
     
     def _get_resource_usage(self) -> Dict[str, float]:
@@ -184,7 +184,7 @@ class ResourceMonitor:
                         f"({100 * usage.get('memory', 0)/self.memory_limit:.1f}%)"
                     )
             except Exception as e:
-                logger.warning(f"Error getting detailed memory info: {str(e)}")
+                logger.warning(f"Error getting detailed memory info: {e}")
         
         # Check CPU usage
         if usage.get("cpu", 0) > self.cpu_limit:

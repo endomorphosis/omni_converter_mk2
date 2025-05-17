@@ -48,7 +48,7 @@ def basic_usage():
         if hasattr(result, 'content') and result.success:
             print(f"Extracted text (first 100 chars): {result.content[:100]}...")
     except Exception as e:
-        print(f"Error occurred during conversion: {str(e)}")
+        print(f"Error occurred during conversion: {e}")
 
 
 def batch_processing():
@@ -92,7 +92,7 @@ def batch_processing():
             for file_path in batch_result.get_failed_files()[:5]:  # Show up to 5 files
                 print(f"  - {os.path.basename(file_path)}")
     except Exception as e:
-        print(f"Error occurred during batch processing: {str(e)}")
+        print(f"Error occurred during batch processing: {e}")
 
 
 def working_with_config():
@@ -100,7 +100,7 @@ def working_with_config():
     print("\n=== Configuration Management ===")
     
     # Get supported formats
-    supported_formats = api.get_supported_formats()
+    supported_formats = api.supported_formats
     print("Supported Formats:")
     for category, formats in supported_formats.items():
         print(f"  {category.capitalize()}: {', '.join(formats)}")
@@ -145,13 +145,13 @@ def using_interface_factory():
     custom_api = interface_factory.create_api()
     
     # Get the configuration manager
-    config_manager = interface_factory.get_config_manager()
+    configs = interface_factory.get_config_manager()
     
     # Set a custom configuration value
-    config_manager.set_config_value('processing.quality_threshold', 0.8)
+    configs.set_config_value('processing.quality_threshold', 0.8)
     
     # Use the custom API
-    formats = custom_api.get_supported_formats()
+    formats = custom_api.supported_formats
     print(f"API from factory supports {sum(len(f) for f in formats.values())} formats")
     
     # Try to create a CLI (will raise NotImplementedError, but handle it gracefully)

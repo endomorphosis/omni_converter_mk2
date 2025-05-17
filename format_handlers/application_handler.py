@@ -96,7 +96,7 @@ class ApplicationHandler(BaseFormatHandler):
         logger.debug(f"Extracting content from {format_name} file: {file_path}")
         
         try:
-            text, metadata, sections = parser(file_content.get_as_binary(), options)
+            text, metadata, sections = parser(file_content.as_binary, options)
             
             # Create content object
             content = Content(
@@ -180,8 +180,8 @@ class ApplicationHandler(BaseFormatHandler):
             return formatted_json, metadata, sections
             
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
-            logger.warning(f"JSON parsing failed: {str(e)}")
-            return f"[Invalid JSON: {str(e)}]", {'format': 'json', 'is_valid': False}, []
+            logger.warning(f"JSON parsing failed: {e}")
+            return f"[Invalid JSON: {e}]", {'format': 'json', 'is_valid': False}, []
     
     def _parse_docx(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """

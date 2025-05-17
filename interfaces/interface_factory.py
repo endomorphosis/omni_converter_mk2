@@ -7,7 +7,7 @@ This allows for centralized configuration and management of interfaces.
 
 from typing import Any, Dict, Optional
 
-from utils.config import ConfigManager, config_manager
+from utils.configs import Configs, configs
 from interfaces.python_api import PythonAPI
 
 
@@ -19,7 +19,7 @@ class InterfaceFactory:
     to the Omni-Converter, with shared configuration and resources.
     
     Attributes:
-        config_manager: The configuration manager to use for all interfaces.
+        configs: The configuration manager to use for all interfaces.
     """
     
     def __init__(self, custom_config_manager=None):
@@ -28,9 +28,9 @@ class InterfaceFactory:
         
         Args:
             custom_config_manager: Custom configuration manager to use.
-                If None, the global config_manager will be used.
+                If None, the global configs will be used.
         """
-        self.config_manager = custom_config_manager or config_manager
+        self.configs = custom_config_manager or configs
     
     def create_cli(self):
         """
@@ -54,16 +54,16 @@ class InterfaceFactory:
         Returns:
             A PythonAPI instance with the factory's configuration manager.
         """
-        return PythonAPI(custom_config_manager=self.config_manager)
+        return PythonAPI(custom_config_manager=self.configs)
     
-    def get_config_manager(self) -> ConfigManager:
+    def get_config_manager(self) -> Configs:
         """
         Get the configuration manager used by this factory.
         
         Returns:
             The configuration manager instance.
         """
-        return self.config_manager
+        return self.configs
     
     def create_interface(self, interface_type: str, **kwargs: Any):
         """

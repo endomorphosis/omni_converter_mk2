@@ -30,31 +30,22 @@ class FormatRegistry:
         format_to_handler_map (dict): Mapping from format name to handler name.
     """
     
-    def __init__(self):
+    def __init__(self, configs=None,resources=None):
         """Initialize the format registry."""
         self.handlers: Dict[str, FormatHandler] = {}
         self.format_to_handler_map: Dict[str, str] = {}
         
         # Register default handlers
-        self._register_default_handlers()
+        self._register_default_handlers(resources)
     
-    def _register_default_handlers(self) -> None:
+    def _register_default_handlers(self, resources: dict[str, Any]) -> None:
         """Register the default format handlers."""
-        # Register text handler
-        self.register_handler(text_handler)
-        
-        # Register image handler
-        self.register_handler(image_handler)
-        
-        # Register application handler
-        self.register_handler(application_handler)
-        
-        # Register audio handler
-        self.register_handler(audio_handler)
-        
-        # Register video handler
-        self.register_handler(video_handler)
-    
+        for handler in resources['handlers'].values():
+            if not isinstance(handler, FormatHandler):
+                logger.warning(f"Handler {handler} is not a valid FormatHandler")
+                continue
+            self.register_handler(handler)
+
     def register_handler(self, handler: FormatHandler) -> None:
         """
         Register a format handler.
@@ -197,7 +188,8 @@ class FormatRegistry:
         
         return handler.extract_content(file_path, options)
     
-    def get_supported_formats(self) -> List[str]:
+    @property
+    def supported_formats(self) -> List[str]:
         """
         Get all supported formats.
         
@@ -242,6 +234,15 @@ class FormatRegistry:
         
         return categories
 
+resources = {
+    "handlers": {
+        "text": text_handler,
+        "image": image_handler,
+        "application": application_handler,
+        "audio": audio_handler,
+        "video": video_handler
+    }
+}
 
 # Global format registry instance
-format_registry = FormatRegistry()
+format_registry = FormatRegistry(resources=resources)

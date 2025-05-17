@@ -12,7 +12,7 @@ import argparse
 import tqdm
 from typing import List, Optional, Dict, Any
 
-from utils.config import config_manager
+from utils.configs import configs
 from utils.logger import logger
 from format_handlers.text_handler import text_handler
 from format_handlers.image_handler import image_handler
@@ -109,7 +109,8 @@ def show_version() -> None:
     """Show version information."""
     from __version__ import __version__
     print(f"Omni-Converter version {__version__}")
-    print("Copyright 2025")
+    print("By Kyle Rose")
+    print("MIT 2025")
     print("\nImplementation Status:")
     print("- Text formats: Fully implemented (HTML, XML, Plain text, CSV, Calendar)")
     print("- Image formats: Fully implemented (JPEG, PNG, GIF, WebP, SVG)")
@@ -135,7 +136,7 @@ def process_file(input_path: str, output_path: Optional[str] = None, options: Op
         # Get output format from args, config, or default to txt
         output_format = output_path.split('.')[-1] if output_path and '.' in output_path else None
         if not output_format:
-            output_format = config_manager.get_config_value('output.format', 'txt')
+            output_format = configs.get_config_value('output.format', 'txt')
         
         # Set processing options
         if options is None:
@@ -147,7 +148,7 @@ def process_file(input_path: str, output_path: Optional[str] = None, options: Op
         if 'normalizers' not in options:
             options['normalizers'] = ['whitespace', 'line_endings', 'empty_lines', 'unicode']
         if 'verbose' not in options:
-            options['verbose'] = config_manager.get_config_value('output.verbose', False)
+            options['verbose'] = configs.get_config_value('output.verbose', False)
         
         # Process the file using the processing pipeline
         result = processing_pipeline.process_file(input_path, output_path, options)
@@ -337,10 +338,10 @@ def main() -> int:
     
     # Set configuration based on command-line arguments
     if args.format:
-        config_manager.set_config_value('output.format', args.format)
+        configs.set_config_value('output.format', args.format)
     
     if args.verbose:
-        config_manager.set_config_value('output.verbose', True)
+        configs.set_config_value('output.verbose', True)
     
     # Configure resource limits if specified
     from managers.resource_monitor import resource_monitor
@@ -369,7 +370,7 @@ def main() -> int:
     
     # Store options in config for other components to access
     for key, value in options.items():
-        config_manager.set_config_value(f'processing.{key}', value)
+        configs.set_config_value(f'processing.{key}', value)
     
     # Process input based on type
     if os.path.isfile(args.input):
@@ -468,6 +469,17 @@ def main() -> int:
             print(f"Error: {args.input} does not exist", file=sys.stderr)
             return 1
 
-
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        outcode = main()
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user.")
+        sys.exit(0)
+    except Exception as e: # Unexpected error handling
+        logger.exception(f"Unexpected error: {e}")
+        sys.exit(1)
+    else: # Should be called if no exceptions were raised
+        sys.exit(outcode)
+    finally: # Cleanup and teardown
+        import teardown
+        teardown.teardown()

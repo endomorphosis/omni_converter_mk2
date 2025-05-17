@@ -9,9 +9,100 @@ import magic
 import mimetypes
 from typing import Dict, List, Optional, Set, Tuple, Any
 
-from utils.config import config_manager
+
+import pydantic
+from pydantic import BaseModel
+
+
+from utils.configs import configs, Configs
 from utils.filesystem import FileInfo, FileSystem
 from utils.logger import logger
+
+
+FORMAT_SIGNATURES: dict[str, str] = {
+    # Map of MIME types to formats
+    # Text formats
+    'text/html': 'html',
+    'application/xhtml+xml': 'html',
+    'text/xml': 'xml',
+    'application/xml': 'xml',
+    'text/plain': 'plain',
+    'text/calendar': 'calendar',
+    'text/csv': 'csv',
+    
+    # Image formats
+    'image/jpeg': 'jpeg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+    
+    # Audio formats
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/ogg': 'ogg',
+    'audio/flac': 'flac',
+    'audio/aac': 'aac',
+    
+    # Video formats
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/x-msvideo': 'avi',
+    'video/x-matroska': 'mkv',
+    'video/quicktime': 'mov',
+    
+    # Application formats
+    'application/pdf': 'pdf',
+    'application/json': 'json',
+    'application/zip': 'zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx'
+}
+
+
+FORMAT_EXTENSIONS = {
+    # Text formats
+    'html': 'html',
+    'htm': 'html',
+    'xhtml': 'html',
+    'xml': 'xml',
+    'txt': 'plain',
+    'text': 'plain',
+    'ics': 'calendar',
+    'csv': 'csv',
+    
+    # Image formats
+    'jpg': 'jpeg',
+    'jpeg': 'jpeg',
+    'png': 'png',
+    'gif': 'gif',
+    'webp': 'webp',
+    'svg': 'svg',
+    
+    # Audio formats
+    'mp3': 'mp3',
+    'wav': 'wav',
+    'ogg': 'ogg',
+    'flac': 'flac',
+    'aac': 'aac',
+    
+    # Video formats
+    'mp4': 'mp4',
+    'webm': 'webm',
+    'avi': 'avi',
+    'mkv': 'mkv',
+    'mov': 'mov',
+    
+    # Application formats
+    'pdf': 'pdf',
+    'json': 'json',
+    'zip': 'zip',
+    'docx': 'docx',
+    'xlsx': 'xlsx'
+}
+
 
 
 class FormatDetector:
@@ -20,11 +111,20 @@ class FormatDetector:
     
     Detects the format of files based on their content and extension.
     """
-    
-    def __init__(self):
+
+    def __init__(self, 
+                 resources: Dict[str, Any] = None, 
+                 configs: Configs = None
+                 ) -> None:
         """Initialize the format detector."""
+        self.configs = configs or {}
+        self.resources = resources
+
         # Load format registry from config
-        self.format_registry = config_manager.get_config_value('formats', {})
+        self.format_registry = configs.get_config_value('formats', {})
+
+        self.format_signatures: Dict[str, str] = self.resources['format_signatures']
+        self.format_extensions: Dict[str, str] = self.resources['format_extensions']
         
         # Initialize format signatures
         self._init_format_signatures()
@@ -34,91 +134,13 @@ class FormatDetector:
     
     def _init_format_signatures(self) -> None:
         """Initialize the format signatures."""
-        # Map of MIME types to formats
-        self.format_signatures = {
-            # Text formats
-            'text/html': 'html',
-            'application/xhtml+xml': 'html',
-            'text/xml': 'xml',
-            'application/xml': 'xml',
-            'text/plain': 'plain',
-            'text/calendar': 'calendar',
-            'text/csv': 'csv',
-            
-            # Image formats
-            'image/jpeg': 'jpeg',
-            'image/png': 'png',
-            'image/gif': 'gif',
-            'image/webp': 'webp',
-            'image/svg+xml': 'svg',
-            
-            # Audio formats
-            'audio/mpeg': 'mp3',
-            'audio/mp3': 'mp3',
-            'audio/wav': 'wav',
-            'audio/x-wav': 'wav',
-            'audio/ogg': 'ogg',
-            'audio/flac': 'flac',
-            'audio/aac': 'aac',
-            
-            # Video formats
-            'video/mp4': 'mp4',
-            'video/webm': 'webm',
-            'video/x-msvideo': 'avi',
-            'video/x-matroska': 'mkv',
-            'video/quicktime': 'mov',
-            
-            # Application formats
-            'application/pdf': 'pdf',
-            'application/json': 'json',
-            'application/zip': 'zip',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx'
-        }
+        self.format_signatures = FORMAT_SIGNATURES.copy()
+
     
     def _init_format_extensions(self) -> None:
         """Initialize the format extensions."""
         # Map of extensions to formats
-        self.format_extensions = {
-            # Text formats
-            'html': 'html',
-            'htm': 'html',
-            'xhtml': 'html',
-            'xml': 'xml',
-            'txt': 'plain',
-            'text': 'plain',
-            'ics': 'calendar',
-            'csv': 'csv',
-            
-            # Image formats
-            'jpg': 'jpeg',
-            'jpeg': 'jpeg',
-            'png': 'png',
-            'gif': 'gif',
-            'webp': 'webp',
-            'svg': 'svg',
-            
-            # Audio formats
-            'mp3': 'mp3',
-            'wav': 'wav',
-            'ogg': 'ogg',
-            'flac': 'flac',
-            'aac': 'aac',
-            
-            # Video formats
-            'mp4': 'mp4',
-            'webm': 'webm',
-            'avi': 'avi',
-            'mkv': 'mkv',
-            'mov': 'mov',
-            
-            # Application formats
-            'pdf': 'pdf',
-            'json': 'json',
-            'zip': 'zip',
-            'docx': 'docx',
-            'xlsx': 'xlsx'
-        }
+
     
     def detect_format(self, file_path: str) -> Tuple[Optional[str], Optional[str]]:
         """
@@ -179,8 +201,9 @@ class FormatDetector:
             if format_name in formats:
                 return category
         return None
-    
-    def get_supported_formats(self) -> Dict[str, List[str]]:
+
+    @property
+    def supported_formats(self) -> Dict[str, List[str]]:
         """
         Get the supported formats.
         
@@ -213,6 +236,11 @@ class FormatDetector:
         """
         return self._get_category_for_format(format_name)
 
+resources = {
+    "format_signatures": FORMAT_SIGNATURES,
+    "format_extensions": FORMAT_EXTENSIONS
+}
+
 
 # Global format detector instance
-format_detector = FormatDetector()
+format_detector = FormatDetector(resources=resources, configs=configs)

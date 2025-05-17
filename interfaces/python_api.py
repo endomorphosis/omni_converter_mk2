@@ -8,7 +8,7 @@ allowing Python applications to convert files to text without using the command-
 import os
 from typing import Any, Dict, List, Optional, Union
 
-from utils.config import config_manager
+from utils.configs import configs
 from utils.logger import logger
 from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
@@ -26,7 +26,7 @@ class PythonAPI:
     including single file conversion, batch processing, and configuration management.
     
     Attributes:
-        config_manager: The configuration manager to use.
+        configs: The configuration manager to use.
         batch_processor: The batch processor to use.
     """
     
@@ -41,13 +41,13 @@ class PythonAPI:
         
         Args:
             custom_config_manager: Custom configuration manager to use.
-                If None, the global config_manager will be used.
+                If None, the global configs will be used.
             custom_batch_processor: Custom batch processor to use.
                 If None, the global batch_processor will be used.
             custom_resource_monitor: Custom resource monitor to use.
                 If None, the global resource_monitor will be used.
         """
-        self.config_manager = custom_config_manager or config_manager
+        self.configs = custom_config_manager or configs
         self.batch_processor = custom_batch_processor or batch_processor
         self.resource_monitor = custom_resource_monitor or resource_monitor
     
@@ -157,7 +157,8 @@ class PythonAPI:
         
         return batch_result
     
-    def get_supported_formats(self) -> Dict[str, List[str]]:
+    @property
+    def supported_formats(self) -> Dict[str, List[str]]:
         """
         Get all supported formats, organized by category.
         
@@ -179,7 +180,7 @@ class PythonAPI:
         """
         try:
             for key, value in config_dict.items():
-                self.config_manager.set_config_value(key, value)
+                self.configs.set_config_value(key, value)
             return True
         except Exception:
             return False
@@ -191,7 +192,7 @@ class PythonAPI:
         Returns:
             The current configuration as a dictionary.
         """
-        return self.config_manager.current_config
+        return self.configs.current_config
     
     def _get_default_options(self) -> Dict[str, Any]:
         """
@@ -202,26 +203,26 @@ class PythonAPI:
         """
         options = {
             # Output options
-            "format": self.config_manager.get_config_value("output.format", "txt"),
-            "include_metadata": self.config_manager.get_config_value("output.include_metadata", True),
+            "format": self.configs.get_config_value("output.format", "txt"),
+            "include_metadata": self.configs.get_config_value("output.include_metadata", True),
             
             # Processing options
-            "extract_metadata": self.config_manager.get_config_value("processing.extract_metadata", True),
-            "normalize_text": self.config_manager.get_config_value("processing.normalize_text", True),
-            "quality_threshold": self.config_manager.get_config_value("processing.quality_threshold", 0.9),
+            "extract_metadata": self.configs.get_config_value("processing.extract_metadata", True),
+            "normalize_text": self.configs.get_config_value("processing.normalize_text", True),
+            "quality_threshold": self.configs.get_config_value("processing.quality_threshold", 0.9),
             
             # Batch processing options
-            "continue_on_error": self.config_manager.get_config_value("processing.continue_on_error", True),
-            "batch_size": self.config_manager.get_config_value("resources.batch_size", 100),
-            "parallel": self.config_manager.get_config_value("resources.parallel", False),
-            "max_workers": self.config_manager.get_config_value("resources.max_workers", 4),
+            "continue_on_error": self.configs.get_config_value("processing.continue_on_error", True),
+            "batch_size": self.configs.get_config_value("resources.batch_size", 100),
+            "parallel": self.configs.get_config_value("resources.parallel", False),
+            "max_workers": self.configs.get_config_value("resources.max_workers", 4),
             
             # Security options
-            "sanitize": self.config_manager.get_config_value("security.sanitize_output", True),
+            "sanitize": self.configs.get_config_value("security.sanitize_output", True),
             
             # Resource options
-            "max_cpu": self.config_manager.get_config_value("resources.cpu_limit_percent", 80),
-            "max_memory": self.config_manager.get_config_value("resources.memory_limit_gb", 6) * 1024  # Convert to MB
+            "max_cpu": self.configs.get_config_value("resources.cpu_limit_percent", 80),
+            "max_memory": self.configs.get_config_value("resources.memory_limit_gb", 6) * 1024  # Convert to MB
         }
         
         return options

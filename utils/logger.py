@@ -7,11 +7,64 @@ This module provides logging functionality for the Omni-Converter.
 import os
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 
-class LogRecord:
+from pydantic import BaseModel, Field
+
+
+def get_logger(name: str,
+                log_file_name: str = 'app.log',
+                level: int = logging.INFO,
+                max_size: int = 5*1024*1024,
+                backup_count: int = 3
+                ) -> logging.Logger:
+    """Sets up a logger with both file and console handlers.
+
+    Args:
+        name: Name of the logger.
+        log_file_name: Name of the log file. Defaults to 'app.log'.
+        level: Logging level. Defaults to logging.INFO.
+        max_size: Maximum size of the log file before it rotates. Defaults to 5MB.
+        backup_count: Number of backup files to keep. Defaults to 3.
+
+    Returns:
+        Configured logger.
+
+    Example:
+        # Usage
+        logger = get_logger(__name__)
+    """
+    # Create a custom logger
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    # Create handlers
+    console_handler = logging.StreamHandler()
+
+    # Create 'logs' directory in the current working directory if it doesn't exist
+    logs_dir = os.path.join(os.getcwd(), 'logs')
+    os.makedirs(logs_dir, exist_ok=True)
+
+    log_file_path = os.path.join(logs_dir, log_file_name)
+    file_handler = RotatingFileHandler(log_file_path, maxBytes=max_size, backupCount=backup_count)
+
+    # Create formatters and add it to handlers
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+    formatter = logging.Formatter(log_format)
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    # Add handlers to the logger
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
+
+
+class LogRecord(BaseModel):
     """
     A record of a log message.
     
@@ -22,38 +75,20 @@ class LogRecord:
         timestamp (datetime): The time the log was created.
         source (str): The source of the log.
     """
-    
-    def __init__(
-        self, 
-        level: str, 
-        message: str, 
-        context: Optional[Dict[str, Any]] = None, 
-        source: Optional[str] = None
-    ):
-        """
-        Initialize a log record.
-        
-        Args:
-            level: The log level.
-            message: The log message.
-            context: Additional context for the log.
-            source: The source of the log.
-        """
-        self.level = level
-        self.message = message
-        self.context = context or {}
-        self.timestamp = datetime.now()
-        self.source = source or 'unknown'
-    
-    def to_string(self) -> str:
+    level: str
+    message: str
+    context: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    timestamp: str = Field(default_factory=datetime.now().isoformat)
+    source: Optional[str] = Field(default='unknown')
+
+    @property 
+    def string(self) -> str:
         """
         Convert to a string.
         
         Returns:
             A string representation of the log record.
         """
-        timestamp_str = self.timestamp.isoformat()
-        
         # Format the context as a string
         context_str = ''
         if self.context:
@@ -63,8 +98,9 @@ class LogRecord:
                 # Fall back to simple string representation
                 context_str = ' ' + str(self.context)
         
-        return f"{timestamp_str} [{self.level}] {self.source}: {self.message}{context_str}"
+        return f"{self.timestamp} [{self.level}] {self.source}: {self.message}{context_str}"
     
+    @property
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert to a dictionary.
@@ -76,7 +112,7 @@ class LogRecord:
             'level': self.level,
             'message': self.message,
             'context': self.context,
-            'timestamp': self.timestamp.isoformat(),
+            'timestamp': self.timestamp,
             'source': self.source
         }
 
@@ -183,7 +219,7 @@ class Logger:
         
         try:
             with open(self.log_file, 'a', encoding='utf-8') as f:
-                f.write(record.to_string() + '\n')
+                f.write(record.string() + '\n')
         except Exception:
             # Fall back to Python's built-in logging
             logging.error(f"Failed to write to log file: {self.log_file}")
@@ -210,7 +246,12 @@ class Logger:
             extra={'source': record.source, 'context': record.context}
         )
     
-    def log(self, level: str, message: str, context: Optional[Dict[str, Any]] = None, source: Optional[str] = None) -> None:
+    def log(self, 
+            level: str, 
+            message: str, 
+            context: Optional[Dict[str, Any]] = None, 
+            source: Optional[str] = None
+            ) -> None:
         """
         Log a message.
         
@@ -225,8 +266,8 @@ class Logger:
             return
         
         # Create the log record
-        record = LogRecord(level, message, context, source)
-        
+        record = LogRecord(level=level, message=message, context=context, source=source)
+
         # Apply custom formatter if one exists
         formatter = self.log_formatters.get(level)
         if formatter:
@@ -329,4 +370,8 @@ class Logger:
 
 
 # Global logger instance
-logger = Logger()
+#logger = Logger()
+
+logger = get_logger(__name__, log_file_name='app.log', level=logging.DEBUG)
+
+test_logger = get_logger('tests', log_file_name='test.log', level=logging.DEBUG)

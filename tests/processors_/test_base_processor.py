@@ -50,7 +50,7 @@ class TestBaseProcessor(unittest.TestCase):
         Verifies that the BaseProcessor class correctly declares the essential methods
         as abstract, which includes:
         - can_process: For determining if a specific format is supported
-        - get_supported_formats: For listing all formats the processor can handle
+        - supported_formats: For listing all formats the processor can handle
         - get_processor_info: For providing metadata about the processor
         
         This ensures that all concrete implementations must provide these core capabilities.
@@ -62,7 +62,7 @@ class TestBaseProcessor(unittest.TestCase):
         
         # Check that the required methods are abstract
         self.assertTrue(is_abstract_method(BaseProcessor, "can_process"))
-        self.assertTrue(is_abstract_method(BaseProcessor, "get_supported_formats"))
+        self.assertTrue(is_abstract_method(BaseProcessor, "supported_formats"))
         self.assertTrue(is_abstract_method(BaseProcessor, "get_processor_info"))
     
     def test_contract_compliance(self):
@@ -92,8 +92,9 @@ class TestBaseProcessor(unittest.TestCase):
         class CompleteProcessor(BaseProcessor):
             def can_process(self, format_name):
                 return True
-                
-            def get_supported_formats(self):
+            
+            @property
+            def supported_formats(self):
                 return ["test"]
                 
             def get_processor_info(self):
@@ -105,7 +106,7 @@ class TestBaseProcessor(unittest.TestCase):
         
         # Verify that the methods work as expected
         self.assertTrue(processor.can_process("test"))
-        self.assertEqual(processor.get_supported_formats(), ["test"])
+        self.assertEqual(processor.supported_formats, ["test"])
         self.assertEqual(processor.get_processor_info()["name"], "CompleteProcessor")
 
 
@@ -163,7 +164,7 @@ class TestDocumentProcessor(unittest.TestCase):
         
         # Check that it still requires the BaseProcessor methods
         self.assertTrue(is_abstract_method(DocumentProcessor, "can_process"))
-        self.assertTrue(is_abstract_method(DocumentProcessor, "get_supported_formats"))
+        self.assertTrue(is_abstract_method(DocumentProcessor, "supported_formats"))
         self.assertTrue(is_abstract_method(DocumentProcessor, "get_processor_info"))
     
     def test_contract_compliance(self):
@@ -186,8 +187,9 @@ class TestDocumentProcessor(unittest.TestCase):
         class IncompleteDocProcessor(DocumentProcessor):
             def can_process(self, format_name):
                 return True
-                
-            def get_supported_formats(self):
+            
+            @property
+            def supported_formats(self):
                 return ["test"]
                 
             def get_processor_info(self):
@@ -201,8 +203,9 @@ class TestDocumentProcessor(unittest.TestCase):
         class CompleteDocProcessor(DocumentProcessor):
             def can_process(self, format_name):
                 return True
-                
-            def get_supported_formats(self):
+            
+            @property
+            def supported_formats(self):
                 return ["test"]
                 
             def get_processor_info(self):
@@ -227,7 +230,7 @@ class TestDocumentProcessor(unittest.TestCase):
         
         # Verify that the methods work as expected
         self.assertTrue(processor.can_process("test"))
-        self.assertEqual(processor.get_supported_formats(), ["test"])
+        self.assertEqual(processor.supported_formats, ["test"])
         self.assertEqual(processor.extract_text(None, {}), "Text")
         self.assertEqual(processor.extract_metadata(None, {})["title"], "Test")
         self.assertEqual(processor.extract_structure(None, {})[0]["type"], "section")

@@ -31,7 +31,7 @@ class DocxProcessor(DocumentProcessor):
     
     def __init__(self):
         """Initialize the DOCX processor."""
-        self.supported_formats = ["docx"]
+        self._supported_formats = ["docx"]
     
     def can_process(self, format_name: str) -> bool:
         """
@@ -46,14 +46,15 @@ class DocxProcessor(DocumentProcessor):
         """
         return PYTHON_DOCX_AVAILABLE and format_name.lower() in self.supported_formats
     
-    def get_supported_formats(self) -> List[str]:
+    @property
+    def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
         
         Returns:
             A list of format names supported by this processor.
         """
-        return self.supported_formats if PYTHON_DOCX_AVAILABLE else []
+        return self._supported_formats if PYTHON_DOCX_AVAILABLE else []
     
     def get_processor_info(self) -> Dict[str, Any]:
         """
@@ -64,7 +65,7 @@ class DocxProcessor(DocumentProcessor):
         """
         info = {
             "name": "DocxProcessor",
-            "supported_formats": self.get_supported_formats(),
+            "supported_formats": self.supported_formats,
             "available": PYTHON_DOCX_AVAILABLE
         }
         
@@ -123,8 +124,8 @@ class DocxProcessor(DocumentProcessor):
             return "\n\n".join(paragraphs)
             
         except Exception as e:
-            logger.error(f"Error extracting text from DOCX: {str(e)}")
-            raise ValueError(f"Error extracting text from DOCX: {str(e)}")
+            logger.error(f"Error extracting text from DOCX: {e}")
+            raise ValueError(f"Error extracting text from DOCX: {e}")
     
     def extract_metadata(self, data: bytes, options: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -202,8 +203,8 @@ class DocxProcessor(DocumentProcessor):
             return metadata
             
         except Exception as e:
-            logger.error(f"Error extracting metadata from DOCX: {str(e)}")
-            raise ValueError(f"Error extracting metadata from DOCX: {str(e)}")
+            logger.error(f"Error extracting metadata from DOCX: {e}")
+            raise ValueError(f"Error extracting metadata from DOCX: {e}")
     
     def extract_structure(self, data: bytes, options: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -324,8 +325,8 @@ class DocxProcessor(DocumentProcessor):
             return structure
             
         except Exception as e:
-            logger.error(f"Error extracting structure from DOCX: {str(e)}")
-            raise ValueError(f"Error extracting structure from DOCX: {str(e)}")
+            logger.error(f"Error extracting structure from DOCX: {e}")
+            raise ValueError(f"Error extracting structure from DOCX: {e}")
     
     def process_document(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
@@ -373,8 +374,8 @@ class DocxProcessor(DocumentProcessor):
             return "\n".join(text_content), metadata, sections
             
         except Exception as e:
-            logger.error(f"Error processing DOCX document: {str(e)}")
-            raise ValueError(f"Error processing DOCX document: {str(e)}")
+            logger.error(f"Error processing DOCX document: {e}")
+            raise ValueError(f"Error processing DOCX document: {e}")
 
 
 # Create a global instance for usage

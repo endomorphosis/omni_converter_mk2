@@ -28,6 +28,7 @@ class ImageHandler(BaseFormatHandler):
     Handles common image formats like JPEG, PNG, GIF, WebP, and SVG.
     Extracts metadata and generates basic descriptions for images.
     
+    # TODO: Implement OCR functionality for text extraction from images.
     Note: For full OCR functionality, additional packages would be required.
     This is a simplified implementation focused on metadata extraction.
     """
@@ -41,7 +42,7 @@ class ImageHandler(BaseFormatHandler):
                 'category': 'image',
                 'preserves_structure': False,
                 'extracts_metadata': True,
-                'supports_ocr': True if ocr_processor.get_supported_formats() else 'basic'
+                'supports_ocr': True if ocr_processor.supported_formats else 'basic'
             }
         )
     
@@ -143,7 +144,7 @@ class ImageHandler(BaseFormatHandler):
                 if ocr_processor.can_process(format_name):
                     try:
                         # Read file as binary for OCR processing
-                        file_data = FileSystem.read_file(file_path, 'rb').get_as_binary()
+                        file_data = FileSystem.read_file(file_path, 'rb').as_binary
                         
                         # Process with OCR
                         ocr_options = {
@@ -174,12 +175,12 @@ class ImageHandler(BaseFormatHandler):
                                     )
                                     sections.extend(features)
                                 except Exception as e:
-                                    logger.warning(f"Failed to extract image features: {str(e)}")
+                                    logger.warning(f"Failed to extract image features: {e}")
                     except Exception as e:
-                        logger.warning(f"OCR processing failed: {str(e)}")
+                        logger.warning(f"OCR processing failed: {e}")
                         sections.append({
                             'type': 'ocr_text',
-                            'content': f"OCR processing failed: {str(e)}"
+                            'content': f"OCR processing failed: {e}"
                         })
                 else:
                     # Add a placeholder if OCR is not available

@@ -260,18 +260,18 @@ class SecurityEffectivenessTest(unittest.TestCase):
                     # If processing fails, it's expected and actually good for security files
                     if not is_prevented:
                         detection_details['exploit_prevented'] = True
-                        detection_details['prevention_mechanism'] = f"Security exception: {str(e)}"
+                        detection_details['prevention_mechanism'] = f"Security exception: {e}"
                 
                 return detection_details
             except Exception as e:
                 # If security manager fails, assume exploit detected but prevention failed
-                print(f"Error in security validation: {str(e)}")
+                print(f"Error in security validation: {e}")
                 return {
                     'file_name': file_data['file_name'],
                     'exploit_detected': True,
                     'exploit_prevented': False,
                     'exploit_type': file_data['exploit_description'],
-                    'prevention_mechanism': f"Security validation error: {str(e)}"
+                    'prevention_mechanism': f"Security validation error: {e}"
                 }
         
         # For sample files or if the file doesn't exist, simulate security checking
@@ -461,7 +461,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
             try:
                 shutil.rmtree(self.temp_output_dir)
             except Exception as e:
-                print(f"Warning: Failed to clean up temporary directory: {str(e)}")
+                print(f"Warning: Failed to clean up temporary directory: {e}")
 
 
 if __name__ == '__main__':

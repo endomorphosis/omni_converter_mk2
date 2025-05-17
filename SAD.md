@@ -146,7 +146,7 @@ graph TD
 classDiagram
     class CommandLineInterface {
         -ArgumentParser parser
-        -ConfigManager config_manager
+        -Configs configs
         +parse_arguments() list
         +run_from_args(args) bool
         +display_help() void
@@ -155,16 +155,16 @@ classDiagram
     }
 
     class PythonAPI {
-        -ConfigManager config_manager
+        -Configs configs
         -BatchProcessor batch_processor
         +convert_file(file_path, output_path, options) Result
         +convert_batch(file_paths, output_dir, options) BatchResult
-        +get_supported_formats() dict
+        +supported_formats dict
         +set_config(config_dict) bool
         +get_config() dict
     }
 
-    class ConfigManager {
+    class Configs {
         -dict default_config
         -str config_path
         -dict current_config
@@ -179,14 +179,14 @@ classDiagram
     class InterfaceFactory {
         +create_cli() CommandLineInterface
         +create_api() PythonAPI
-        +get_config_manager() ConfigManager
+        +get_config_manager() Configs
     }
 
     InterfaceFactory --> CommandLineInterface : creates
     InterfaceFactory --> PythonAPI : creates 
-    InterfaceFactory --> ConfigManager : creates
-    CommandLineInterface --> ConfigManager : uses
-    PythonAPI --> ConfigManager : uses
+    InterfaceFactory --> Configs : creates
+    CommandLineInterface --> Configs : uses
+    PythonAPI --> Configs : uses
 ```
 
 ## 2. Core Processing System - Class Diagram
@@ -209,7 +209,7 @@ classDiagram
         -dict format_extensions
         -FormatRegistry registry
         +detect_format(file_path) Format
-        +get_supported_formats() list
+        +supported_formats list
         +is_format_supported(format) bool
     }
 
@@ -401,7 +401,7 @@ classDiagram
         -dict format_to_handler_map
         +register_handler(format, handler) void
         +get_handler(format) FormatHandler
-        +get_supported_formats() list
+        +supported_formats list
         +is_format_supported(format) bool
     }
 
@@ -469,7 +469,7 @@ classDiagram
         +int size
         +str mime_type
         +get_as_text(encoding) str
-        +get_as_binary() bytes
+        +as_binary bytes
     }
 
     class LogRecord {

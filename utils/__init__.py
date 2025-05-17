@@ -7,7 +7,7 @@ operations, format detection, validation, and logging.
 
 Modules:
     config: Configuration management with support for nested keys and default values.
-        - ConfigManager: Handles loading, saving, and validating configuration settings.
+        - Configs: Handles loading, saving, and validating configuration settings.
         
     filesystem: File system operations, metadata, and content extraction.
         - FileSystem: Utilities for file reading, writing, and information retrieval.
@@ -29,7 +29,7 @@ Implementation Status:
     These modules implement functionality described in the following class groups from the
     System Architecture Document:
     - Storage Class Group (FileSystem, Logger): 🔄 In Progress
-    - Interface Class Group (ConfigManager): 🔄 In Progress
+    - Interface Class Group (Configs): 🔄 In Progress
     - Core Processing Class Group (FormatDetector, BasicValidator): 🔄 In Progress
     - Managers Class Group: ❌ Not Started
     - Format Handlers Class Group: ❌ Not Started

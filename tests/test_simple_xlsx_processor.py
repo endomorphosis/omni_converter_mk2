@@ -18,7 +18,7 @@ def main():
     # Create a processor
     processor = XlsxProcessor()
     print(f"Created processor: {processor.__class__.__name__}")
-    print(f"Supported formats: {processor.get_supported_formats()}")
+    print(f"Supported formats: {processor.supported_formats}")
     print(f"Processor info: {processor.get_processor_info()}")
     
     # Create a simple test XLSX
@@ -76,7 +76,7 @@ def main():
         print("\nXLSX processor test completed successfully!")
         
     except Exception as e:
-        print(f"Error during testing: {str(e)}")
+        print(f"Error during testing: {e}")
         raise
 
 if __name__ == "__main__":

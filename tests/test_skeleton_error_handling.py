@@ -16,7 +16,7 @@ from typing import Dict, List, Any, Tuple
 from managers.batch_processor import batch_processor
 from core.processing_pipeline import processing_pipeline
 from managers.error_handler import error_handler
-from utils.config import config_manager
+from utils.configs import configs
 
 
 class ErrorHandlingTest(unittest.TestCase):
@@ -34,7 +34,7 @@ class ErrorHandlingTest(unittest.TestCase):
         self.temp_output_dir = tempfile.mkdtemp()
         
         # Get the continue_on_error setting
-        self.continue_on_error = config_manager.get_config_value('processing.continue_on_error', True)
+        self.continue_on_error = configs.get_config_value('processing.continue_on_error', True)
         
         # Results will be stored here
         self.results = {
@@ -659,7 +659,7 @@ class ErrorHandlingTest(unittest.TestCase):
             try:
                 shutil.rmtree(self.temp_output_dir)
             except Exception as e:
-                print(f"Warning: Failed to clean up temporary directory: {str(e)}")
+                print(f"Warning: Failed to clean up temporary directory: {e}")
 
 
 if __name__ == '__main__':

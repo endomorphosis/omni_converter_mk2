@@ -148,7 +148,7 @@ class TestFormatRegistry(unittest.TestCase):
         self.registry.register_handler(self.app_handler)
         
         # Check that we get all formats
-        formats = self.registry.get_supported_formats()
+        formats = self.registry.supported_formats
         self.assertEqual(len(formats), 8)  # 3 text + 3 image + 2 app
         
         for fmt in ["txt", "md", "rst", "jpg", "png", "gif", "pdf", "docx"]:

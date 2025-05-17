@@ -46,7 +46,7 @@ class ContentExtractor:
             options: Optional extraction options.
             
         Returns:
-            The extracted content.
+            Content: A pydantic model containing the extracted content.
             
         Raises:
             FileNotFoundError: If the file does not exist.
@@ -80,7 +80,7 @@ class ContentExtractor:
         
         # Build capabilities dictionary
         capabilities = {
-            'supported_formats': self.registry.get_supported_formats(),
+            'supported_formats': self.registry.supported_formats,
             'categories': list(formats_by_category.keys()),
             'formats_by_category': formats_by_category
         }

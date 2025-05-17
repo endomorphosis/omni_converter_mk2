@@ -62,8 +62,8 @@ class TextQualityTest(unittest.TestCase):
         self.nlp_available = False
         try:
             import nltk
-            from nltk.translate.bleu_score import sentence_bleu
             nltk.download('punkt', quiet=True)
+            from nltk.translate.bleu_score import sentence_bleu
             self.nlp_available = True
             self.nltk = nltk
         except ImportError:
@@ -209,7 +209,7 @@ class TextQualityTest(unittest.TestCase):
                             with open(gt_path, 'r', encoding='utf-8') as f:
                                 return f.read()
                         except Exception as e:
-                            print(f"Warning: Could not read ground truth file {gt_path}: {str(e)}")
+                            print(f"Warning: Could not read ground truth file {gt_path}: {e}")
         
         # Also check for ground truth in special file "ground_truth.txt"
         dir_path = os.path.dirname(filepath)
@@ -232,7 +232,7 @@ class TextQualityTest(unittest.TestCase):
                     if match:
                         return match.group(1).strip()
             except Exception as e:
-                print(f"Warning: Could not read group ground truth file: {str(e)}")
+                print(f"Warning: Could not read group ground truth file: {e}")
                 
         return None
         
@@ -524,14 +524,14 @@ class TextQualityTest(unittest.TestCase):
                         with open(output_path, 'r', encoding='utf-8') as f:
                             return f.read()
                     except Exception as e:
-                        print(f"Warning: Error reading output file: {str(e)}")
+                        print(f"Warning: Error reading output file: {e}")
                         # Try to use result content if available
                         return result.content if hasattr(result, 'content') and result.content else ""
                 else:
                     print(f"Warning: Processing failed for {file_path}")
                     return ""
             except Exception as e:
-                print(f"Error extracting text from {file_path}: {str(e)}")
+                print(f"Error extracting text from {file_path}: {e}")
                 return ""
         
         # For simulated files, use simulated extraction with quality issues
@@ -883,6 +883,7 @@ class TextQualityTest(unittest.TestCase):
             print(f"Average quality score: {overall_avg_quality:.4f}")
             print(f"Meets quality threshold ({self.quality_threshold}): {overall_meets_threshold}")
             
+            # TODO
             # Assert that overall quality meets the threshold
             # Comment this out for now since our mock might not meet the requirements
             # self.assertGreaterEqual(overall_avg_quality, self.quality_threshold, 

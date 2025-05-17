@@ -46,7 +46,7 @@ class XlsxProcessor(DocumentProcessor):
         """
         return OPENPYXL_AVAILABLE and format_name.lower() in self.supported_formats
     
-    def get_supported_formats(self) -> List[str]:
+    def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
         
@@ -64,7 +64,7 @@ class XlsxProcessor(DocumentProcessor):
         """
         info = {
             "name": "XlsxProcessor",
-            "supported_formats": self.get_supported_formats(),
+            "supported_formats": self.supported_formats,
             "available": OPENPYXL_AVAILABLE
         }
         
@@ -150,8 +150,8 @@ class XlsxProcessor(DocumentProcessor):
             return "\n".join(sheet_texts)
             
         except Exception as e:
-            logger.error(f"Error extracting text from XLSX: {str(e)}")
-            raise ValueError(f"Error extracting text from XLSX: {str(e)}")
+            logger.error(f"Error extracting text from XLSX: {e}")
+            raise ValueError(f"Error extracting text from XLSX: {e}")
     
     def extract_metadata(self, data: bytes, options: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -233,8 +233,8 @@ class XlsxProcessor(DocumentProcessor):
             return metadata
             
         except Exception as e:
-            logger.error(f"Error extracting metadata from XLSX: {str(e)}")
-            raise ValueError(f"Error extracting metadata from XLSX: {str(e)}")
+            logger.error(f"Error extracting metadata from XLSX: {e}")
+            raise ValueError(f"Error extracting metadata from XLSX: {e}")
     
     def extract_structure(self, data: bytes, options: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -333,8 +333,8 @@ class XlsxProcessor(DocumentProcessor):
             return structure
             
         except Exception as e:
-            logger.error(f"Error extracting structure from XLSX: {str(e)}")
-            raise ValueError(f"Error extracting structure from XLSX: {str(e)}")
+            logger.error(f"Error extracting structure from XLSX: {e}")
+            raise ValueError(f"Error extracting structure from XLSX: {e}")
     
     def process_document(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
@@ -381,8 +381,8 @@ class XlsxProcessor(DocumentProcessor):
             return "\n".join(text_content), metadata, sections
             
         except Exception as e:
-            logger.error(f"Error processing XLSX document: {str(e)}")
-            raise ValueError(f"Error processing XLSX document: {str(e)}")
+            logger.error(f"Error processing XLSX document: {e}")
+            raise ValueError(f"Error processing XLSX document: {e}")
 
 
 # Create a global instance for usage

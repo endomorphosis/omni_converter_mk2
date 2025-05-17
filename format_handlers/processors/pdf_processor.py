@@ -31,7 +31,7 @@ class PyPDF2Processor(DocumentProcessor):
     
     def __init__(self):
         """Initialize the PDF processor."""
-        self.supported_formats = ["pdf"]
+        self._supported_formats = ["pdf"]
     
     def can_process(self, format_name: str) -> bool:
         """
@@ -46,14 +46,15 @@ class PyPDF2Processor(DocumentProcessor):
         """
         return PYPDF2_AVAILABLE and format_name.lower() in self.supported_formats
     
-    def get_supported_formats(self) -> List[str]:
+    @property
+    def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
         
         Returns:
             A list of format names supported by this processor.
         """
-        return self.supported_formats if PYPDF2_AVAILABLE else []
+        return self._supported_formats if PYPDF2_AVAILABLE else []
     
     def get_processor_info(self) -> Dict[str, Any]:
         """
@@ -64,7 +65,7 @@ class PyPDF2Processor(DocumentProcessor):
         """
         info = {
             "name": "PyPDF2Processor",
-            "supported_formats": self.get_supported_formats(),
+            "supported_formats": self.supported_formats,
             "available": PYPDF2_AVAILABLE
         }
         
@@ -113,8 +114,8 @@ class PyPDF2Processor(DocumentProcessor):
             return "\n\n".join(text_parts)
             
         except Exception as e:
-            logger.error(f"Error extracting text from PDF: {str(e)}")
-            raise ValueError(f"Error extracting text from PDF: {str(e)}")
+            logger.error(f"Error extracting text from PDF: {e}")
+            raise ValueError(f"Error extracting text from PDF: {e}")
     
     def extract_metadata(self, data: bytes, options: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -191,8 +192,8 @@ class PyPDF2Processor(DocumentProcessor):
             return metadata
             
         except Exception as e:
-            logger.error(f"Error extracting metadata from PDF: {str(e)}")
-            raise ValueError(f"Error extracting metadata from PDF: {str(e)}")
+            logger.error(f"Error extracting metadata from PDF: {e}")
+            raise ValueError(f"Error extracting metadata from PDF: {e}")
     
     def extract_structure(self, data: bytes, options: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -257,8 +258,8 @@ class PyPDF2Processor(DocumentProcessor):
             return structure
             
         except Exception as e:
-            logger.error(f"Error extracting structure from PDF: {str(e)}")
-            raise ValueError(f"Error extracting structure from PDF: {str(e)}")
+            logger.error(f"Error extracting structure from PDF: {e}")
+            raise ValueError(f"Error extracting structure from PDF: {e}")
     
     def _extract_outline(self, outline, structure, level=0):
         """Helper method to extract outline/bookmarks from the PDF."""
@@ -326,8 +327,8 @@ class PyPDF2Processor(DocumentProcessor):
             return "\n".join(text_content), metadata, sections
             
         except Exception as e:
-            logger.error(f"Error processing PDF document: {str(e)}")
-            raise ValueError(f"Error processing PDF document: {str(e)}")
+            logger.error(f"Error processing PDF document: {e}")
+            raise ValueError(f"Error processing PDF document: {e}")
 
 
 # Create a global instance for usage

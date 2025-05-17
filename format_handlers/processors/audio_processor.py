@@ -13,6 +13,8 @@ from datetime import timedelta
 
 from format_handlers.processors.base_processor import BaseProcessor
 from utils.logger import logger
+from utils.configs import configs
+from utils.try_except_decorator import try_except
 
 try:
     import whisper
@@ -29,6 +31,103 @@ try:
 except ImportError:
     logger.warning("pydub not available, audio extraction will be limited")
     PYDUB_AVAILABLE = False
+
+
+def _calc_spectral_centroid_using_fft(samples: np.ndarray, sample_rate: int) -> float:
+    """
+    TODO - Validate this function. LLM generated math code makes me nervous.
+    Calculate the spectral centroid of an audio signal using FFT.
+
+    Args:
+        samples: The audio samples as a numpy array.
+        sample_rate: The sample rate of the audio signal.
+    
+    Returns:
+        The spectral centroid in Hz. TODO - Validate unit.
+    """
+    # Perform Fast Fourier Transform
+    n_samples = len(samples)
+    window = np.hamming(n_samples)  # Apply Hamming window to reduce spectral leakage
+    windowed_samples = samples * window
+    
+    # Calculate FFT and get magnitudes
+    fft_result = np.abs(np.fft.rfft(windowed_samples))
+    frequencies = np.fft.rfftfreq(n_samples, 1.0/sample_rate)
+    
+    # Calculate spectral centroid (weighted average of frequencies)
+    if np.sum(fft_result) > 0:
+        return np.sum(frequencies * fft_result) / np.sum(fft_result)
+    else:
+        return 0
+
+
+def _calc_spectral_centroid(samples: np.ndarray, sample_rate: int) -> float:
+    """
+    TODO - Validate this function.
+    
+    """
+    np.sum( # Sum the absolute differences between consecutive samples
+        np.abs( # Calculate the absolute differences
+            np.diff(samples) # np.diff() calculates the difference between consecutive samples e.g. [1, 2, 72] -> [1, 70]
+        )) / (len(samples) - 1
+    ) * sample_rate
+
+
+@try_except(raise_=False, msg="Error in waveform analysis", default_return={"error": f"Waveform analysis failed"})
+def _analyze_waveform(audio: 'AudioSegment', sample_rate: int, duration: float) -> Dict[str, Any]:
+    """
+    Analyze the waveform of an audio segment.
+    
+    Args:
+        audio: The audio segment to analyze.
+        sample_rate: The sample rate of the audio.
+        duration: The duration of the audio in seconds.
+        
+    Returns:
+        A dictionary containing waveform analysis results.
+    """
+    if not PYDUB_AVAILABLE:
+        return {"error": "pydub not available for waveform analysis"}
+
+    # Convert to numpy array for analysis
+    samples = np.array(audio.get_array_of_samples())
+    
+    # If stereo, average the channels for simplicity
+    if audio.channels > 1:
+        samples = samples.reshape((-1, audio.channels)).mean(axis=1)
+
+    # Normalize to -1.0 to 1.0 range
+    max_value = 2**(audio.sample_width * 8 - 1) - 1
+    samples = samples / max_value
+    
+    # Calculate some basic statistics
+    rms = np.sqrt(np.mean(samples**2)) # Root Mean Square
+    peak = np.max(np.abs(samples)) # Peak amplitude
+    
+    # Calculate spectral centroid (rough estimate of "brightness")
+    if len(samples) > 0 and duration > 0:
+        spectral_centroid = _calc_spectral_centroid_using_fft(samples, sample_rate) if len(samples) > 0 else 0
+    else:
+        spectral_centroid = 0
+    
+    # Create a reduced version for visualization
+    # Aim for about 1000 points max
+    points = min(1000, len(samples))
+    step = max(1, len(samples) // points)
+    visualization = samples[::step].tolist()[:points]
+    
+    return {
+        "num_samples": len(samples),
+        "rms": float(rms),
+        "peak": float(peak),
+        "dynamic_range_db": float(20 * np.log10(peak / (rms + 1e-9))),
+        "spectral_centroid": float(spectral_centroid),
+        "visualization": {
+            "points": len(visualization),
+            "step": step,
+            "data": visualization
+        }
+    }
 
 
 class AudioProcessor(BaseProcessor):
@@ -103,7 +202,7 @@ class WhisperAudioProcessor(AudioProcessor):
     transcribe speech to text from audio files using the Whisper library.
     """
     
-    def __init__(self, model_name: str = "base"):
+    def __init__(self, model_name: str = "base", resources=None, configs=None) -> None:
         """
         Initialize the Whisper audio processor.
         
@@ -112,7 +211,7 @@ class WhisperAudioProcessor(AudioProcessor):
                 Options include: "tiny", "base", "small", "medium", "large".
                 Default is "base" which offers a good balance of accuracy and speed.
         """
-        self.supported_formats = ["mp3", "wav", "ogg", "flac", "aac", "m4a"]
+        self._supported_formats = ["mp3", "wav", "ogg", "flac", "aac", "m4a"]
         self.model_name = model_name
         self.model = None
         
@@ -123,8 +222,12 @@ class WhisperAudioProcessor(AudioProcessor):
                 self.model = whisper.load_model(model_name)
                 logger.info(f"Whisper model {model_name} loaded successfully")
             except Exception as e:
-                logger.error(f"Error loading Whisper model: {str(e)}")
+                logger.error(f"Error loading Whisper model: {e}")
                 self.model = None
+
+        if self.model is not None:
+            if not hasattr(self.model, "transcribe"):
+                raise AttributeError(f"Whisper model {self.model_name} does not have a transcribe method")
     
     def can_process(self, format_name: str) -> bool:
         """
@@ -140,14 +243,15 @@ class WhisperAudioProcessor(AudioProcessor):
         has_requirements = WHISPER_AVAILABLE and PYDUB_AVAILABLE
         return has_requirements and format_name.lower() in self.supported_formats
     
-    def get_supported_formats(self) -> List[str]:
+    @property
+    def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
         
         Returns:
             A list of format names supported by this processor.
         """
-        return self.supported_formats if WHISPER_AVAILABLE and PYDUB_AVAILABLE else []
+        return self._supported_formats if WHISPER_AVAILABLE and PYDUB_AVAILABLE else []
     
     def get_processor_info(self) -> Dict[str, Any]:
         """
@@ -158,7 +262,7 @@ class WhisperAudioProcessor(AudioProcessor):
         """
         info = {
             "name": "WhisperAudioProcessor",
-            "supported_formats": self.get_supported_formats(),
+            "supported_formats": self.supported_formats,
             "whisper_available": WHISPER_AVAILABLE,
             "pydub_available": PYDUB_AVAILABLE,
             "model_name": self.model_name,
@@ -247,9 +351,10 @@ class WhisperAudioProcessor(AudioProcessor):
                     pass
                 
         except Exception as e:
-            logger.error(f"Error extracting metadata from audio: {str(e)}")
-            raise ValueError(f"Error extracting metadata from audio: {str(e)}")
+            logger.error(f"Error extracting metadata from audio: {e}")
+            raise ValueError(f"Error extracting metadata from audio: {e}")
     
+    @try_except(raise_=True, exception_type=ValueError, msg="Error in waveform analysis")
     def extract_waveform(self, data: bytes, format_name: str, options: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract waveform data from an audio file.
@@ -267,56 +372,50 @@ class WhisperAudioProcessor(AudioProcessor):
         """
         if not PYDUB_AVAILABLE:
             raise ValueError("pydub is not available for audio waveform extraction")
+
+        # Save audio data to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
+            temp_file.write(data)
+            temp_file_path = temp_file.name
         
         try:
-            # Save audio data to a temporary file
-            with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
-                temp_file.write(data)
-                temp_file_path = temp_file.name
+            # Load audio file
+            audio = AudioSegment.from_file(temp_file_path, format=format_name)
+
+            # TODO - Fully validate this part of the code.
+            # For a 30-second visualization, we'll extract 150 samples (1 sample per 0.2 seconds)
+            duration_seconds = len(audio) / 1000.0
+            max_samples = options.get("waveform_samples", 150)
             
+            # Calculate sample interval based on duration
+            sample_interval_ms = (len(audio) / max_samples) if duration_seconds > 0 else 200
+
+            # waveform_analysis_results = _analyze_waveform(audio, sample_interval_ms, duration_seconds)
+
+            samples = []
+            for i in range(0, len(audio), int(sample_interval_ms)):
+                if len(samples) >= max_samples:
+                    break
+                segment = audio[i:i+10]  # Get a 10ms segment
+                if len(segment) > 0:
+                    samples.append(segment.dBFS)
+            
+            return {
+                'waveform_type': 'dBFS',
+                'sample_count': len(samples),
+                'sample_interval_ms': sample_interval_ms,
+                'min_value': min(samples) if samples else None,
+                'max_value': max(samples) if samples else None,
+                'samples': samples
+            }
+            
+        finally:
+            # Remove temporary file
             try:
-                # Load audio file
-                audio = AudioSegment.from_file(temp_file_path, format=format_name)
-                
-                # Extract a simplified waveform
-                # For a full implementation, we'd analyze the waveform in detail
-                # but for this version, we'll just extract some basic stats
-                
-                # Get a simplified waveform by sampling the audio
-                # For a 30-second visualization, we'll extract 150 samples (1 sample per 0.2 seconds)
-                duration_seconds = len(audio) / 1000.0
-                max_samples = options.get("waveform_samples", 150)
-                
-                # Calculate sample interval based on duration
-                sample_interval_ms = (len(audio) / max_samples) if duration_seconds > 0 else 200
-                
-                samples = []
-                for i in range(0, len(audio), int(sample_interval_ms)):
-                    if len(samples) >= max_samples:
-                        break
-                    segment = audio[i:i+10]  # Get a 10ms segment
-                    if len(segment) > 0:
-                        samples.append(segment.dBFS)
-                
-                return {
-                    'waveform_type': 'dBFS',
-                    'sample_count': len(samples),
-                    'sample_interval_ms': sample_interval_ms,
-                    'min_value': min(samples) if samples else None,
-                    'max_value': max(samples) if samples else None,
-                    'samples': samples
-                }
-                
-            finally:
-                # Remove temporary file
-                try:
-                    os.unlink(temp_file_path)
-                except Exception:
-                    pass
-                
-        except Exception as e:
-            logger.error(f"Error extracting waveform from audio: {str(e)}")
-            raise ValueError(f"Error extracting waveform from audio: {str(e)}")
+                os.unlink(temp_file_path)
+            except Exception:
+                pass
+
     
     def transcribe_audio(self, data: bytes, format_name: str, options: Dict[str, Any]) -> str:
         """
@@ -399,8 +498,8 @@ class WhisperAudioProcessor(AudioProcessor):
                     pass
                 
         except Exception as e:
-            logger.error(f"Error transcribing audio: {str(e)}")
-            raise ValueError(f"Error transcribing audio: {str(e)}")
+            logger.error(f"Error transcribing audio: {e}")
+            raise ValueError(f"Error transcribing audio: {e}")
     
     def process_audio(self, data: bytes, format_name: str, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
@@ -434,7 +533,7 @@ class WhisperAudioProcessor(AudioProcessor):
                         'content': waveform_data
                     })
                 except Exception as e:
-                    logger.warning(f"Error extracting waveform: {str(e)}")
+                    logger.warning(f"Error extracting waveform: {e}")
             
             # Transcribe the audio if requested and Whisper is available
             transcript = ""
@@ -448,8 +547,8 @@ class WhisperAudioProcessor(AudioProcessor):
                         'content': transcript
                     })
                 except Exception as e:
-                    logger.warning(f"Error transcribing audio: {str(e)}")
-                    transcript = f"[Error during transcription: {str(e)}]"
+                    logger.warning(f"Error transcribing audio: {e}")
+                    transcript = f"[Error during transcription: {e}]"
             elif transcribe_enabled and (not WHISPER_AVAILABLE or self.model is None):
                 transcript = "[Speech-to-text transcription not available]"
                 sections.append({
@@ -503,9 +602,10 @@ class WhisperAudioProcessor(AudioProcessor):
             return "\n".join(text_content), metadata, sections
             
         except Exception as e:
-            logger.error(f"Error processing audio file: {str(e)}")
-            raise ValueError(f"Error processing audio file: {str(e)}")
+            logger.error(f"Error processing audio file: {e}")
+            raise ValueError(f"Error processing audio file: {e}")
 
+resources = {}
 
 # Create a global instance for usage
-whisper_processor = WhisperAudioProcessor()
+whisper_processor = WhisperAudioProcessor(configs=configs, resources=resources)

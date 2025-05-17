@@ -140,7 +140,7 @@ class FormatSupportCoverageTest(unittest.TestCase):
             self.fail(f"Format detector does not recognize formats: {unrecognized_formats}")
         
         # Get format registry capabilities
-        registry_formats = format_registry.get_supported_formats()
+        registry_formats = format_registry.supported_formats
         
         # Check for consistency between extractor and registry
         if sorted(supported_formats) != sorted(registry_formats):

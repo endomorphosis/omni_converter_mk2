@@ -123,6 +123,7 @@ class TextHandler(BaseFormatHandler):
         Returns:
             A tuple of (text content, metadata, sections). 
         """
+        # TODO: Implement a more robust HTML parser with BeautifulSoup.
         # Basic HTML parsing - in a real implementation, use a proper HTML parser like BeautifulSoup #TODO
         # This is a simplified version for demonstration purposes
         
@@ -151,6 +152,7 @@ class TextHandler(BaseFormatHandler):
         # Normalize whitespace
         text = re.sub(r'\s+', ' ', text).strip()
         
+        # TODO - Extract more metadata (like author, date, etc.) if available
         # Split into sections (just a simple example - real implementation would be more sophisticated) # TODO
         sections = []
         if title:
@@ -177,6 +179,7 @@ class TextHandler(BaseFormatHandler):
         Returns:
             A tuple of (text content, metadata, sections).
         """
+        # TODO - Implement a more robust XML parser with lxml or similar library.
         # Basic XML parsing
         try:
             root = ET.fromstring(text)
@@ -254,6 +257,7 @@ class TextHandler(BaseFormatHandler):
         Returns:
             A tuple of (text content, metadata, sections).
         """
+        # TODO - Implement a more robust iCal parser with icalendar or similar library.
         # Basic iCal parsing
         metadata = {
             'format': 'calendar'
@@ -262,12 +266,25 @@ class TextHandler(BaseFormatHandler):
         # Extract events
         events = []
         current_event = {}
-        lines = text.split('\n')
+        lines = [line.strip() for line in text.split('\n')]
         in_event = False
-        
+
         for line in lines:
-            line = line.strip()
-            
+            match line:
+                case 'BEGIN:VEVENT':
+                    in_event = True
+                    current_event = {}
+                case 'END:VEVENT':
+                    in_event = False
+                    if current_event:
+                        events.append(current_event)
+                case _ if in_event and ':' in line:
+                    key, value = line.split(':', 1)
+                    current_event[key] = value
+                case _:
+                    # Ignore other lines
+                    pass
+
             if line == 'BEGIN:VEVENT':
                 in_event = True
                 current_event = {}

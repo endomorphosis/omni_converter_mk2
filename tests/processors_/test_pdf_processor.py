@@ -103,8 +103,8 @@ class TestPyPDF2Processor(unittest.TestCase):
         self.assertFalse(self.processor.can_process(""))
     
     def test_get_supported_formats(self):
-        """Test the get_supported_formats method."""
-        self.assertEqual(self.processor.get_supported_formats(), ["pdf"])
+        """Test the supported_formats method."""
+        self.assertEqual(self.processor.supported_formats, ["pdf"])
     
     def test_get_processor_info(self):
         """Test the get_processor_info method."""
@@ -215,7 +215,7 @@ class TestPyPDF2Processor(unittest.TestCase):
         processor = PyPDF2Processor()
         
         # Check that it correctly reports no supported formats
-        self.assertEqual(processor.get_supported_formats(), [])
+        self.assertEqual(processor.supported_formats, [])
         self.assertFalse(processor.can_process("pdf"))
         
         # Check that all methods raise ValueError

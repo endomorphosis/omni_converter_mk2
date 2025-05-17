@@ -32,7 +32,7 @@ class TestPythonAPI(unittest.TestCase):
         """
         Set up test environment before each test.
         
-        Creates mock objects for dependencies (ConfigManager, BatchProcessor),
+        Creates mock objects for dependencies (Configs, BatchProcessor),
         configures the mock objects with appropriate return values, creates a
         PythonAPI instance with the mocked dependencies, and generates a simple
         test file for conversion tests.
@@ -41,7 +41,7 @@ class TestPythonAPI(unittest.TestCase):
         self.mock_config_manager = MagicMock()
         self.mock_batch_processor = MagicMock()
         
-        # Configure mock config_manager
+        # Configure mock configs
         self.mock_config_manager.get_config_value.return_value = "default_value"
         self.mock_config_manager.current_config = {
             'output': {'format': 'txt'},
@@ -151,7 +151,7 @@ class TestPythonAPI(unittest.TestCase):
     @patch('interfaces.python_api.format_registry')
     def test_get_supported_formats(self, mock_registry):
         """
-        Test the get_supported_formats method for retrieving available format information.
+        Test the supported_formats method for retrieving available format information.
         
         Verifies that the API correctly delegates to the format registry when retrieving
         information about supported formats. Checks that the API returns the format
@@ -166,7 +166,7 @@ class TestPythonAPI(unittest.TestCase):
         mock_registry.get_formats_by_category.return_value = mock_formats
         
         # Get formats
-        formats = self.api.get_supported_formats()
+        formats = self.api.supported_formats
         
         # Check result
         self.assertEqual(formats, mock_formats)
@@ -190,7 +190,7 @@ class TestPythonAPI(unittest.TestCase):
         # Check result
         self.assertTrue(result)
         
-        # Check that config_manager was called for each key
+        # Check that configs was called for each key
         self.assertEqual(self.mock_config_manager.set_config_value.call_count, 2)
     
     def test_get_config(self):

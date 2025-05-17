@@ -4,14 +4,14 @@ OCR processor implementation for image format handlers.
 This module provides the PyTesseractProcessor class for extracting text 
 from images using the Tesseract OCR engine via pytesseract.
 """
-
-import os
+from datetime import datetime
 import io
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
+
 
 from utils.logger import logger
 from format_handlers.processors.image_processor import ImageProcessor
+
 
 # Try to import pytesseract and PIL
 try:
@@ -32,7 +32,7 @@ class PyTesseractProcessor(ImageProcessor):
     
     def __init__(self):
         """Initialize the PyTesseract processor."""
-        self.supported_formats = ["jpeg", "jpg", "png", "bmp", "tiff", "tif", "gif", "webp"] if TESSERACT_AVAILABLE else []
+        self._supported_formats = ["jpeg", "jpg", "png", "bmp", "tiff", "tif", "gif", "webp"]
         
         # Check if tesseract is installed and available
         if TESSERACT_AVAILABLE:
@@ -41,7 +41,7 @@ class PyTesseractProcessor(ImageProcessor):
                 tesseract_version = pytesseract.get_tesseract_version()
                 logger.info(f"Tesseract OCR version {tesseract_version} detected")
             except Exception as e:
-                logger.warning(f"Tesseract OCR not available: {str(e)}")
+                logger.warning(f"Tesseract OCR not available: {e}")
                 self.supported_formats = []
     
     def can_process(self, format_name: str) -> bool:
@@ -58,14 +58,15 @@ class PyTesseractProcessor(ImageProcessor):
             return False
         return format_name.lower() in self.supported_formats
     
-    def get_supported_formats(self) -> List[str]:
+    @property
+    def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
         
         Returns:
             A list of format names supported by this processor.
         """
-        return self.supported_formats
+        return self._supported_formats if TESSERACT_AVAILABLE else []
     
     def get_processor_info(self) -> Dict[str, Any]:
         """
@@ -78,7 +79,7 @@ class PyTesseractProcessor(ImageProcessor):
             "name": "PyTesseractProcessor",
             "available": TESSERACT_AVAILABLE,
             "version": str(pytesseract.get_tesseract_version()) if TESSERACT_AVAILABLE else "N/A",
-            "supported_formats": self.get_supported_formats()
+            "supported_formats": self.supported_formats
         }
         
         if TESSERACT_AVAILABLE:
@@ -119,15 +120,13 @@ class PyTesseractProcessor(ImageProcessor):
             
             # Perform OCR
             text = pytesseract.image_to_string(image, lang=language, config=config)
-            
+
             # Clean up extracted text
-            text = text.strip()
-            
-            return text
+            return text.strip()
             
         except Exception as e:
-            logger.error(f"Error extracting text with Tesseract OCR: {str(e)}")
-            raise ValueError(f"Failed to extract text: {str(e)}")
+            logger.error(f"Error extracting text with Tesseract OCR: {e}")
+            raise ValueError(f"Failed to extract text: {e}")
     
     def extract_metadata(self, data: bytes, options: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -186,8 +185,8 @@ class PyTesseractProcessor(ImageProcessor):
             return metadata
             
         except Exception as e:
-            logger.error(f"Error extracting image metadata: {str(e)}")
-            raise ValueError(f"Failed to extract metadata: {str(e)}")
+            logger.error(f"Error extracting image metadata: {e}")
+            raise ValueError(f"Failed to extract metadata: {e}")
     
     def extract_features(self, data: bytes, options: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -256,7 +255,7 @@ class PyTesseractProcessor(ImageProcessor):
                         "content": hocr.decode('utf-8') if isinstance(hocr, bytes) else hocr
                     })
                 except Exception as e:
-                    logger.warning(f"Failed to generate HOCR: {str(e)}")
+                    logger.warning(f"Failed to generate HOCR: {e}")
             
             # Add text bounding boxes if requested
             if include_boxes:
@@ -283,13 +282,13 @@ class PyTesseractProcessor(ImageProcessor):
                         "content": text_regions
                     })
                 except Exception as e:
-                    logger.warning(f"Failed to generate text regions: {str(e)}")
+                    logger.warning(f"Failed to generate text regions: {e}")
             
             return features
             
         except Exception as e:
-            logger.error(f"Error extracting image features: {str(e)}")
-            raise ValueError(f"Failed to extract features: {str(e)}")
+            logger.error(f"Error extracting image features: {e}")
+            raise ValueError(f"Failed to extract features: {e}")
     
     def process_image(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
@@ -353,8 +352,8 @@ class PyTesseractProcessor(ImageProcessor):
             return "\n".join(text_content), metadata, sections
             
         except Exception as e:
-            logger.error(f"Error processing image: {str(e)}")
-            raise ValueError(f"Failed to process image: {str(e)}")
+            logger.error(f"Error processing image: {e}")
+            raise ValueError(f"Failed to process image: {e}")
 
 
 # Create a global instance of the processor

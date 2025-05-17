@@ -7,7 +7,7 @@ This module provides validation functionality for files and formats.
 import os
 from typing import Dict, List, Optional, Tuple, Any
 
-from utils.config import config_manager
+from utils.configs import configs
 from utils.filesystem import FileInfo, FileSystem
 from utils.format_detector import format_detector
 from utils.logger import logger
@@ -29,9 +29,9 @@ class BasicValidator:
         """Initialize the basic validator."""
         # Load validation rules from config
         self.validation_rules = {
-            'max_file_size_mb': config_manager.get_config_value(
+            'max_file_size_mb': configs.get_config_value(
                 'security.max_file_size_mb', 100),
-            'allowed_formats': config_manager.get_config_value(
+            'allowed_formats': configs.get_config_value(
                 'security.allowed_formats', [])
         }
     
@@ -115,7 +115,7 @@ class BasicValidator:
             result.is_valid = True
             
         except Exception as e:
-            result.add_error(f"Validation error: {str(e)}")
+            result.add_error(f"Validation error: {e}")
             logger.error(f"Validation error for file: {file_path}", {'error': str(e)})
         
         return result

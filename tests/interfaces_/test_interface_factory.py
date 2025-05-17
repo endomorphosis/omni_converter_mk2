@@ -11,7 +11,7 @@ appropriately with descriptive errors.
 import unittest
 from unittest.mock import MagicMock, patch
 
-from utils.config import ConfigManager
+from utils.configs import Configs
 from interfaces.python_api import PythonAPI
 from interfaces.interface_factory import InterfaceFactory
 
@@ -30,11 +30,11 @@ class TestInterfaceFactory(unittest.TestCase):
         """
         Set up test environment before each test.
         
-        Creates a mock ConfigManager and initializes an InterfaceFactory instance
+        Creates a mock Configs and initializes an InterfaceFactory instance
         with the mocked dependency for isolation in unit testing.
         """
-        # Mock ConfigManager
-        self.mock_config_manager = MagicMock(spec=ConfigManager)
+        # Mock Configs
+        self.mock_config_manager = MagicMock(spec=Configs)
         
         # Create factory with mocked dependencies
         self.factory = InterfaceFactory(custom_config_manager=self.mock_config_manager)
@@ -43,17 +43,17 @@ class TestInterfaceFactory(unittest.TestCase):
         """
         Test proper initialization of the InterfaceFactory.
         
-        Verifies that the InterfaceFactory correctly stores the provided ConfigManager
+        Verifies that the InterfaceFactory correctly stores the provided Configs
         instance during initialization, making it available for interfaces it creates.
         """
-        self.assertEqual(self.factory.config_manager, self.mock_config_manager)
+        self.assertEqual(self.factory.configs, self.mock_config_manager)
     
     def test_create_api(self):
         """
         Test the create_api method for instantiating a Python API interface.
         
         Verifies that the factory correctly creates a PythonAPI instance and
-        configures it with the factory's ConfigManager. This ensures that interfaces
+        configures it with the factory's Configs. This ensures that interfaces
         created by the factory have access to the proper configuration settings.
         """
         # Create API
@@ -63,7 +63,7 @@ class TestInterfaceFactory(unittest.TestCase):
         self.assertIsInstance(api, PythonAPI)
         
         # Check that it uses the factory's config manager
-        self.assertEqual(api.config_manager, self.mock_config_manager)
+        self.assertEqual(api.configs, self.mock_config_manager)
     
     def test_create_cli(self):
         """
@@ -80,11 +80,11 @@ class TestInterfaceFactory(unittest.TestCase):
         """
         Test the get_config_manager method for accessing the configuration manager.
         
-        Verifies that the factory provides access to its ConfigManager instance,
+        Verifies that the factory provides access to its Configs instance,
         allowing components to retrieve configuration settings directly if needed.
         """
-        config_manager = self.factory.get_config_manager()
-        self.assertEqual(config_manager, self.mock_config_manager)
+        configs = self.factory.get_config_manager()
+        self.assertEqual(configs, self.mock_config_manager)
     
     def test_create_interface_api(self):
         """

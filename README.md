@@ -75,7 +75,7 @@ batch_result = api.convert_batch('/path/to/directory', output_dir='/path/to/outp
 print(f"Processed {batch_result.total_files} files with {batch_result.successful_files} successful")
 
 # Get supported formats
-formats = api.get_supported_formats()
+formats = api.supported_formats
 print(formats)
 
 # Configure the converter
@@ -118,7 +118,7 @@ Current implementation status:
 - ✅ Format Registry: Centralized registry for format detection and handler management
 - ✅ Core Processing Pipeline: Complete pipeline with extraction, normalization, and output formatting
 - ✅ Managers: Batch processing, resource monitoring, error handling, and security validation implemented
-- ✅ Interfaces: Complete implementation of CLI, PythonAPI, ConfigManager, and InterfaceFactory
+- ✅ Interfaces: Complete implementation of CLI, PythonAPI, Configs, and InterfaceFactory
 
 ### Format Coverage
 

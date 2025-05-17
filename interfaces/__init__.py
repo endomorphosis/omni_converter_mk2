@@ -11,10 +11,11 @@ from interfaces import (
 )
 
 from .python_api import PythonAPI
-from .interface_factory import ConfigManager
+from .interface_factory import Configs
+
 __all__ = [
     "python_api",
     "interface_factory",
     "PythonAPI",
-    "ConfigManager"
+    "Configs"
 ]
