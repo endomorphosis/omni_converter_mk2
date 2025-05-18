@@ -64,7 +64,7 @@ class TestProcessingResultIntegration(unittest.TestCase):
         
         # Check that the error was properly added to the result
         self.assertFalse(result.success)
-        self.assertIn(error_message, result.get_error_string())
+        self.assertIn(error_message, result.error_string)
     
     def test_dict_serialization_compatibility(self):
         """Test that to_dict() output is compatible with consumers."""

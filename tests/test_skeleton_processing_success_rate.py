@@ -4,13 +4,15 @@ Processing Success Rate Tests for the Omni-Converter.
 
 This module tests the rate of successful processing across different file types.
 """
-
+from datetime import datetime
 import os
 import json
-import unittest
+import shutil
 import tempfile
-from datetime import datetime
 from typing import Dict, List, Any, Optional
+import unittest
+from unittest.mock import MagicMock, patch
+
 
 from core.processing_pipeline import processing_pipeline, ProcessingResult
 from utils.format_detector import format_detector
@@ -22,6 +24,13 @@ class ProcessingSuccessRateTest(unittest.TestCase):
 
     def setUp(self):
         """Set up test case with necessary data structures."""
+
+        # Define test files directory
+        self.test_files_dir = os.path.join('test_files')
+        
+        # Create temp directory for output
+        self.temp_output_dir = tempfile.mkdtemp()
+
         # Define the test datasets for each category
         self.test_datasets = {
             'text': self._create_test_files('text', 10),
@@ -48,12 +57,22 @@ class ProcessingSuccessRateTest(unittest.TestCase):
                 'success_rate': 0
             }
         }
+
+    def tearDown(self):
+        """Save test results to a JSON file and clean up."""
+        # Save results to JSON file
+        output_file = os.path.join('tests', 'collected_results', 'processing_success_rate.json')
+        with open(output_file, 'w') as f:
+            json.dump(self.results, f, indent=2)
+        print(f"\nTest results saved to {output_file}")
         
-        # Define test files directory
-        self.test_files_dir = os.path.join('test_files')
-        
-        # Create temp directory for output
-        self.temp_output_dir = tempfile.mkdtemp()
+        # Clean up temporary output directory if it exists
+        if os.path.exists(self.temp_output_dir):
+            import shutil
+            try:
+                shutil.rmtree(self.temp_output_dir)
+            except Exception as e:
+                print(f"Warning: Failed to remove temporary directory: {e}")
 
     def _create_test_files(self, category: str, count: int) -> List[Dict[str, Any]]:
         """Create test file data for a category.
@@ -393,7 +412,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
             
             # Assert that success rate is at least 95%
             # If there are enough real files to make a meaningful assertion
-            if total_valid_files >= 5:
+            if total_valid_files >= 5: # TODO Should be 30 when we have enough test files.
                 self.assertGreaterEqual(overall_success_rate, 95, 
                                        "Overall processing success rate must be at least 95%")
             else:
@@ -408,21 +427,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
             self.results['error'] = str(e)
             self.fail(f"Error: {e}")
 
-    def tearDown(self):
-        """Save test results to a JSON file and clean up."""
-        # Save results to JSON file
-        output_file = os.path.join('tests', 'collected_results', 'processing_success_rate.json')
-        with open(output_file, 'w') as f:
-            json.dump(self.results, f, indent=2)
-        print(f"\nTest results saved to {output_file}")
-        
-        # Clean up temporary output directory if it exists
-        if os.path.exists(self.temp_output_dir):
-            import shutil
-            try:
-                shutil.rmtree(self.temp_output_dir)
-            except Exception as e:
-                print(f"Warning: Failed to remove temporary directory: {e}")
+
 
 
 if __name__ == '__main__':

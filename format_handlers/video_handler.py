@@ -8,7 +8,7 @@ It extracts metadata and generates text descriptions of video files.
 import os
 import io
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeAlias, TypeVar, Union
 import tempfile
 import shutil
 
@@ -27,12 +27,32 @@ except ImportError:
 
 # Import PIL for thumbnail extraction
 try:
-    from PIL import Image
+    import PIL
     PIL_AVAILABLE = True
 except ImportError:
     logger.warning("PIL not available, thumbnail extraction will be limited")
     PIL_AVAILABLE = False
 
+if MEDIAINFO_AVAILABLE:
+    # Define custom type for pymediainfo Track
+    Track: TypeAlias = pymediainfo.Track
+else:
+    # Fallback to Any if pymediainfo is not available
+    Track: TypeAlias = Any
+
+def _format_text_content(text_content: list[str], track: 'Track', attribute_list: list[tuple[str, Any, Any]]) -> str:
+    """
+    Format text content for a specific track.
+    """
+    for attr, default, func in attribute_list:
+        if hasattr(track, attr):
+            value = getattr(track, attr, default)
+            if value:
+                name = attr.replace('_', ' ').capitalize()
+                value = func(value) if isinstance(func, Callable) else value
+                text_content.append(
+                    f"  {name}: {value}".rstrip()
+                )
 
 class VideoHandler(BaseFormatHandler):
     """
@@ -128,10 +148,9 @@ class VideoHandler(BaseFormatHandler):
             return content
             
         except Exception as e:
-            logger.error(f"Error extracting content from {format_name} video file: {file_path}", 
-                        {'error': str(e)})
-            raise
-    
+            logger.exception(f"Error extracting content from {format_name} video file: '{file_path}'\n{e}")
+            raise e
+
     def _extract_with_mediainfo(self, file_path: str, format_name: str, options: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
         Extract video information using pymediainfo.
@@ -193,183 +212,125 @@ class VideoHandler(BaseFormatHandler):
                         track_data[attr] = value
             
             # Categorize tracks by type
-            if track.track_type == 'General':
-                general_info = track_data
-                metadata['general'] = track_data
+            match track.track_type:
+                case 'General':
+                    general_info = track_data
+                    metadata['general'] = track_data
+                    
+                    # Add duration and other general information
+                    if hasattr(track, 'duration'):
+                        duration_ms = getattr(track, 'duration', 0)
+                        if duration_ms:
+                            duration = str(timedelta(milliseconds=int(duration_ms)))
+                            text_content.append(f"Duration: {duration}")
+                            metadata['duration_ms'] = duration_ms
+                            metadata['duration'] = duration
+                    
+                    # Add file size
+                    if hasattr(track, 'file_size'):
+                        file_size = getattr(track, 'file_size', 0)
+                        if file_size:
+                            text_content.append(f"File Size: {self._format_file_size(file_size)}")
+                            metadata['file_size_bytes'] = file_size
+                    
+                    # Add overall bitrate
+                    if hasattr(track, 'overall_bit_rate'):
+                        overall_bit_rate = getattr(track, 'overall_bit_rate', 0)
+                        if overall_bit_rate:
+                            text_content.append(f"Overall Bitrate: {int(overall_bit_rate)/1000:.0f} kbps")
+                            metadata['overall_bitrate_kbps'] = int(overall_bit_rate)/1000
                 
-                # Add duration and other general information
-                if hasattr(track, 'duration'):
-                    duration_ms = getattr(track, 'duration', 0)
-                    if duration_ms:
-                        duration = str(timedelta(milliseconds=int(duration_ms)))
-                        text_content.append(f"Duration: {duration}")
-                        metadata['duration_ms'] = duration_ms
-                        metadata['duration'] = duration
-                
-                # Add file size
-                if hasattr(track, 'file_size'):
-                    file_size = getattr(track, 'file_size', 0)
-                    if file_size:
-                        text_content.append(f"File Size: {self._format_file_size(file_size)}")
-                        metadata['file_size_bytes'] = file_size
-                
-                # Add overall bitrate
-                if hasattr(track, 'overall_bit_rate'):
-                    overall_bit_rate = getattr(track, 'overall_bit_rate', 0)
-                    if overall_bit_rate:
-                        text_content.append(f"Overall Bitrate: {int(overall_bit_rate)/1000:.0f} kbps")
-                        metadata['overall_bitrate_kbps'] = int(overall_bit_rate)/1000
-                
-            elif track.track_type == 'Video':
-                video_tracks.append(track_data)
-                
-                # Add video track details to text content
-                text_content.append("\nVideo:")
-                
-                # Add resolution
-                if hasattr(track, 'width') and hasattr(track, 'height'):
-                    width = getattr(track, 'width', 0)
-                    height = getattr(track, 'height', 0)
-                    if width and height:
-                        text_content.append(f"  Resolution: {width}x{height}")
-                
-                # Add frame rate
-                if hasattr(track, 'frame_rate'):
-                    frame_rate = getattr(track, 'frame_rate', 0)
-                    if frame_rate:
-                        text_content.append(f"  Frame Rate: {frame_rate} fps")
-                
-                # Add codec
-                if hasattr(track, 'codec'):
-                    codec = getattr(track, 'codec', '')
-                    if codec:
-                        text_content.append(f"  Codec: {codec}")
-                
-                # Add bit depth
-                if hasattr(track, 'bit_depth'):
-                    bit_depth = getattr(track, 'bit_depth', 0)
-                    if bit_depth:
-                        text_content.append(f"  Bit Depth: {bit_depth} bits")
-                
-                # Add bit rate
-                if hasattr(track, 'bit_rate'):
-                    bit_rate = getattr(track, 'bit_rate', 0)
-                    if bit_rate:
-                        text_content.append(f"  Bitrate: {int(bit_rate)/1000:.0f} kbps")
-                
-            elif track.track_type == 'Audio':
-                audio_tracks.append(track_data)
-                
-                # Add audio track details to text content
-                if len(audio_tracks) == 1:
-                    text_content.append("\nAudio:")
-                
-                # Label track if multiple audio tracks
-                if len(audio_tracks) > 1:
-                    text_content.append(f"\nAudio Track {len(audio_tracks)}:")
-                
-                # Add channels
-                if hasattr(track, 'channel_s'):
-                    channels = getattr(track, 'channel_s', 0)
-                    if channels:
-                        text_content.append(f"  Channels: {channels} ({'Mono' if channels == 1 else 'Stereo' if channels == 2 else 'Multi-channel'})")
-                
-                # Add sample rate
-                if hasattr(track, 'sampling_rate'):
-                    sampling_rate = getattr(track, 'sampling_rate', 0)
-                    if sampling_rate:
-                        text_content.append(f"  Sample Rate: {int(sampling_rate)/1000:.1f} kHz")
-                
-                # Add codec
-                if hasattr(track, 'codec'):
-                    codec = getattr(track, 'codec', '')
-                    if codec:
-                        text_content.append(f"  Codec: {codec}")
-                
-                # Add language
-                if hasattr(track, 'language'):
-                    language = getattr(track, 'language', '')
-                    if language:
-                        text_content.append(f"  Language: {language}")
-                
-                # Add bit rate
-                if hasattr(track, 'bit_rate'):
-                    bit_rate = getattr(track, 'bit_rate', 0)
-                    if bit_rate:
-                        text_content.append(f"  Bitrate: {int(bit_rate)/1000:.0f} kbps")
-                
-            elif track.track_type == 'Text':
-                text_tracks.append(track_data)
-                
-                # Add subtitle track details if this is the first track
-                if len(text_tracks) == 1:
-                    text_content.append("\nSubtitles:")
-                
-                # Add language
-                if hasattr(track, 'language'):
-                    language = getattr(track, 'language', '')
-                    if language:
-                        text_content.append(f"  Language: {language}")
-                
-                # Add format
-                if hasattr(track, 'format'):
-                    subtitle_format = getattr(track, 'format', '')
-                    if subtitle_format:
-                        text_content.append(f"  Format: {subtitle_format}")
-            
-            else:
-                other_tracks.append(track_data)
-        
+                case 'Video':
+                    video_tracks.append(track_data)
+                    
+                    # Add video track details to text content
+                    text_content.append("\nVideo:")
+                    
+                    # Add resolution
+                    if hasattr(track, 'width') and hasattr(track, 'height'):
+                        width, height = getattr(track, 'width', 0), getattr(track, 'height', 0)
+                        if width and height:
+                            text_content.append(f"  Resolution: {width}x{height}")
+
+                    # Add frame rate, code, bit depth, and bit rate
+                    for attr, default, func in [('frame_rate', 0, lambda x: f"{x:.2f} fps"),
+                                                ('codec', '', ''),
+                                                ('bit_depth', '', lambda x: f"{x} bits"),
+                                                ('bit_rate', 0, lambda x: f"{int(x)/1000:.0f} kbps")]:
+                        if hasattr(track, attr):
+                            value = getattr(track, attr, default)
+                            if value:
+                                name = attr.replace('_', ' ').capitalize()
+                                value = func(value) if isinstance(func, Callable) else value
+                                text_content.append(
+                                    f"  {name}: {value}".rstrip()
+                                )
+
+                case 'Audio':
+                    audio_tracks.append(track_data)
+                    
+                    # Add audio track details to text content
+                    if len(audio_tracks) == 1:
+                        text_content.append("\nAudio:")
+                    
+                    # Label track if multiple audio tracks
+                    if len(audio_tracks) > 1:
+                        text_content.append(f"\nAudio Track {len(audio_tracks)}:")
+                    
+                    # Add channels, sample rate, codec, language, and bit rate
+                    for attr, default, func in [('channel_s', 0, lambda x: '(Mono)' if x == 1 else '(Stereo)' if x == 2 else '(Multi-channel)'),
+                                            ('sampling_rate', 0, lambda x: f"{int(x)/1000:.1f} kHz"),
+                                            ('codec', '', ''),
+                                            ('language', '', ''),
+                                            ('bit_rate', 0, lambda x: f"{int(x)/1000:.0f} kbps")]:
+                        if hasattr(track, attr):
+                            value = getattr(track, attr, default)
+                            if value:
+                                name = attr.replace('_', ' ').capitalize()
+                                value = func(value) if isinstance(func, Callable) else value
+                                text_content.append(
+                                    f"  {name}: {value}".rstrip()
+                                )
+
+                case 'Text':
+                    text_tracks.append(track_data)
+                    
+                    # Add subtitle track details if this is the first track
+                    if len(text_tracks) == 1:
+                        text_content.append("\nSubtitles:")
+
+                    # Add language and format
+                    for attr in ['language', 'format']:
+                        if hasattr(track, attr):
+                            value = getattr(track, attr, '')
+                            if value:
+                                text_content.append(f"  {attr.capitalize()}: {value}")
+                case _:
+                    other_tracks.append(track_data)
+
         # Add track data to metadata
-        metadata['video_tracks'] = video_tracks
-        metadata['audio_tracks'] = audio_tracks
-        metadata['text_tracks'] = text_tracks
-        metadata['other_tracks'] = other_tracks
-        
-        # Add track counts to metadata
-        metadata['video_track_count'] = len(video_tracks)
-        metadata['audio_track_count'] = len(audio_tracks)
-        metadata['text_track_count'] = len(text_tracks)
-        metadata['other_track_count'] = len(other_tracks)
-        
+        for key, value in [("video_tracks", video_tracks),
+                           ("audio_tracks", audio_tracks),
+                           ("text_tracks", text_tracks),
+                           ("other_tracks", other_tracks)]:
+            metadata[key] = value
+            metadata[key.rstrip('s') + "_count"] = len(value) # Add track count to metadata
+
         # Create sections
         sections = []
-        
+
         # Add general info section
-        if general_info:
-            sections.append({
-                'type': 'general_info',
-                'content': general_info
-            })
-        
-        # Add video tracks section
-        if video_tracks:
-            sections.append({
-                'type': 'video_tracks',
-                'content': video_tracks
-            })
-        
-        # Add audio tracks section
-        if audio_tracks:
-            sections.append({
-                'type': 'audio_tracks',
-                'content': audio_tracks
-            })
-        
-        # Add text tracks section
-        if text_tracks:
-            sections.append({
-                'type': 'text_tracks',
-                'content': text_tracks
-            })
-        
-        # Add other tracks section
-        if other_tracks:
-            sections.append({
-                'type': 'other_tracks',
-                'content': other_tracks
-            })
-        
+        for type_, content in [('general_info', general_info),
+                               ('video_tracks', video_tracks), # Add video tracks section
+                               ('audio_tracks', audio_tracks), # Add audio tracks section
+                               ('text_tracks', text_tracks),  # Add text tracks section
+                               ('other_tracks', other_tracks)]: # Add other tracks section
+            if content:
+                sections.append({
+                    'type': type_,
+                    'content': content,
+                })
+
         # Add thumbnail section - use the video processor if available
         if self.video_processor_available and hasattr(self, 'video_processor_available'):
             try:

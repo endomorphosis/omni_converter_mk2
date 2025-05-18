@@ -86,11 +86,11 @@ class ContentExtractor:
         }
         
         return capabilities
-    
+
     def register_format_handler(self, format_name: str, handler_name: str) -> None:
         """
         Register a format handler.
-        
+
         Args:
             format_name: The format to register.
             handler_name: The name of the handler to register for the format.

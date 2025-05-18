@@ -222,7 +222,7 @@ startxref
     
     def test_capabilities(self):
         """Test that the handler reports its capabilities correctly."""
-        capabilities = self.handler.get_capabilities()
+        capabilities = self.handler.capabilities
         self.assertEqual(capabilities["handler_name"], "ApplicationHandler")
         self.assertEqual(set(capabilities["supported_formats"]), 
                          {"pdf", "json", "docx", "xlsx", "zip"})

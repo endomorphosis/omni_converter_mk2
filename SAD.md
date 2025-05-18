@@ -200,7 +200,7 @@ classDiagram
         -OutputFormatter formatter
         -ErrorHandler error_handler
         +process_file(file_path, output_path, options) Result
-        +get_pipeline_status() Status
+        +status Status
         +register_listeners(listener) void
     }
 
@@ -232,14 +232,14 @@ classDiagram
         -list normalizers
         +normalize_text(content) NormalizedContent
         +register_normalizer(normalizer) void
-        +get_applied_normalizers() list
+        +applied_normalizers list
     }
 
     class OutputFormatter {
         -dict output_formats
         -str default_format
         +format_output(content, format, options) FormattedOutput
-        +get_available_formats() list
+        +available_formats list
         +register_format(format, formatter) void
     }
 
@@ -339,7 +339,7 @@ classDiagram
         <<interface>>
         +can_handle(file_path, format) bool
         +extract_content(file_path, options) Content
-        +get_capabilities() dict
+        +capabilities dict
     }
 
     class ServiceFormatHandler {
@@ -349,7 +349,7 @@ classDiagram
         #dict capabilities
         +can_handle(file_path, format) bool
         +extract_content(file_path, options) Content
-        +get_capabilities() dict
+        +capabilities dict
         #validate_input(file_path) ValidationResult
         #do_extraction(file_path, options) Content
     }

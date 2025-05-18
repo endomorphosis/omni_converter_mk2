@@ -5,12 +5,15 @@ Omni-Converter: Convert various file formats to plaintext.
 
 This is the main entry point for the Omni-Converter application.
 """
-
+import argparse
+from datetime import datetime
 import os
 import sys
-import argparse
+from typing import Any, Dict, Optional
+
+
 import tqdm
-from typing import List, Optional, Dict, Any
+
 
 from utils.configs import configs
 from utils.logger import logger
@@ -63,13 +66,13 @@ def parse_arguments() -> argparse.Namespace:
                         help="Continue processing batch if errors occur (default: True)")
     parser.add_argument("--skip-security", action="store_true", default=False,
                         help="Skip security validation for faster processing")
-    
+
     # Resource options
     parser.add_argument("--max-cpu", type=float, default=None,
                         help="Maximum CPU usage percentage (0-100)")
     parser.add_argument("--max-memory", type=int, default=None,
                         help="Maximum memory usage in MB")
-    
+
     # Information options
     parser.add_argument("-l", "--list-formats", action="store_true",
                         help="List supported formats and exit")
@@ -90,10 +93,8 @@ def parse_arguments() -> argparse.Namespace:
 def list_supported_formats() -> None:
     """List all supported formats."""
     # Format the handler capabilities
-    print("Omni-Converter Supported Formats:")
-    print("=================================")
-    print()
-    
+    print("Omni-Converter Supported Formats\n===============================\n\n")
+
     # Get formats grouped by category from the registry
     categories = format_registry.get_formats_by_category()
     
@@ -109,15 +110,15 @@ def show_version() -> None:
     """Show version information."""
     from __version__ import __version__
     print(f"Omni-Converter version {__version__}")
-    print("By Kyle Rose")
-    print("MIT 2025")
+    print("By Kyle Rose, Claude 3.7 Sonnet")
+    print(f"MIT {datetime.now().year}")
     print("\nImplementation Status:")
     print("- Text formats: Fully implemented (HTML, XML, Plain text, CSV, Calendar)")
     print("- Image formats: Fully implemented (JPEG, PNG, GIF, WebP, SVG)")
     print("- Application formats: Fully implemented (PDF, JSON, DOCX, XLSX, ZIP)")
     print("- Audio formats: Fully implemented (MP3, WAV, OGG, FLAC, AAC)")
     print("- Video formats: Fully implemented (MP4, WebM, AVI, MKV, MOV)")
-    print("\nSee IMPLEMENTATION_STATUS.md for detailed status report.")
+    print("\nSee ROADMAP.md for detailed status report.")
 
 
 def process_file(input_path: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> bool:
@@ -272,26 +273,22 @@ def process_directory(
 
 def list_normalizers() -> None:
     """List all available text normalizers."""
-    print("Omni-Converter Text Normalizers:")
-    print("===============================")
-    print()
-    
-    normalizers = processing_pipeline.normalizer.get_applied_normalizers()
-    
+    print("Omni-Converter Text Normalizers\n===============================\n\n")
+
+    normalizers = processing_pipeline.normalizer.applied_normalizers
+
     for normalizer in sorted(normalizers):
         print(f"- {normalizer}")
-    
+
     print("\nUse --normalizers option to specify which normalizers to apply.")
     print("Example: --normalizers whitespace,line_endings")
 
 
 def list_output_formats() -> None:
     """List all available output formats."""
-    print("Omni-Converter Output Formats:")
-    print("============================")
-    print()
-    
-    formats = processing_pipeline.formatter.get_available_formats()
+    print("Omni-Converter Output Formats\n============================\n\n")
+
+    formats = processing_pipeline.formatter.available_formats
     
     for fmt in sorted(formats):
         print(f"- {fmt}")

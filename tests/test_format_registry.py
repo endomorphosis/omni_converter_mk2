@@ -36,8 +36,9 @@ class MockHandler(FormatHandler):
             source_format=file_path.split(".")[-1],
             source_path=file_path
         )
-    
-    def get_capabilities(self):
+
+    @property
+    def capabilities(self):
         """Get the capabilities of this handler."""
         return {
             "handler_name": self.name,

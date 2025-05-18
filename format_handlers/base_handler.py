@@ -92,9 +92,10 @@ class FormatHandler(ABC):
             Exception: If an error occurs during extraction.
         """
         pass
-    
+
+    @property
     @abstractmethod
-    def get_capabilities(self) -> Dict[str, Any]:
+    def capabilities(self) -> Dict[str, Any]:
         """
         Get the capabilities of this handler.
         
@@ -132,7 +133,7 @@ class BaseFormatHandler(FormatHandler):
         """
         self.handler_name = handler_name
         self.supported_formats = supported_formats
-        self.capabilities = capabilities
+        self._capabilities = capabilities
     
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -181,7 +182,8 @@ class BaseFormatHandler(FormatHandler):
         # Extract content
         return self.do_extraction(file_path, options or {})
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    @property
+    def capabilities(self) -> Dict[str, Any]:
         """
         Get the capabilities of this handler.
         
@@ -191,7 +193,7 @@ class BaseFormatHandler(FormatHandler):
         return {
             'handler_name': self.handler_name,
             'supported_formats': list(self.supported_formats),
-            **self.capabilities
+            **self._capabilities
         }
     
     def validate_input(self, file_path: str) -> bool:

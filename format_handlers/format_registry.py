@@ -53,7 +53,7 @@ class FormatRegistry:
         Args:
             handler: The handler to register.
         """
-        capabilities = handler.get_capabilities()
+        capabilities = handler.capabilities
         handler_name = capabilities.get('handler_name')
         
         if not handler_name:
@@ -223,9 +223,8 @@ class FormatRegistry:
             handler = self.handlers.get(handler_name)
             if not handler:
                 continue
-            
-            capabilities = handler.get_capabilities()
-            category = capabilities.get('category', 'unknown')
+
+            category = handler.capabilities.get('category', 'unknown')
             
             if category not in categories:
                 categories[category] = []

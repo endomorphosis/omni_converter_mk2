@@ -10,12 +10,12 @@ import inspect
 from typing import Any, Callable, Coroutine, Optional
 
 
-from logger import logger
+from utils.logger import logger
 
 
 def try_except(func: Callable = lambda x: x, 
                raise_: bool = None,
-               exception_type: Exception = Exception, 
+               exception_type: Exception | tuple[Exception,...] = Exception, 
                msg: str = "An unexpected exception occurred",
                default_return: Optional[Any] = None
                ) -> Callable:

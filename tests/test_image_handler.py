@@ -126,10 +126,10 @@ class TestImageHandler(unittest.TestCase):
         Test that the ImageHandler reports its capabilities correctly.
         
         Verifies that the handler provides accurate information about its name,
-        supported formats, and category through the get_capabilities() method.
+        supported formats, and category through the capabilities method.
         This ensures the handler properly identifies itself within the format registry system.
         """
-        capabilities = self.handler.get_capabilities()
+        capabilities = self.handler.capabilities
         self.assertEqual(capabilities["handler_name"], "ImageHandler")
         self.assertEqual(set(capabilities["supported_formats"]), 
                          {"jpeg", "png", "gif", "webp", "svg"})

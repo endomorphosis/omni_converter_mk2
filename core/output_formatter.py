@@ -256,8 +256,9 @@ class OutputFormatter:
         
         self.output_formats[format_name] = formatter
         logger.debug(f"Registered output format: {format_name}")
-    
-    def get_available_formats(self) -> List[str]:
+
+    @property
+    def available_formats(self) -> List[str]:
         """
         Get the available output formats.
         

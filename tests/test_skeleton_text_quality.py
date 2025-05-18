@@ -13,6 +13,11 @@ import unittest
 from datetime import datetime
 from typing import Dict, List, Any, Union, Tuple, Optional
 
+
+from nltk.translate.bleu_score import sentence_bleu
+import string
+
+
 from core.processing_pipeline import processing_pipeline
 from utils.validator import BasicValidator
 
@@ -231,6 +236,7 @@ class TextQualityTest(unittest.TestCase):
                     match = re.search(general_pattern, content, re.MULTILINE | re.DOTALL)
                     if match:
                         return match.group(1).strip()
+
             except Exception as e:
                 print(f"Warning: Could not read group ground truth file: {e}")
                 
@@ -659,6 +665,71 @@ class TextQualityTest(unittest.TestCase):
         Returns:
             Dictionary with quality metrics
         """
+        # Calculate BLEU and ROUGE-L scores using actual NLP libraries
+        metrics = {}
+        
+        # Calculate BLEU score if NLTK is available
+        if self.nlp_available:
+            try:
+                # Tokenize the reference and extracted text
+                reference_tokens = self.nltk.word_tokenize(reference)
+                extracted_tokens = self.nltk.word_tokenize(extracted)
+            
+                # Calculate BLEU score (using 1-4 gram weights)
+                weights = [(1.0,), (0.5, 0.5), (0.33, 0.33, 0.33), (0.25, 0.25, 0.25, 0.25)]
+                bleu_scores = []
+            
+                for weight in weights:
+                    bleu_score = sentence_bleu([reference_tokens], extracted_tokens, weights=weight)
+                    bleu_scores.append(bleu_score)
+            
+                # Average the scores for different n-gram weights
+                metrics['bleu'] = sum(bleu_scores) / len(bleu_scores)
+            except Exception as e:
+                print(f"Error calculating BLEU score: {e}")
+                # Fallback to simpler approximation
+                metrics['bleu'] = self._simple_bleu_approximation(reference, extracted)
+        else:
+            # Fallback to simpler approximation if NLTK is not available
+            metrics['bleu'] = self._simple_bleu_approximation(reference, extracted)
+        
+        # Calculate ROUGE-L score if Rouge is available
+        if self.rouge_available:
+            try:
+                # Normalize inputs for Rouge (remove extra whitespace)
+                reference_norm = ' '.join(reference.split())
+                extracted_norm = ' '.join(extracted.split())
+                
+                # Skip empty texts
+                if reference_norm and extracted_norm:
+                    # Calculate ROUGE scores
+                    rouge_scores = self.rouge.get_scores(extracted_norm, reference_norm)[0]
+                    
+                    # Extract ROUGE-L F1 score
+                    metrics['rouge_l'] = rouge_scores['rouge-l']['f']
+                else:
+                    metrics['rouge_l'] = 0.0
+            except Exception as e:
+                print(f"Error calculating ROUGE-L score: {e}")
+                # Fallback to simpler approximation
+                metrics['rouge_l'] = self._simple_rouge_approximation(reference, extracted)
+        else:
+            # Fallback to simpler approximation if Rouge is not available
+            metrics['rouge_l'] = self._simple_rouge_approximation(reference, extracted)
+        
+        # Calculate structural similarity for text and application categories
+        if category in ['text', 'application']:
+            metrics['structural'] = self._calculate_structural_similarity(reference, extracted)
+        
+        return metrics
+        
+
+        
+
+        
+
+        
+
         # In a real implementation, we would calculate actual BLEU, ROUGE-L scores
         # using libraries like nltk, rouge, etc.
         # Here we'll simulate the scores based on the modification types

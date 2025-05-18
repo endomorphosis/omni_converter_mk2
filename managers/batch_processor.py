@@ -551,7 +551,7 @@ class BatchProcessor:
         Returns:
             A dictionary with the current status.
         """
-        pipeline_status = self.pipeline.get_pipeline_status()
+        pipeline_status = self.pipeline.status
         resource_status = self.resource_monitor.get_current_usage()
         error_stats = self.error_handler.get_error_statistics()
         

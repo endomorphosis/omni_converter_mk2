@@ -73,8 +73,9 @@ class ProcessingResult:
             'content_hash': self.content_hash,
             'timestamp': self.timestamp.isoformat()
         }
-    
-    def get_error_string(self) -> str:
+
+    @property
+    def error_string(self) -> str:
         """
         Get the errors as a formatted string.
         
@@ -98,6 +99,6 @@ class ProcessingResult:
             f"Processing {self.file_path} - {status}\n"
             f"Output: {self.output_path or 'None'}\n"
             f"Format: {self.format or 'Unknown'}\n"
-            f"Errors: {self.get_error_string()}\n"
+            f"Errors: {self.error_string}\n"
             f"Timestamp: {self.timestamp.isoformat()}"
         )

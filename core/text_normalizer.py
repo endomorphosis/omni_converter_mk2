@@ -78,9 +78,7 @@ class TextNormalizer:
         text = text.replace("\t", "    ")
         
         # Replace multiple spaces with a single space
-        text = re.sub(r" {2,}", " ", text)
-        
-        return text
+        return re.sub(r" {2,}", " ", text)
     
     def _normalize_line_endings(self, text: str) -> str:
         """
@@ -93,10 +91,7 @@ class TextNormalizer:
             The normalized text.
         """
         # Replace all types of line endings with Unix-style line endings
-        text = text.replace("\r\n", "\n")
-        text = text.replace("\r", "\n")
-        
-        return text
+        return text.replace("\r\n", "\n").replace("\r", "\n")
     
     def _normalize_empty_lines(self, text: str) -> str:
         """
@@ -109,9 +104,7 @@ class TextNormalizer:
             The normalized text.
         """
         # Replace three or more consecutive newlines with two newlines
-        text = re.sub(r"\n{3,}", "\n\n", text)
-        
-        return text
+        return re.sub(r"\n{3,}", "\n\n", text)
     
     def _normalize_unicode(self, text: str) -> str:
         """
@@ -125,14 +118,13 @@ class TextNormalizer:
         """
         # Replace non-breaking spaces with regular spaces
         text = text.replace("\u00A0", " ")
-        
-        # Replace various dash characters with a standard dash
-        text = re.sub(r"[\u2012-\u2015]", "-", text)
-        
-        # Replace various quote characters with standard quotes
-        text = re.sub(r"[\u2018\u2019]", "'", text)
-        text = re.sub(r"[\u201C\u201D]", '"', text)
-        
+
+        for pattern, repl in [ # TODO - Validate this.
+            (r"[\u2012-\u2015]", "-"), # Replace various dash characters with a standard dash
+            (r"[\u2018\u2019]", "'"),  # Replace various quote characters with standard quote
+            (r"[\u201C\u201D]", '"'),  # Horizontal bar
+        ]:
+            text = re.sub(pattern, repl, text)
         return text
     
     def normalize_text(self, content: Content, normalizers: Optional[List[str]] = None) -> NormalizedContent:
@@ -197,8 +189,9 @@ class TextNormalizer:
         
         self.normalizers[name] = normalizer
         logger.debug(f"Registered normalizer: {name}")
-    
-    def get_applied_normalizers(self) -> List[str]:
+
+    @property
+    def applied_normalizers(self) -> List[str]:
         """
         Get the names of all registered normalizers.
         

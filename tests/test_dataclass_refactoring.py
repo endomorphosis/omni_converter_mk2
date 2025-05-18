@@ -125,10 +125,10 @@ class TestProcessingResultCompatibility(unittest.TestCase):
     def test_get_error_string(self):
         """Test formatting errors as a string."""
         # No errors
-        self.assertEqual(self.success_result.get_error_string(), "No errors")
+        self.assertEqual(self.success_result.error_string, "No errors")
         
         # One error
-        self.assertEqual(self.failure_result.get_error_string(), "- File format not supported")
+        self.assertEqual(self.failure_result.error_string, "- File format not supported")
         
         # Multiple errors
         result = ProcessingResult(
@@ -137,7 +137,7 @@ class TestProcessingResultCompatibility(unittest.TestCase):
             errors=["Error 1", "Error 2", "Error 3"]
         )
         expected = "- Error 1\n- Error 2\n- Error 3"
-        self.assertEqual(result.get_error_string(), expected)
+        self.assertEqual(result.error_string, expected)
     
     def test_string_representation(self):
         """Test string representation of the result."""
