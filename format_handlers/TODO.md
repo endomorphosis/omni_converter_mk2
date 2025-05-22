@@ -54,13 +54,13 @@ This document tracks the tasks and issues related to implementing Inversion of C
 ## Remaining Tasks
 
 - [ ] Update remaining format handlers to use the new IoC pattern
-  - [ ] Refactor `video_handler.py` to use the new pattern
+  - [x] Refactor `video_handler.py` to use the new pattern
   - [ ] Refactor `application_handler.py` to use the new pattern
 
 - [ ] Create additional processor modules for remaining dependencies
-  - [ ] Create pymediainfo_processor.py for video metadata extraction
-  - [ ] Create cv2_processor.py for video frame extraction
-  - [ ] Create ffmpeg_processor.py for video processing
+  - [x] Create pymediainfo_processor.py for video metadata extraction
+  - [x] Create cv2_processor.py for video frame extraction
+  - [x] Create ffmpeg_processor.py for video processing
   - [ ] Create pdf_processor.py for PDF handling
   - [ ] Create docx_processor.py for DOCX handling
   - [ ] Create xlsx_processor.py for XLSX handling

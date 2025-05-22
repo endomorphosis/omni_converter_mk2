@@ -15,6 +15,7 @@ from utils.logger import logger
 from format_handlers.refactored_audio_handler import create_audio_handler
 from format_handlers.refactored_image_handler import create_image_handler
 from format_handlers.refactored_text_handler import create_text_handler
+from format_handlers.refactored_video_handler import create_video_handler
 from format_handlers.unified_handler import map_extension_to_format
 from format_handlers.refactored_format_registry import create_format_registry
 
@@ -64,6 +65,31 @@ try:
 except ImportError:
     PANDAS_AVAILABLE = False
     logger.info("pandas processor not available")
+
+# Import video processor modules
+try:
+    from utils.dependency_modules.pymediainfo_processor import (
+        MEDIAINFO_AVAILABLE
+    )
+except ImportError:
+    MEDIAINFO_AVAILABLE = False
+    logger.info("pymediainfo processor not available")
+
+try:
+    from utils.dependency_modules.cv2_processor import (
+        CV2_AVAILABLE
+    )
+except ImportError:
+    CV2_AVAILABLE = False
+    logger.info("OpenCV (cv2) processor not available")
+
+try:
+    from utils.dependency_modules.ffmpeg_processor import (
+        FFMPEG_AVAILABLE
+    )
+except ImportError:
+    FFMPEG_AVAILABLE = False
+    logger.info("FFmpeg processor not available")
 
 
 def initialize_processors(resources: Dict[str, Any]) -> Dict[str, Any]:
@@ -156,6 +182,66 @@ def initialize_processors(resources: Dict[str, Any]) -> Dict[str, Any]:
         logger.warning("pandas not available, using basic CSV processing")
         processors["csv_processor"] = None
     
+    # === Video Processors ===
+    
+    # pymediainfo processor
+    if MEDIAINFO_AVAILABLE:
+        from utils.dependency_modules.pymediainfo_processor import (
+            extract_metadata,
+            generate_text_description,
+            process_video_metadata,
+            is_available as mediainfo_is_available
+        )
+        processors["pymediainfo_processor"] = {
+            "extract_metadata": extract_metadata,
+            "generate_text_description": generate_text_description,
+            "process_video_metadata": process_video_metadata,
+            "is_available": mediainfo_is_available
+        }
+    else:
+        logger.warning("pymediainfo not available, video metadata extraction will be limited")
+        processors["pymediainfo_processor"] = None
+    
+    # OpenCV processor
+    if CV2_AVAILABLE:
+        from utils.dependency_modules.cv2_processor import (
+            get_video_properties,
+            extract_frame,
+            extract_multiple_frames,
+            process_video_frames,
+            is_available as cv2_is_available
+        )
+        processors["cv2_processor"] = {
+            "get_video_properties": get_video_properties,
+            "extract_frame": extract_frame,
+            "extract_multiple_frames": extract_multiple_frames,
+            "process_video_frames": process_video_frames,
+            "is_available": cv2_is_available
+        }
+    else:
+        logger.warning("OpenCV (cv2) not available, frame extraction will be limited")
+        processors["cv2_processor"] = None
+    
+    # FFmpeg processor
+    if FFMPEG_AVAILABLE:
+        from utils.dependency_modules.ffmpeg_processor import (
+            extract_thumbnail,
+            extract_multiple_frames as ffmpeg_extract_frames,
+            get_video_info,
+            process_video_file as ffmpeg_process_video,
+            is_available as ffmpeg_is_available
+        )
+        processors["ffmpeg_processor"] = {
+            "extract_thumbnail": extract_thumbnail,
+            "extract_multiple_frames": ffmpeg_extract_frames,
+            "get_video_info": get_video_info,
+            "process_video_file": ffmpeg_process_video,
+            "is_available": ffmpeg_is_available
+        }
+    else:
+        logger.warning("FFmpeg not available, video processing will be limited")
+        processors["ffmpeg_processor"] = None
+    
     return processors
 
 
@@ -182,8 +268,8 @@ def create_all_handlers(resources: Optional[Dict[str, Any]] = None, configs: Opt
         "audio": create_audio_handler,
         "image": create_image_handler,
         "text": create_text_handler,
+        "video": create_video_handler,
         # TODO Add other handlers as they are refactored
-        # "video": create_video_handler,
         # "application": create_application_handler,
     }
     

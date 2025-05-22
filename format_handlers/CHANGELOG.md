@@ -42,6 +42,11 @@
   - Added processor modules for third-party libraries: PIL, pytesseract, lxml, BeautifulSoup, etc.
   - Implemented placeholder modules for unavailable dependencies
   - Made all dependencies explicit and swappable via resource dictionary
+- Created `refactored_video_handler.py` following the IoC pattern
+  - Extracted pymediainfo, OpenCV, and FFmpeg dependencies to dedicated modules
+  - Implemented handlers with proper fallback mechanisms
+  - Added graceful degradation for missing dependencies
+  - Used composition to combine multiple processing approaches
 
 ### Changed
 - Refactored `format_registry.py` to accept resources and configs as constructor parameters

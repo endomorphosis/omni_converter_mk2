@@ -5,6 +5,43 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-05-22
+
+### Added
+- Implemented Inversion of Control (IoC) pattern across all format handlers
+  - Created `unified_handler.py` to implement composition over inheritance
+  - Isolated third-party dependencies into dedicated processor modules
+  - Added explicit dependency injection via resources dictionary
+  - Implemented factory pattern for handler creation
+  - Created centralized format registry with injected handlers
+  - Added fail-fast approach for required resources
+  - Extracted all third-party libraries to isolated modules
+
+### Changed
+- Refactored all format handlers to use composition instead of inheritance
+  - Refactored `audio_handler.py` to use IoC pattern
+  - Refactored `image_handler.py` to use IoC pattern
+  - Refactored `text_handler.py` to use IoC pattern
+  - Refactored `video_handler.py` to use IoC pattern
+  - Updated factory.py to centralize handler creation
+  - Preserved backward compatibility throughout refactoring
+  - Moved obsolete code to deprecated/ directory instead of deleting
+
+### Technical Details
+- Created dedicated processor modules in utils/dependency_modules/
+  - PIL and SVG processors for image handling
+  - pytesseract processor for OCR functionality
+  - beautiful_soup_processor for HTML processing
+  - lxml_processor for XML processing
+  - icalendar_processor for calendar file handling
+  - csv_processor for CSV handling
+  - pymediainfo_processor for video metadata extraction
+  - cv2_processor for video frame extraction 
+  - ffmpeg_processor for video processing
+- Implemented fail-fast approach for dependencies
+- Improved testability with swappable components
+- Enhanced code maintainability with decoupled dependencies
+
 ## [1.9.0] - 2025-03-23
 
 ### Added
