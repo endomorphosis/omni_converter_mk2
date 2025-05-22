@@ -24,7 +24,7 @@ Modules:
     validator: File validation with configurable rules.
         - BasicValidator: Validates files for processing with security checks.
         - ValidationResult: Contains validation status, errors, and metadata.
-        
+
 Implementation Status:
     These modules implement functionality described in the following class groups from the
     System Architecture Document:

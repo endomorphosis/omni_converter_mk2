@@ -15,6 +15,8 @@ from utils.logger import logger
 from utils.format_detector import format_detector
 from format_handlers.base_handler import BaseFormatHandler, Content
 from format_handlers.processors.audio_processor import whisper_processor
+from .constants import Constants
+
 
 # Import pydub for audio processing (will be installed via requirements.txt)
 try:

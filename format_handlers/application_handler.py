@@ -70,18 +70,18 @@ class ApplicationHandler(BaseFormatHandler):
             
             # Override format detection based on file extension if needed
             _, ext = os.path.splitext(file_path)
-            ext = ext.lower().lstrip('.')
-            
+
             # Handle special cases
-            if ext == 'json':
-                format_name = 'json'
-            elif ext == 'docx':
-                format_name = 'docx'
-            elif ext == 'xlsx':
-                format_name = 'xlsx'
-            elif ext == 'zip':
-                format_name = 'zip'
-        
+            match ext.lower().lstrip('.'):
+                case 'json' | 'jsonl':
+                    format_name = 'json'
+                case 'xlsx' | 'xlsx':
+                    format_name = 'xlsx'
+                case 'docx':
+                    format_name = 'docx'
+                case 'zip':
+                    format_name = 'zip'
+
         if not format_name or format_name not in self.supported_formats:
             raise ValueError(f"Unsupported format: {format_name}")
         
@@ -110,9 +110,8 @@ class ApplicationHandler(BaseFormatHandler):
             return content
             
         except Exception as e:
-            logger.error(f"Error extracting content from {format_name} file: {file_path}", 
-                        {'error': str(e)})
-            raise
+            logger.error(f"Error extracting content from {format_name} file: {file_path}\n{e}") 
+            raise e
     
     def _parse_pdf(self, data: bytes, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """

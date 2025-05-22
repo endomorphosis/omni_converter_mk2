@@ -148,6 +148,5 @@ class BasicValidator:
         result = self.validate_file(file_path, format_name)
         return result.errors
 
-
 # Global validator instance
 validator = BasicValidator()

@@ -118,7 +118,7 @@ class TestErrorHandler(unittest.TestCase):
         self.error_handler.handle_error(ValueError("Error 3"))
         
         # Get statistics
-        stats = self.error_handler.get_error_statistics()
+        stats = self.error_handler.error_statistics
         
         # Check statistics
         self.assertEqual(stats["total_errors"], 3)
@@ -184,19 +184,19 @@ class TestErrorHandler(unittest.TestCase):
     def test_has_errors(self):
         """Test checking if errors have been handled."""
         # Initially there are no errors
-        self.assertFalse(self.error_handler.has_errors())
+        self.assertFalse(self.error_handler.has_errors)
         
         # Add an error
         self.error_handler.handle_error("Test error")
         
         # Now there should be errors
-        self.assertTrue(self.error_handler.has_errors())
+        self.assertTrue(self.error_handler.has_errors)
         
         # Reset counters
         self.error_handler.reset_error_counters()
         
         # Now there should be no errors again
-        self.assertFalse(self.error_handler.has_errors())
+        self.assertFalse(self.error_handler.has_errors)
     
     def test_get_error_count(self):
         """Test getting error counts."""

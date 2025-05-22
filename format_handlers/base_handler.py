@@ -46,7 +46,7 @@ class Content(BaseModel):
         data = self.model_dump()
         data['extraction_time'] = self.extraction_time.isoformat()
         return data
-    
+
     class Config:
         """Pydantic configuration."""
         arbitrary_types_allowed = True
@@ -146,9 +146,9 @@ class BaseFormatHandler(FormatHandler):
         Returns:
             True if this handler can process the file, False otherwise.
         """
-        
         # If format is provided, check if it's supported
         logger.debug(f"Checking if handler '{self.handler_name}' can handle file: {file_path}\nformat_name: {format_name}")
+
         if format_name:
             # If format is provided, check against supported formats
             logger.debug(f"Handler '{self.handler_name}' supports formats: {self.supported_formats}")

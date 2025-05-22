@@ -179,7 +179,7 @@ classDiagram
     class InterfaceFactory {
         +create_cli() CommandLineInterface
         +create_api() PythonAPI
-        +get_config_manager() Configs
+        +configs Configs
     }
 
     InterfaceFactory --> CommandLineInterface : creates
@@ -274,20 +274,20 @@ classDiagram
         -bool continue_on_error
         +process_batch(file_paths, output_dir, options) BatchResult
         +cancel_processing() void
-        +get_processing_status() BatchStatus
+        +processing_status BatchStatus
         +set_max_batch_size(size) void
         +set_continue_on_error(flag) void
     }
 
     class ResourceMonitor {
-        -float cpu_limit
+        -float cpu_limit_percent
         -int memory_limit
         -dict current_usage
         -bool active_monitoring
         +start_monitoring() void
         +stop_monitoring() void
-        +get_current_usage() dict
-        +is_resource_available() bool
+        +current_usage dict
+        +is_resource_available bool
         +set_resource_limits(cpu, memory) void
     }
 
@@ -298,7 +298,7 @@ classDiagram
         -bool suppress_errors
         +handle_error(error, context) void
         +log_error(error, context) void
-        +get_error_statistics() dict
+        +error_statistics dict
         +reset_error_counters() void
         +set_error_suppression(flag) void
     }

@@ -6,9 +6,13 @@ This module provides the SecurityManager class for security validation and conte
 
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+
 from pydantic import BaseModel, Field
 
+
+from utils.configs import configs, Configs
 from utils.logger import logger
 from format_handlers.base_handler import Content
 from core.validation_result import ValidationResult
@@ -30,11 +34,11 @@ class SecurityResult(BaseModel):
     issues: List[str] = Field(default_factory=list)
     risk_level: str = "low"
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert to a dictionary.
-        
+
         Returns:
             A dictionary representation of the security result.
         """
@@ -79,48 +83,27 @@ class SecurityManager:
         security_rules (Dict[str, Any]): Security rules for validation and sanitization.
     """
     
-    def __init__(self):
+    def __init__(self, 
+                resources: Dict[str, Callable] = None, 
+                configs: Configs = None
+                ) -> None:
         """Initialize a security manager."""
-        # Default file size limits (in bytes)
-        self.file_size_limits = {
-            "default": 100 * 1024 * 1024,  # 100 MB general limit
-            "text": 10 * 1024 * 1024,      # 10 MB for text files
-            "image": 50 * 1024 * 1024,     # 50 MB for images
-            "audio": 100 * 1024 * 1024,    # 100 MB for audio
-            "video": 500 * 1024 * 1024,    # 500 MB for video
-            "application": 100 * 1024 * 1024,  # 100 MB for applications
-        }
-        
+        self.configs = configs
+        self.resources = resources
+
+        self._dangerous_patterns:          list[re.Pattern] = self.resources['dangerous_patterns']
+        self._executable_extensions:       list[str] = self.resources['executable_extensions']
+        self._file_size_limits:            dict[str, int] = self.resources['file_size_limits_in_bytes']
+        self._format_names:                dict[str, list[str]] = self.resources['format_names']
+        self._pii_detection:               list[tuple[re.Pattern, str]] = self.resources['pii_detection_regex']
+        self._remove_active_content_regex: list[re.Pattern] = self.resources['remove_active_content_regex']
+        self._remove_scripts_regex:        list[re.Pattern] = self.resources['remove_scripts_regex']
+        self._security_rules:              dict[str, Any] = self.resources['security_rules']
+        self._sensitive_keys:              list[str] = self.resources['sensitive_keys']
+
         # All formats are allowed by default
         self.allowed_formats = []  # Empty means all formats are allowed
-        
-        # Security rules
-        self.security_rules = {
-            "reject_executable": True,
-            "reject_encrypted": True,
-            "reject_password_protected": True,
-            "max_compression_ratio": 100,  # Reject files with compression ratio > 100:1
-            "sanitize_content": True,
-            "remove_scripts": True,
-            "remove_active_content": True,
-            "remove_personal_data": True,
-            "remove_metadata": False,  # We generally want to keep metadata
-        }
-        
-        # Patterns for dangerous content
-        self._dangerous_patterns = [
-            r"<script.*?>.*?</script>",
-            r"javascript:",
-            r"vbscript:",
-            r"<iframe.*?>.*?</iframe>",
-            r"eval\s*\(",
-            r"document\.write\s*\(",
-            r"<object.*?>.*?</object>",
-            r"<embed.*?>.*?</embed>",
-            r"<applet.*?>.*?</applet>",
-            r"<form.*?>.*?</form>"
-        ]
-    
+
     def validate_security(self, file_path: str, format_name: Optional[str] = None) -> SecurityResult:
         """
         Validate the security of a file.
@@ -136,7 +119,7 @@ class SecurityManager:
         is_safe = True
         risk_level = "low"
         metadata = {"file_path": file_path, "format": format_name}
-        
+
         try:
             # Check if file exists
             if not os.path.exists(file_path):
@@ -144,29 +127,28 @@ class SecurityManager:
                 return SecurityResult(is_safe=False, issues=issues, risk_level="high", metadata=metadata)
             
             # Get file size
-            file_size = os.path.getsize(file_path)
-            metadata["file_size"] = file_size
+            metadata["file_size"] = file_size = os.path.getsize(file_path)
             
             # Check file size limits
             category_limit = None
             if format_name:
                 # Try to get category from format name
                 category = None
-                if format_name in ["html", "xml", "plain", "csv", "calendar"]:
+                if format_name in self._format_names["text"]:
                     category = "text"
-                elif format_name in ["jpeg", "png", "gif", "webp", "svg"]:
+                elif format_name in self._format_names["image"]:
                     category = "image"
-                elif format_name in ["mp3", "wav", "ogg", "flac", "aac"]:
+                elif format_name in self._format_names["audio"]:
                     category = "audio"
-                elif format_name in ["mp4", "webm", "avi", "mkv", "mov"]:
+                elif format_name in self._format_names["video"]:
                     category = "video"
-                elif format_name in ["pdf", "json", "docx", "xlsx", "zip"]:
+                elif format_name in self._format_names["application"]:
                     category = "application"
                 
                 if category:
-                    category_limit = self.file_size_limits.get(category)
+                    category_limit = self._file_size_limits[category]
             
-            size_limit = category_limit or self.file_size_limits.get("default")
+            size_limit = category_limit or self._file_size_limits["default"]
             
             if file_size > size_limit:
                 issues.append(f"File size {file_size} bytes exceeds limit of {size_limit} bytes")
@@ -180,13 +162,15 @@ class SecurityManager:
                 risk_level = "medium"
             
             # Check for executable files
-            if self.security_rules["reject_executable"] and self._is_executable(file_path):
+            if self._security_rules["reject_executable"] and self._is_executable(file_path):
                 issues.append("File appears to be executable")
                 is_safe = False
                 risk_level = "high"
             
             # Additional checks for specific formats
-            if format_name == "zip" and self.security_rules["reject_encrypted"]:
+            # We want to check for storage formats like zip, tar, etc.
+            # This is because they may contain other files that might be malicious.
+            if format_name == "zip" and self._security_rules["reject_encrypted"]:
                 # Basic check for encrypted ZIP (this is not comprehensive)
                 with open(file_path, 'rb') as f:
                     header = f.read(1024)
@@ -232,7 +216,7 @@ class SecurityManager:
         Returns:
             Sanitized content.
         """
-        if not self.security_rules["sanitize_content"]:
+        if not self._security_rules["sanitize_content"]:
             # Return content as-is if sanitization is disabled
             return SanitizedContent(
                 text=content.text,
@@ -251,25 +235,25 @@ class SecurityManager:
         removed_content = {}
         
         # Apply sanitization rules
-        if self.security_rules["remove_scripts"]:
+        if self._security_rules["remove_scripts"]:
             text, script_count = self._remove_scripts(text)
             if script_count > 0:
                 applied_sanitizers.append("remove_scripts")
                 removed_content["scripts"] = script_count
         
-        if self.security_rules["remove_active_content"]:
+        if self._security_rules["remove_active_content"]:
             text, active_count = self._remove_active_content(text)
             if active_count > 0:
                 applied_sanitizers.append("remove_active_content")
                 removed_content["active_content"] = active_count
         
-        if self.security_rules["remove_personal_data"]:
+        if self._security_rules["remove_personal_data"]:
             text, pii_count = self._remove_personal_data(text)
             if pii_count > 0:
                 applied_sanitizers.append("remove_personal_data")
                 removed_content["personal_data"] = pii_count
         
-        if self.security_rules["remove_metadata"]:
+        if self._security_rules["remove_metadata"]:
             metadata, removed_keys = self._sanitize_metadata(metadata)
             if removed_keys:
                 applied_sanitizers.append("remove_metadata")
@@ -285,31 +269,21 @@ class SecurityManager:
             sanitization_applied=applied_sanitizers,
             removed_content=removed_content
         )
-    
+
     def set_security_rules(self, rules: Dict[str, Any]) -> None:
-        """
-        Set security rules.
-        
-        Args:
-            rules: Dictionary of security rules.
-        """
+        """Set the dictionary of security rules."""
         for key, value in rules.items():
-            if key in self.security_rules:
-                self.security_rules[key] = value
+            if key in self._security_rules:
+                self._security_rules[key] = value
             else:
                 logger.warning(f"Unknown security rule: {key}")
         
-        logger.info("Security rules updated", {"rules": self.security_rules})
+        logger.info("Security rules updated", {"rules": self._security_rules})
     
     def set_allowed_formats(self, formats: List[str]) -> None:
-        """
-        Set allowed formats.
-        
-        Args:
-            formats: List of allowed formats.
-        """
+        """Set the list of allowed formats."""
         self.allowed_formats = formats
-        logger.info("Allowed formats updated", {"formats": self.allowed_formats})
+        logger.info(f"Allowed formats updated '{self.allowed_formats}'")
     
     def set_file_size_limits(self, limits: Dict[str, int]) -> None:
         """
@@ -318,10 +292,10 @@ class SecurityManager:
         Args:
             limits: Dictionary of file size limits by format (in bytes).
         """
-        for key, value in limits.items():
-            self.file_size_limits[key] = value
+        for key, value in limits.items(): # TODO Add pydantic validation here.
+            self._file_size_limits[key] = value
         
-        logger.info("File size limits updated", {"limits": self.file_size_limits})
+        logger.info(f"File size limits updated to '{self._file_size_limits}'")
     
     def _is_executable(self, file_path: str) -> bool:
         """
@@ -335,17 +309,14 @@ class SecurityManager:
         """
         # Check file extension
         _, ext = os.path.splitext(file_path)
-        ext = ext.lower()
-        
-        executable_extensions = [
-            ".exe", ".com", ".bat", ".cmd", ".sh", ".ps1", ".vbs", ".js", ".jar", ".dll", ".so"
-        ]
-        
-        if ext in executable_extensions:
+
+        if ext.lower() in self._executable_extensions:
             return True
         
         # Check if file has executable permissions (Unix only)
         try:
+            if os.name == "nt":
+                return False  # Windows does not support this check. # TODO Find a way to inform the user about this.
             return os.access(file_path, os.X_OK)
         except Exception:
             return False
@@ -360,23 +331,13 @@ class SecurityManager:
         Returns:
             Tuple of (sanitized text, count of items removed).
         """
+        # Remove the following: script tags, javascript: URLs, VBScript, eval() and similar
         count = 0
-        # Remove script tags
-        new_text, script_count = re.subn(r"<script.*?>.*?</script>", "", text, flags=re.IGNORECASE | re.DOTALL)
-        count += script_count
-        
-        # Remove javascript: URLs
-        new_text, js_count = re.subn(r"javascript:[^\s\"'<>]*", "", new_text, flags=re.IGNORECASE)
-        count += js_count
-        
-        # Remove VBScript
-        new_text, vbs_count = re.subn(r"vbscript:[^\s\"'<>]*", "", new_text, flags=re.IGNORECASE)
-        count += vbs_count
-        
-        # Remove eval() and similar
-        new_text, eval_count = re.subn(r"eval\s*\([^)]*\)", "", new_text, flags=re.IGNORECASE)
-        count += eval_count
-        
+        new_text = text
+        for regex in self._remove_scripts_regex:
+            flags = re.IGNORECASE | re.DOTALL
+            new_text, removal_count = re.subn(regex, "", new_text, flags=flags)
+            count += removal_count
         return new_text, count
     
     def _remove_active_content(self, text: str) -> Tuple[str, int]:
@@ -389,28 +350,14 @@ class SecurityManager:
         Returns:
             Tuple of (sanitized text, count of items removed).
         """
+        # Remove active content like iframes, objects, embeds, applets, forms
         count = 0
         new_text = text
-        
-        # Remove iframes
-        new_text, iframe_count = re.subn(r"<iframe.*?>.*?</iframe>", "", new_text, flags=re.IGNORECASE | re.DOTALL)
-        count += iframe_count
-        
-        # Remove objects and embeds
-        new_text, obj_count = re.subn(r"<object.*?>.*?</object>", "", new_text, flags=re.IGNORECASE | re.DOTALL)
-        count += obj_count
-        
-        new_text, embed_count = re.subn(r"<embed.*?>.*?</embed>", "", new_text, flags=re.IGNORECASE | re.DOTALL)
-        count += embed_count
-        
-        # Remove applets
-        new_text, applet_count = re.subn(r"<applet.*?>.*?</applet>", "", new_text, flags=re.IGNORECASE | re.DOTALL)
-        count += applet_count
-        
-        # Remove forms
-        new_text, form_count = re.subn(r"<form.*?>.*?</form>", "", new_text, flags=re.IGNORECASE | re.DOTALL)
-        count += form_count
-        
+        for regex in self._remove_active_content_regex:
+            flags = re.IGNORECASE | re.DOTALL
+            new_text, removal_count = re.subn(regex, "", new_text, flags=flags)
+            count += removal_count
+
         return new_text, count
     
     def _remove_personal_data(self, text: str) -> Tuple[str, int]:
@@ -425,32 +372,8 @@ class SecurityManager:
         """
         count = 0
         new_text = text
-        
-        # Very basic PII detection and removal (not comprehensive)
-        patterns = [
-            # Email addresses
-            (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL REDACTED]'),
-            
-            # Phone numbers (various formats)
-            (r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b', '[PHONE REDACTED]'),
-            
-            # Social Security Numbers
-            (r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b', '[SSN REDACTED]'),
-            
-            # Credit card numbers (simplistic)
-            (r'\b(?:\d{4}[-.\s]?){3}\d{4}\b', '[CREDIT CARD REDACTED]'),
-            
-            # Dates of birth (various formats)
-            (r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b', '[DATE REDACTED]'),
-            
-            # IP addresses
-            (r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', '[IP REDACTED]'),
-            
-            # URLs (simplified)
-            (r'https?://[^\s<>"\']+', '[URL REDACTED]')
-        ]
-        
-        for pattern, replacement in patterns:
+        # Very basic PII detection and removal (not comprehensive) TODO see constants.py
+        for pattern, replacement in self._pii_detection:
             new_text, replacements = re.subn(pattern, replacement, new_text)
             count += replacements
         
@@ -468,21 +391,14 @@ class SecurityManager:
         """
         if not metadata:
             return metadata, []
-        
-        # Sensitive metadata keys to remove
-        sensitive_keys = [
-            "author", "creator", "producer", "owner", "company", "email", 
-            "phone", "address", "gps", "location", "username", "user",
-            "password", "key", "secret", "token", "api_key", "auth"
-        ]
-        
+
         removed_keys = []
         sanitized_metadata = {}
         
         for key, value in metadata.items():
             # Check if key contains sensitive information
             should_remove = False
-            for sensitive in sensitive_keys:
+            for sensitive in self._sensitive_keys:
                 if sensitive.lower() in key.lower():
                     removed_keys.append(key)
                     should_remove = True
@@ -493,6 +409,18 @@ class SecurityManager:
         
         return sanitized_metadata, removed_keys
 
+from .constants import Constants
+resources = {
+    "dangerous_patterns": Constants.SecurityManager.DANGEROUS_PATTERNS_REGEX,
+    "executable_extensions": Constants.SecurityManager.EXECUTABLE_EXTENSIONS,
+    "file_size_limits_in_bytes": Constants.SecurityManager.FILE_SIZE_LIMITS_IN_BYTES,
+    "format_names": Constants.SecurityManager.FORMAT_NAMES,
+    "pii_detection_regex": Constants.SecurityManager.PII_DETECTION_REGEX,
+    "remove_active_content_regex": Constants.SecurityManager.REMOVE_ACTIVE_CONTENT_REGEX,
+    "remove_scripts_regex": Constants.SecurityManager.REMOVE_SCRIPTS_REGEX,
+    "security_rules": Constants.SecurityManager.SECURITY_RULES,
+    "sensitive_keys": Constants.SecurityManager.SENSITIVE_KEYS
+}
 
 # Global security manager instance
-security_manager = SecurityManager()
+security_manager = SecurityManager(resources=resources, configs=configs)

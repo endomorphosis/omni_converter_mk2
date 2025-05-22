@@ -17,6 +17,9 @@ from core.output_formatter import OutputFormatter
 from core.text_normalizer import TextNormalizer
 from core.content_extractor import ContentExtractor
 from format_handlers.format_registry import FormatRegistry
+from utils.configs import configs, Configs
+from utils.format_detector import format_detector
+from utils.validator import BasicValidator
 
 # Classes being refactored
 from core.processing_result import ProcessingResult
@@ -43,9 +46,17 @@ class TestProcessingResultIntegration(unittest.TestCase):
     
     def setUp(self):
         """Set up the test environment."""
-        self.pipeline = ProcessingPipeline()
+        resources = {
+            "validator": BasicValidator(),
+            "detector": format_detector,
+            "extractor": ContentExtractor(),
+            "normalizer": TextNormalizer(),
+            "formatter": OutputFormatter()
+        }
+
+        self.pipeline = ProcessingPipeline(resources=resources,configs=configs)
         self.formatter = OutputFormatter()
-    
+
     def test_integration_with_processing_pipeline(self):
         """Test integration with the processing pipeline."""
         # Create a simple result to be passed to pipeline components

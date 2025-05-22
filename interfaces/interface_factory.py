@@ -4,11 +4,14 @@ Interface Factory for the Omni-Converter.
 This module provides a factory for creating interface instances, such as the CLI and Python API.
 This allows for centralized configuration and management of interfaces.
 """
+from typing import Any, Callable, Optional
 
-from typing import Any, Dict, Optional
 
 from utils.configs import Configs, configs
 from interfaces.python_api import PythonAPI
+
+
+
 
 
 class InterfaceFactory:
@@ -22,7 +25,10 @@ class InterfaceFactory:
         configs: The configuration manager to use for all interfaces.
     """
     
-    def __init__(self, custom_config_manager=None):
+    def __init__(self, 
+                 resources: dict[str, Callable] = None, 
+                 configs: Configs = None
+                 ):
         """
         Initialize the interface factory.
         
@@ -30,7 +36,11 @@ class InterfaceFactory:
             custom_config_manager: Custom configuration manager to use.
                 If None, the global configs will be used.
         """
-        self.configs = custom_config_manager or configs
+        self.configs = configs
+        self.resources = resources
+
+        self.python_api = self.resources['python_api']
+        self.cli = self.resources['cli']
     
     def create_cli(self):
         """
@@ -46,7 +56,7 @@ class InterfaceFactory:
             "The CLI is currently implemented directly in main.py. "
             "Use python main.py --help for CLI usage."
         )
-    
+
     def create_api(self) -> PythonAPI:
         """
         Create a Python API.
@@ -54,17 +64,14 @@ class InterfaceFactory:
         Returns:
             A PythonAPI instance with the factory's configuration manager.
         """
-        return PythonAPI(custom_config_manager=self.configs)
-    
-    def get_config_manager(self) -> Configs:
-        """
-        Get the configuration manager used by this factory.
-        
-        Returns:
-            The configuration manager instance.
-        """
-        return self.configs
-    
+        from managers.batch_processor import batch_processor
+        from managers.resource_monitor import resource_monitor
+        resources = {
+            'batch_processor': batch_processor,
+            'resource_monitor': resource_monitor,
+        }
+        return PythonAPI(resources=resources, configs=self.configs)
+
     def create_interface(self, interface_type: str, **kwargs: Any):
         """
         Create an interface of the specified type.
@@ -79,13 +86,18 @@ class InterfaceFactory:
         Raises:
             ValueError: If the interface type is not supported.
         """
-        if interface_type.lower() == 'cli':
-            return self.create_cli()
-        elif interface_type.lower() == 'api':
-            return self.create_api()
-        else:
-            raise ValueError(f"Unsupported interface type: {interface_type}")
+        match interface_type.lower():
+            case 'cli':
+                return self.create_cli()
+            case 'api':
+                return self.create_api()
+            case _:
+                raise ValueError(f"Unsupported interface type: {interface_type}")
 
+resources = {
+    'python_api': PythonAPI,
+    'cli': None,  # TODO CLI is not implemented yet
+}
 
 # Global interface factory instance
-interface_factory = InterfaceFactory()
+interface_factory = InterfaceFactory(resources=resources,configs=configs)

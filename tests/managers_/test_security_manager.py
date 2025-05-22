@@ -19,7 +19,7 @@ This test suite validates the SecurityManager component against several criteria
      preserving the essential information needed for LLM training
    - Tests verify text content is properly sanitized without removing essential information
 """
-
+import copy
 import os
 import unittest
 from unittest.mock import MagicMock, patch
@@ -28,16 +28,32 @@ import shutil
 
 from format_handlers.base_handler import Content
 from managers.security_manager import SecurityManager, SecurityResult, SanitizedContent
+from utils.configs import Configs, configs
 
+from managers.constants import Constants
+resources = { # NOTE: Since these are constants, we can use them directly
+    "dangerous_patterns": Constants.SecurityManager.DANGEROUS_PATTERNS_REGEX,
+    "executable_extensions": Constants.SecurityManager.EXECUTABLE_EXTENSIONS,
+    "file_size_limits_in_bytes": Constants.SecurityManager.FILE_SIZE_LIMITS_IN_BYTES,
+    "format_names": Constants.SecurityManager.FORMAT_NAMES,
+    "pii_detection_regex": Constants.SecurityManager.PII_DETECTION_REGEX,
+    "remove_active_content_regex": Constants.SecurityManager.REMOVE_ACTIVE_CONTENT_REGEX,
+    "remove_scripts_regex": Constants.SecurityManager.REMOVE_SCRIPTS_REGEX,
+    "security_rules": Constants.SecurityManager.SECURITY_RULES,
+    "sensitive_keys": Constants.SecurityManager.SENSITIVE_KEYS
+}
 
 class TestSecurityManager(unittest.TestCase):
     """Test the SecurityManager class."""
     
     def setUp(self):
         """Set up test fixtures."""
+        self.mock_configs = copy.deepcopy(configs) 
+        self.mock_resources = copy.deepcopy(resources)
+
         # Create a security manager
-        self.security_manager = SecurityManager()
-        
+        self.security_manager = SecurityManager(resources=self.mock_resources, configs=self.mock_configs)
+
         # Create a temp directory for test files
         self.temp_dir = tempfile.mkdtemp()
         
@@ -48,30 +64,39 @@ class TestSecurityManager(unittest.TestCase):
         
         self.large_file_path = os.path.join(self.temp_dir, "large_file.txt")
         with open(self.large_file_path, 'w') as f:
-            f.write("A" * (11 * 1024 * 1024))  # 11 MB file (exceeds text limit)
+            f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
         
         self.executable_file_path = os.path.join(self.temp_dir, "test_script.sh")
         with open(self.executable_file_path, 'w') as f:
             f.write("#!/bin/sh\necho 'Hello, world!'")
+
         # Make it executable
         os.chmod(self.executable_file_path, 0o755)
-    
+
+        # Check if the file is executable
+        if os.name == 'nt':
+            pass
+        else:
+            # On Unix-like systems, we can check if the file is executable
+            if not os.access(self.executable_file_path, os.X_OK):
+                raise PermissionError(f"File {self.executable_file_path} is not executable")
+
     def tearDown(self):
         """Clean up test fixtures."""
         # Remove temp directory
         shutil.rmtree(self.temp_dir)
-    
+
     def test_init(self):
         """Test initialization."""
-        self.assertIn("default", self.security_manager.file_size_limits)
-        self.assertIn("text", self.security_manager.file_size_limits)
-        self.assertIn("image", self.security_manager.file_size_limits)
-        self.assertIn("audio", self.security_manager.file_size_limits)
-        self.assertIn("video", self.security_manager.file_size_limits)
-        self.assertIn("application", self.security_manager.file_size_limits)
+        self.assertIn("default", self.security_manager._file_size_limits)
+        self.assertIn("text", self.security_manager._file_size_limits)
+        self.assertIn("image", self.security_manager._file_size_limits)
+        self.assertIn("audio", self.security_manager._file_size_limits)
+        self.assertIn("video", self.security_manager._file_size_limits)
+        self.assertIn("application", self.security_manager._file_size_limits)
         self.assertEqual(len(self.security_manager.allowed_formats), 0)
-        self.assertTrue(self.security_manager.security_rules["reject_executable"])
-    
+        self.assertTrue(self.security_manager._security_rules["reject_executable"])
+
     def test_security_result_init(self):
         """Test SecurityResult initialization."""
         # Create with minimal arguments
@@ -398,9 +423,9 @@ class TestSecurityManager(unittest.TestCase):
         })
         
         # Check if rules were updated
-        self.assertFalse(self.security_manager.security_rules["reject_executable"])
-        self.assertFalse(self.security_manager.security_rules["remove_scripts"])
-        self.assertNotIn("unknown_rule", self.security_manager.security_rules)
+        self.assertFalse(self.security_manager._security_rules["reject_executable"])
+        self.assertFalse(self.security_manager._security_rules["remove_scripts"])
+        self.assertNotIn("unknown_rule", self.security_manager._security_rules)
     
     def test_set_allowed_formats(self):
         """Test setting allowed formats."""
@@ -429,11 +454,11 @@ class TestSecurityManager(unittest.TestCase):
         })
         
         # Check if limits were updated
-        self.assertEqual(self.security_manager.file_size_limits["text"], 20 * 1024 * 1024)
-        self.assertEqual(self.security_manager.file_size_limits["new_category"], 30 * 1024 * 1024)
+        self.assertEqual(self.security_manager._file_size_limits["text"], 20 * 1024 * 1024)
+        self.assertEqual(self.security_manager._file_size_limits["new_category"], 30 * 1024 * 1024)
         
         # Other limits should remain unchanged
-        self.assertEqual(self.security_manager.file_size_limits["default"], 100 * 1024 * 1024)
+        self.assertEqual(self.security_manager._file_size_limits["default"], 100 * 1024 * 1024)
     
     def test_is_executable(self):
         """Test checking if a file is executable."""

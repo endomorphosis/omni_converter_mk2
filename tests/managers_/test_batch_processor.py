@@ -19,20 +19,83 @@ This test suite validates the BatchProcessor component against several criteria:
    - Tests verify security validation is properly integrated into batch processing
    - Tests ensure rejection of unsafe files during batch processing
 """
-
 import os
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import tempfile
 import shutil
+from typing import Any, Dict, List
+
+from utils.configs import configs, Configs
+from utils.logger import logger
 
 from core.processing_result import ProcessingResult
-from managers.batch_processor import BatchProcessor
+from managers.batch_processor import BatchProcessor, make_resources
 from managers.batch_result import BatchResult
 from managers.resource_monitor import ResourceMonitor
 from managers.error_handler import ErrorHandler
 from managers.security_manager import SecurityManager, SecurityResult
 
+
+# Set up dictionary-style access for resources
+def _resources_getitem(key):
+    if key == 'max_batch_size':
+        return 5
+    elif key == 'max_workers':
+        return 2
+    return MagicMock()
+
+def _processing_getitem(key):
+    if key == 'continue_on_error':
+        return True
+    elif key == 'memory_limit_mb':
+        return 6
+    return MagicMock()
+
+        # Create a resource monitor with test limits
+        # self.configs = configs
+        # self.configs.resources.memory_limit_gb = 0.5  # 500 MB
+        # self.configs.resources.cpu_limit_percent = 80.0
+        # self.configs.resources.monitoring_interval_seconds = 0.1  # Short interval for tests
+
+
+# create_mock_dataclass.py
+from dataclasses import fields
+
+
+# return_value=[MockField(name) for name in MyMock._spec_signature.parameters.keys()]
+# MockField = namedtuple('Field', ['name'
+
+def _create_dataclass_mock(obj):
+    return Mock(spec=[field.name for field in fields(obj)])
+
+def _set_return_values(mock, attr_return_mapping: dict[str, Any] | list[dict[str, Any]]):
+    """
+    Set return values for mock attributes.
+    
+    Equivalent to mock.some_property.return_value = some_value.
+    """
+    match attr_return_mapping:
+        case dict():
+            for attr, return_value in attr_return_mapping.items():
+                if hasattr(mock, attr):
+                    getattr(mock, attr).return_value = return_value
+                else:
+                    setattr(mock, attr, MagicMock(return_value=return_value))
+        case list():
+            for item in attr_return_mapping:
+                for attr, return_value in item.items():
+                    if hasattr(mock, attr):
+                        getattr(mock, attr).return_value = return_value
+                    else:
+                        setattr(mock, attr, MagicMock(return_value=return_value))
+        case _:
+            raise ValueError("attr_return_mapping must be a dict or a list of dicts")
+
+def _make_property_mock(mock: MagicMock, attr: str, return_value=None):
+    """Create a property mock for a dataclass field."""
+    setattr(mock, attr, PropertyMock(return_value=return_value))
+    return mock
 
 class TestBatchProcessor(unittest.TestCase):
     """Test the BatchProcessor class."""
@@ -46,22 +109,38 @@ class TestBatchProcessor(unittest.TestCase):
         self.mock_security_manager = MagicMock(spec=SecurityManager)
         
         # Configure resource monitor mock
-        self.mock_resource_monitor.is_resource_available.return_value = (True, None)
-        self.mock_resource_monitor.get_current_usage.return_value = {"cpu": 10.0, "memory": 100}
-        
+        type(self.mock_resource_monitor).is_resource_available = PropertyMock(return_value=(True, None))
+        self.mock_resource_monitor.current_usage.return_value = {"cpu": 10.0, "memory": 100}
+
         # Configure security manager mock
         security_result = SecurityResult(is_safe=True)
         self.mock_security_manager.validate_security.return_value = security_result
-        
+
+        self.mock_configs = configs
+        self.mock_configs.resources.max_batch_size = 5
+        self.mock_configs.resources.max_workers = 2
+
+        # self.mock_configs = MagicMock(spec=Configs)
+        # self.mock_configs.resources = MagicMock()
+        # self.mock_configs.processing = MagicMock()
+        # self.mock_configs.resources.max_batch_size.return_value = 5
+        # self.mock_configs.resources.max_workers.return_value = PropertyMock(return_value=2)
+        # self.mock_configs.processing.memory_limit_mb.return_value = PropertyMock(return_value=6)
+
+        # self.mock_configs.resources.__getitem__ = _resources_getitem
+        # self.mock_configs.processing.__getitem__ = _processing_getitem
+
+        self.mock_resources = {
+            'processing_pipeline': self.mock_pipeline,
+            'error_handler': self.mock_error_handler,
+            'resource_monitor': self.mock_resource_monitor,
+            'security_manager': self.mock_security_manager
+        }
+
         # Create batch processor with mocks
         self.batch_processor = BatchProcessor(
-            pipeline=self.mock_pipeline,
-            error_handler=self.mock_error_handler,
-            resource_monitor=self.mock_resource_monitor,
-            security_manager=self.mock_security_manager,
-            max_batch_size=5,
-            continue_on_error=True,
-            max_workers=2
+            resources=self.mock_resources,
+            configs=self.mock_configs,
         )
         
         # Create a temporary directory for test files
@@ -238,14 +317,14 @@ class TestBatchProcessor(unittest.TestCase):
     def test_process_batch_with_insufficient_resources(self):
         """Test processing with insufficient resources."""
         # Configure resource monitor to report insufficient resources
-        self.mock_resource_monitor.is_resource_available.return_value = (False, "CPU usage too high")
-        
+        type(self.mock_resource_monitor).is_resource_available = PropertyMock(return_value=(False, "CPU usage too high"))
+
         # Process the batch (should proceed despite warning)
         result = self.batch_processor.process_batch(
             file_paths=self.test_files,
             output_dir=self.output_dir
         )
-        
+
         # Check batch result - batch size is reduced to 1 due to resource constraints
         self.assertEqual(result.total_files, 1)
         self.assertEqual(result.successful_files, 1)
@@ -321,10 +400,10 @@ class TestBatchProcessor(unittest.TestCase):
         self.mock_pipeline.get_pipeline_status.return_value = {"stage": "extraction"}
         
         # Configure error stats
-        self.mock_error_handler.get_error_statistics.return_value = {"total_errors": 0}
+        self.mock_error_handler.error_statistics.return_value = {"total_errors": 0}
         
         # Get status
-        status = self.batch_processor.get_processing_status()
+        status = self.batch_processor.processing_status
         
         # Check status
         self.assertIn("pipeline", status)

@@ -4,11 +4,11 @@ Python API for the Omni-Converter.
 This module provides a programmatic interface to the Omni-Converter functionality,
 allowing Python applications to convert files to text without using the command-line interface.
 """
-
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Callable, List, Optional, Union
 
-from utils.configs import configs
+
+from utils.configs import configs, Configs
 from utils.logger import logger
 from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
@@ -28,29 +28,30 @@ class PythonAPI:
     Attributes:
         configs: The configuration manager to use.
         batch_processor: The batch processor to use.
+        resource_monitor: The resource monitor to use.
     """
     
     def __init__(
         self,
-        custom_config_manager=None,
-        custom_batch_processor=None,
-        custom_resource_monitor=None
+        resources: dict[str, Callable] = None,
+        configs: Configs = None,
     ):
         """
         Initialize the Python API.
         
         Args:
-            custom_config_manager: Custom configuration manager to use.
-                If None, the global configs will be used.
-            custom_batch_processor: Custom batch processor to use.
+            configs: Custom configuration manager to use.
+            batch processor: Custom batch processor to use.
                 If None, the global batch_processor will be used.
             custom_resource_monitor: Custom resource monitor to use.
                 If None, the global resource_monitor will be used.
         """
-        self.configs = custom_config_manager or configs
-        self.batch_processor = custom_batch_processor or batch_processor
-        self.resource_monitor = custom_resource_monitor or resource_monitor
-    
+        self.configs = configs
+        self.resources = resources
+
+        self.batch_processor = self.resources['batch_processor']
+        self.resource_monitor = self.resources['resource_monitor']
+
     def convert_file(
         self,
         file_path: str,
@@ -104,7 +105,7 @@ class PythonAPI:
             output_dir: Directory to write output files to. 
                 If None, text is still extracted but not written to files.
             options: Conversion options. If None, default options are used.
-            show_progress: Whether to show a progress bar (if in interactive environment).
+            show_progress: Whether to show a progress bar (if in interactive environment). # TODO Implement.
             
         Returns:
             A BatchResult object with the results of the batch conversion.
@@ -114,8 +115,8 @@ class PythonAPI:
             options = self._get_default_options()
         
         # Configure batch processor from options
-        if "batch_size" in options:
-            self.batch_processor.set_max_batch_size(options["batch_size"])
+        if "max_batch_size" in options:
+            self.batch_processor.set_max_batch_size(options["max_batch_size"])
         
         if "continue_on_error" in options:
             self.batch_processor.set_continue_on_error(options["continue_on_error"])
@@ -143,7 +144,7 @@ class PythonAPI:
                     memory_limit = max_reasonable_memory
             
             self.resource_monitor.set_resource_limits(
-                cpu_limit=options.get("max_cpu"),
+                cpu_limit_percent=options.get("max_cpu"),
                 memory_limit=memory_limit
             )
         
@@ -213,7 +214,7 @@ class PythonAPI:
             
             # Batch processing options
             "continue_on_error": self.configs.get_config_value("processing.continue_on_error", True),
-            "batch_size": self.configs.get_config_value("resources.batch_size", 100),
+            "max_batch_size": self.configs.get_config_value("resources.max_batch_size", 100),
             "parallel": self.configs.get_config_value("resources.parallel", False),
             "max_workers": self.configs.get_config_value("resources.max_workers", 4),
             
@@ -228,5 +229,10 @@ class PythonAPI:
         return options
 
 
+resources = {
+    "batch_processor": batch_processor,
+    "resource_monitor": resource_monitor,
+}
+
 # Create a global API instance for easy import and use
-api = PythonAPI()
+api = PythonAPI(resources=resources, configs=configs)

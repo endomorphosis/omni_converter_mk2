@@ -175,3 +175,5 @@ pytest.ini
 .pytest_cache/
 pytest-*.xml
 pytest-*/
+
+tools/

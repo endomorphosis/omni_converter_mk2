@@ -8,11 +8,22 @@ from pathlib import Path
 from typing import Any, Union
 
 
-from pydantic import BaseModel, DirectoryPath, FilePath, Field, ValidationError
+from pydantic import BaseModel, DirectoryPath, FilePath, Field, PositiveInt, PositiveFloat, ValidationError
+import psutil
 import yaml
 
 
 from utils.logger import logger
+
+def _get_cpu_cores(minus: int) -> int:
+    """
+    Get the number of CPU cores.
+
+    Returns:
+        Number of CPU cores.
+    """
+    return psutil.cpu_count(logical=False) - minus
+
 
 
 class Paths(BaseModel):
@@ -40,16 +51,16 @@ def name(e: Exception) -> str:
     """
     return type(e).__name__
 
-def getitem(cls: BaseModel, key: str) -> Union[str, int, float]:
+def getitem(self, key: str) -> Union[str, int, float]:
     try:
-        return getattr(cls, key)
+        return getattr(self, key)
     except AttributeError as e:
-        raise KeyError(f"Key '{key}' not found in configuration") from e
+        raise KeyError(f"Key '{key}' not found in configuration: {e}") from e
 
-def setitem(cls: BaseModel, key: str, value: Any) -> None:
+def setitem(self, key: str, value: Any) -> None:
     try:
-        setattr(cls, key, value)
-        cls.model_validate()
+        setattr(self, key, value)
+        self.model_validate()
     except ValidationError as e:
         raise ValueError(f"Invalid value for key '{key}': {value}") from e
     except TypeError as e:
@@ -58,10 +69,22 @@ def setitem(cls: BaseModel, key: str, value: Any) -> None:
         raise KeyError(f"Key '{key}' not found in configuration") from e
 
 class _Resources(BaseModel):
-    memory_limit_gb: float = Field(default=6, description="RAM limit in GB")
-    cpu_limit_percent: float = Field(default=80, description="CPU utilization limit percentage")
-    timeout_seconds: float = Field(default=3600, description="Timeout in seconds")
-    batch_size: int = Field(default=100, description="Maximum number of files to process in one batch")
+    memory_limit_gb: PositiveFloat = Field(default=6, description="RAM limit in GB")
+    cpu_limit_percent: PositiveFloat = Field(default=80, description="CPU utilization limit percentage")
+    timeout_seconds: PositiveFloat = Field(default=3600, description="Timeout in seconds")
+    max_batch_size: PositiveInt = Field(default=100, description="Maximum number of files to process in one batch")
+    max_workers: PositiveInt = Field(default_factory = lambda x: _get_cpu_cores(1), description="Maximum number of worker threads.") # TODO Abstract this out
+    monitoring_interval_seconds: PositiveFloat = Field(default=1.0, description="Monitoring interval in seconds")
+
+    @property
+    def memory_limit_mb(self) -> float:
+        """
+        Get the memory limit in MB.
+        
+        Returns:
+            Memory limit in MB.
+        """
+        return self.memory_limit_gb * 1024
 
 class _Formats(BaseModel):
     text: list[str] = Field(default=["html", "xml", "plain", "calendar", "csv"])
@@ -71,7 +94,7 @@ class _Formats(BaseModel):
     application: list[str] = Field(default=["pdf", "json", "zip", "docx", "xlsx"])
 
 class _Security(BaseModel):
-    max_file_size_mb: float = Field(default=100, description="Maximum file size in MB")
+    max_file_size_mb: PositiveFloat = Field(default=100, description="Maximum file size in MB")
     sandbox_enabled: bool = Field(default=True, description="Enable sandbox for file processing")
     allowed_formats: list[str] = Field(default=[], description="Empty list means all formats are allowed")
     sanitize_output: bool = Field(default=True, description="Sanitize output to remove potential security risks")
@@ -80,7 +103,7 @@ class _Processing(BaseModel):
     continue_on_error: bool = Field(default=True, description="Continue processing batch even if some files fail")
     extract_metadata: bool = Field(default=True, description="Extract metadata from files")
     normalize_text: bool = Field(default=True, description="Normalize extracted text")
-    quality_threshold: float = Field(default=0.9, description="Minimum quality score for text extraction")
+    quality_threshold: PositiveFloat = Field(default=0.9, description="Minimum quality score for text extraction")
     # TODO Add custom validators for whisper and tesseract models
     whisper_model: str = Field(default="base", description="Whisper model to use for audio processing")
     whisper_language: str = Field(default="en", description="Language for Whisper model")
@@ -91,14 +114,6 @@ class _Output(BaseModel):
     include_metadata: bool = Field(default=True, description="Include metadata in output")
     preserve_structure: bool = Field(default=True, description="Attempt to preserve document structure")
     encoding: str = Field(default="utf-8", description="Output file encoding")
-
-class Configs(BaseModel):
-    resources: _Resources = Field(default_factory=_Resources)
-    formats: _Formats = Field(default_factory=_Formats)
-    security: _Security = Field(default_factory=_Security)
-    processing: _Processing = Field(default_factory=_Processing)
-    output: _Output = Field(default_factory=_Output)
-
 
 class Configs(BaseModel):
     resources: _Resources = Field(default_factory=_Resources)
@@ -128,6 +143,29 @@ class Configs(BaseModel):
             logger.debug(f"Key '{key}' not found in configuration: {e}")
             return default
 
+    def set_config_value(self, key: str, value: Any) -> None:
+        """
+        Set a configuration value by key.
+        
+        Args:
+            key: The key to set the value for, using dot notation for nested keys.
+            value: The value to set.
+            
+        Raises:
+            KeyError: If the key is not found in the configuration.
+            ValueError: If the value is invalid for the specified key.
+        """
+        keys = key.split('.')
+        config = self
+        try:
+            for k in keys[:-1]:
+                config = getattr(config, k)
+            setattr(config, keys[-1], value)
+            config.model_validate()
+        except AttributeError as e:
+            raise KeyError(f"Key '{key}' not found in configuration") from e
+        except ValidationError as e:
+            raise ValueError(f"Invalid value for key '{key}': {value}") from e
 
 PATHS = Paths()
 
@@ -142,6 +180,6 @@ except (FileNotFoundError, yaml.YAMLError, ValidationError) as e:
 
 # Function injections for dictionary-like access.
 for cls in [Configs, _Resources, _Formats, _Security, _Processing, _Output]:
-    cls.__getitem__ = classmethod(getitem)
-    cls.__setitem__ = classmethod(setitem)
+    cls.__getitem__ = getitem
+    cls.__setitem__ = setitem
     cls.items = classmethod(lambda cls: cls.__dict__.items())

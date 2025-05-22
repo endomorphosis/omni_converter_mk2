@@ -38,21 +38,34 @@ class TestPythonAPI(unittest.TestCase):
         test file for conversion tests.
         """
         # Mock dependencies
-        self.mock_config_manager = MagicMock()
+        self.mock_configs = MagicMock()
         self.mock_batch_processor = MagicMock()
-        
+
         # Configure mock configs
-        self.mock_config_manager.get_config_value.return_value = "default_value"
-        self.mock_config_manager.current_config = {
+        self.mock_configs.get_config_value.return_value = "default_value"
+        self.mock_configs.current_config = {
             'output': {'format': 'txt'},
             'processing': {'normalize_text': True},
             'resources': {'memory_limit_gb': 6, 'cpu_limit_percent': 80}
         }
-        
+        from utils.configs import configs, Configs
+        from utils.logger import logger
+        from format_handlers.format_registry import format_registry
+        from core.processing_pipeline import processing_pipeline
+        from core.processing_result import ProcessingResult
+        from managers.batch_processor import batch_processor
+        from managers.batch_result import BatchResult
+        from managers.resource_monitor import resource_monitor
+
+        self.mock_resources = {
+            'batch_processor': self.mock_batch_processor,
+            'resource_monitor': MagicMock(),
+        }
+
         # Create API with mocked dependencies
         self.api = PythonAPI(
-            custom_config_manager=self.mock_config_manager,
-            custom_batch_processor=self.mock_batch_processor
+            resources=self.mock_resources,
+            configs=self.mock_configs
         )
         
         # Create sample test file
@@ -127,13 +140,13 @@ class TestPythonAPI(unittest.TestCase):
         mock_batch_result = BatchResult()
         self.mock_batch_processor.process_batch.return_value = mock_batch_result
         
-        # Convert batch with proper types for resource limits and include batch_size param
+        # Convert batch with proper types for resource limits and include max_batch_size param
         result = self.api.convert_batch(
             [self.test_file_path], 
             options={
                 "max_cpu": 50.0, 
                 "max_memory": 1024,
-                "batch_size": 10, 
+                "max_batch_size": 10, 
                 "continue_on_error": True
             }
         )
@@ -191,7 +204,7 @@ class TestPythonAPI(unittest.TestCase):
         self.assertTrue(result)
         
         # Check that configs was called for each key
-        self.assertEqual(self.mock_config_manager.set_config_value.call_count, 2)
+        self.assertEqual(self.mock_configs.set_config_value.call_count, 2)
     
     def test_get_config(self):
         """
@@ -205,7 +218,7 @@ class TestPythonAPI(unittest.TestCase):
         config = self.api.get_config()
         
         # Check result
-        self.assertEqual(config, self.mock_config_manager.current_config)
+        self.assertEqual(config, self.mock_configs.current_config)
     
     def test_get_default_options(self):
         """
@@ -225,7 +238,7 @@ class TestPythonAPI(unittest.TestCase):
             else:
                 return default
         
-        self.mock_config_manager.get_config_value.side_effect = mock_get_config_value
+        self.mock_configs.get_config_value.side_effect = mock_get_config_value
         
         # Get default options
         options = self.api._get_default_options()
@@ -233,7 +246,7 @@ class TestPythonAPI(unittest.TestCase):
         # Check options
         self.assertEqual(options["format"], "json")
         self.assertEqual(options["normalize_text"], False)
-        self.assertIn("batch_size", options)
+        self.assertIn("max_batch_size", options)
         self.assertIn("max_cpu", options)
         self.assertIn("max_memory", options)
 

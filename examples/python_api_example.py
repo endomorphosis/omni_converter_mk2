@@ -145,7 +145,7 @@ def using_interface_factory():
     custom_api = interface_factory.create_api()
     
     # Get the configuration manager
-    configs = interface_factory.get_config_manager()
+    configs = interface_factory.configs
     
     # Set a custom configuration value
     configs.set_config_value('processing.quality_threshold', 0.8)

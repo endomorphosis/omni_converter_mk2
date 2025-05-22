@@ -17,6 +17,7 @@ def try_except(func: Callable = lambda x: x,
                raise_: bool = None,
                exception_type: Exception | tuple[Exception,...] = Exception, 
                msg: str = "An unexpected exception occurred",
+               raise_as: Optional[Exception] = None,
                default_return: Optional[Any] = None
                ) -> Callable:
     """
@@ -27,8 +28,11 @@ def try_except(func: Callable = lambda x: x,
             NOTE: This must be manually set to True or False. 
                 This reduces the risk of accidentally raising or passing an exception.
         func: The function to decorate
-        exceptiontype: The type of exception to catch
+        exception_type: The type of exception to catch. Equivalent to 
+            `except exception_type as e`
         msg: The message to log on exception
+        raise_as: Raise the exception as this type if specified and raise_ = True. Equivalent to 
+            `raise raise_as from e` in the exception handler.
         default_return: The value to return if an exception occurs. Only returned if raise_ is False
 
     Returns:
@@ -58,7 +62,10 @@ def try_except(func: Callable = lambda x: x,
                 else:
                     logger.debug(fail_msg + f": {errored}")
                     if raise_:
-                        raise errored
+                        if raise_as is not None:
+                            raise raise_as from errored
+                        else:
+                            raise errored
                     else:
                         if default_return is not None:
                             return default_return
@@ -79,7 +86,10 @@ def try_except(func: Callable = lambda x: x,
                 else:
                     logger.debug(fail_msg + f": {errored}")
                     if raise_:
-                        raise errored
+                        if raise_as is not None:
+                            raise raise_as from errored
+                        else:
+                            raise errored
                     else:
                         if default_return is not None:
                             return default_return

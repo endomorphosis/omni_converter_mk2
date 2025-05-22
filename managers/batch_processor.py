@@ -3,24 +3,21 @@ Batch processor module for the Omni-Converter.
 
 This module provides the BatchProcessor class for processing multiple files in batches.
 """
-
-import os
+import concurrent.futures as cf
 import glob
-import time
+import os
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+import time
+from typing import Any, Callable, Dict, List, Optional, Union
+
 
 from utils.logger import logger
+from utils.configs import configs, Configs
 from utils.filesystem import FileSystem
 from utils.format_detector import format_detector
 from core.processing_pipeline import processing_pipeline
 from core.processing_result import ProcessingResult
 from managers.batch_result import BatchResult
-from managers.error_handler import error_handler
-from managers.resource_monitor import resource_monitor
-from managers.security_manager import security_manager
-
 
 # Type for progress callback function
 ProgressCallback = Callable[[int, int, str], None]
@@ -46,13 +43,8 @@ class BatchProcessor:
     
     def __init__(
         self,
-        pipeline=None,
-        error_handler=None,
-        resource_monitor=None,
-        security_manager=None,
-        max_batch_size: int = 100,
-        continue_on_error: bool = True,
-        max_workers: int = 4
+        configs: Configs = None,
+        resources: dict[str, Callable] = None,
     ):
         """
         Initialize a batch processor.
@@ -60,27 +52,22 @@ class BatchProcessor:
         Args:
             pipeline: The processing pipeline to use. If None, the global pipeline will be used.
             error_handler: The error handler to use. If None, the global error handler will be used.
-            resource_monitor: The resource monitor to use. If None, the global resource monitor will be used.
-            security_manager: The security manager to use. If None, the global security manager will be used.
-            max_batch_size: Maximum number of files to process in a single batch.
-            continue_on_error: Whether to continue processing if errors occur.
-            max_workers: Maximum number of worker threads for parallel processing.
         """
-        # Import these locally to avoid circular imports
-        from managers.error_handler import error_handler as global_error_handler
-        from managers.resource_monitor import resource_monitor as global_resource_monitor
-        from managers.security_manager import security_manager as global_security_manager
-        
-        self.pipeline = pipeline or processing_pipeline
-        self.error_handler = error_handler or global_error_handler
-        self.resource_monitor = resource_monitor or global_resource_monitor
-        self.security_manager = security_manager or global_security_manager
-        self.max_batch_size = max_batch_size
-        self.continue_on_error = continue_on_error
-        self.max_workers = max_workers
+        self.configs = configs
+        self.resources = resources
+
+        self.pipeline = self.resources['processing_pipeline']
+        self.error_handler = self.resources['error_handler']
+        self.resource_monitor = self.resources['resource_monitor']
+        self.security_manager = self.resources['security_manager']
+
+        self.max_batch_size = self.configs.resources.max_batch_size
+        self.max_workers = self.configs.resources.max_workers
+        self.continue_on_error = self.configs.processing.continue_on_error
+
         self.cancel_requested = False
         self._lock = threading.RLock()  # For thread safety
-    
+
     def process_batch(
         self,
         file_paths: Union[List[str], str],
@@ -137,7 +124,8 @@ class BatchProcessor:
                 chunk = resolved_paths[i:i + self.max_batch_size]
                 
                 # Check resource availability
-                resources_available, reason = self.resource_monitor.is_resource_available()
+                logger.debug(f"self.resource_monitor.is_resource_available: {self.resource_monitor.is_resource_available}")
+                resources_available, reason = self.resource_monitor.is_resource_available
                 if not resources_available:
                     logger.warning(f"Insufficient resources: {reason}")
                     
@@ -148,7 +136,7 @@ class BatchProcessor:
                         gc.collect(2)
                         
                         # Check if resources are now available
-                        resources_available, reason = self.resource_monitor.is_resource_available()
+                        resources_available, reason = self.resource_monitor.is_resource_available
                         if resources_available:
                             logger.info("Resource constraints resolved after garbage collection")
                         else:
@@ -270,8 +258,8 @@ class BatchProcessor:
         results = []
         progress_counter = 0
         
-        # Use ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        # Use cf.ThreadPoolExecutor for parallel processing
+        with cf.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks
             future_to_path = {}
             for path in file_paths:
@@ -288,7 +276,7 @@ class BatchProcessor:
                 future_to_path[future] = path
             
             # Process results as they complete
-            for future in as_completed(future_to_path):
+            for future in cf.as_completed(future_to_path):
                 if self.cancel_requested:
                     break
                 
@@ -463,48 +451,51 @@ class BatchProcessor:
         resolved = []
         
         # Handle string input (single file or directory)
-        if isinstance(file_paths, str):
-            if os.path.isdir(file_paths):
-                # Recursively find files in directory
-                for root, _, files in os.walk(file_paths):
-                    for f in files:
-                        resolved.append(os.path.join(root, f))
-            elif os.path.isfile(file_paths):
-                # Add single file
-                resolved.append(file_paths)
-            else:
-                # Try to expand wildcards
-                glob_matches = glob.glob(file_paths, recursive=True)
-                if glob_matches:
-                    for match in glob_matches:
-                        if os.path.isfile(match):
-                            resolved.append(match)
-                else:
-                    logger.warning(f"Path not found: {file_paths}")
-                    
-        # Handle list input
-        elif isinstance(file_paths, list):
-            for path in file_paths:
-                if os.path.isdir(path):
+        match file_paths:
+            case str():
+                if os.path.isdir(file_paths):
                     # Recursively find files in directory
-                    for root, _, files in os.walk(path):
+                    for root, _, files in os.walk(file_paths):
                         for f in files:
                             resolved.append(os.path.join(root, f))
-                elif os.path.isfile(path):
+                elif os.path.isfile(file_paths):
                     # Add single file
-                    resolved.append(path)
+                    resolved.append(file_paths)
                 else:
                     # Try to expand wildcards
-                    glob_matches = glob.glob(path, recursive=True)
+                    glob_matches = glob.glob(file_paths, recursive=True)
                     if glob_matches:
                         for match in glob_matches:
                             if os.path.isfile(match):
                                 resolved.append(match)
                     else:
-                        logger.warning(f"Path not found: {path}")
-        
+                        logger.warning(f"Path not found: {file_paths}")
+
+            # Handle list input
+            case list():
+                for path in file_paths:
+                    if os.path.isdir(path):
+                        # Recursively find files in directory
+                        for root, _, files in os.walk(path):
+                            for f in files:
+                                resolved.append(os.path.join(root, f))
+                    elif os.path.isfile(path):
+                        # Add single file
+                        resolved.append(path)
+                    else:
+                        # Try to expand wildcards
+                        glob_matches = glob.glob(path, recursive=True)
+                        if glob_matches:
+                            for match in glob_matches:
+                                if os.path.isfile(match):
+                                    resolved.append(match)
+                        else:
+                            logger.warning(f"Path not found: {path}")
+            case _:
+                raise ValueError("Invalid input type for file_paths. Must be a string or list of strings.")
+
         return resolved
-    
+
     def _get_output_path(
         self,
         input_path: str,
@@ -543,27 +534,22 @@ class BatchProcessor:
         logger.info("Cancellation requested for batch processing")
         with self._lock:
             self.cancel_requested = True
-    
-    def get_processing_status(self) -> Dict[str, Any]:
+
+    @property
+    def processing_status(self) -> Dict[str, Any]:
         """
         Get the current status of batch processing.
         
         Returns:
             A dictionary with the current status.
         """
-        pipeline_status = self.pipeline.status
-        resource_status = self.resource_monitor.get_current_usage()
-        error_stats = self.error_handler.get_error_statistics()
-        
-        status = {
-            'pipeline': pipeline_status,
-            'resources': resource_status,
-            'errors': error_stats,
+        return {
+            'pipeline': self.pipeline.status,
+            'resources': self.resource_monitor.current_usage,
+            'errors': self.error_handler.error_statistics,
             'cancel_requested': self.cancel_requested
         }
-        
-        return status
-    
+
     def set_max_batch_size(self, size: int) -> None:
         """
         Set the maximum batch size.
@@ -594,6 +580,18 @@ class BatchProcessor:
         self.max_workers = max(1, count)
         logger.info(f"Max workers set to {self.max_workers}")
 
+def make_resources() -> dict[str, Callable]:
+    # Import these locally to avoid circular imports
+    from managers.error_handler import error_handler
+    from managers.resource_monitor import resource_monitor
+    from managers.security_manager import security_manager
+
+    return {
+        'processing_pipeline': processing_pipeline,
+        'error_handler': error_handler,
+        'resource_monitor': resource_monitor,
+        'security_manager': security_manager
+    }
 
 # Global batch processor instance
-batch_processor = BatchProcessor()
+batch_processor = BatchProcessor(resources=make_resources(), configs=configs)

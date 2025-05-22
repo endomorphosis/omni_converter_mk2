@@ -79,7 +79,7 @@ class VideoHandler(BaseFormatHandler):
                 'category': 'video',
                 'preserves_structure': False,
                 'extracts_metadata': True,
-                'supports_transcription': False,  # Set to True if speech-to-text is implemented
+                'supports_transcription': False,  # Set to True if speech-to-text is implemented # TODO
                 'extracts_thumbnails': self.video_processor_available  # True if video processor is available
             }
         )

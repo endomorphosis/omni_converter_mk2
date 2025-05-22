@@ -5,6 +5,7 @@ Omni-Converter: Convert various file formats to plaintext.
 
 This is the main entry point for the Omni-Converter application.
 """
+from __future__ import annotations
 import argparse
 from datetime import datetime
 import os
@@ -26,6 +27,13 @@ from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
 from managers.batch_processor import batch_processor
 from managers.batch_result import BatchResult
+
+
+from utils.main_.list_supported_formats import list_supported_formats
+from utils.main_.show_version import show_version
+from utils.main_.progress_callback import progress_callback
+from utils.main_.list_output_formats import list_output_formats
+from utils.main_.list_normalizers import list_normalizers
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -90,37 +98,6 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def list_supported_formats() -> None:
-    """List all supported formats."""
-    # Format the handler capabilities
-    print("Omni-Converter Supported Formats\n===============================\n\n")
-
-    # Get formats grouped by category from the registry
-    categories = format_registry.get_formats_by_category()
-    
-    # Print formats by category
-    for category, formats in sorted(categories.items()):
-        print(f"{category.capitalize()} Formats ({len(formats)}):")
-        for fmt in sorted(formats):
-            print(f"  - {fmt}")
-        print()
-
-
-def show_version() -> None:
-    """Show version information."""
-    from __version__ import __version__
-    print(f"Omni-Converter version {__version__}")
-    print("By Kyle Rose, Claude 3.7 Sonnet")
-    print(f"MIT {datetime.now().year}")
-    print("\nImplementation Status:")
-    print("- Text formats: Fully implemented (HTML, XML, Plain text, CSV, Calendar)")
-    print("- Image formats: Fully implemented (JPEG, PNG, GIF, WebP, SVG)")
-    print("- Application formats: Fully implemented (PDF, JSON, DOCX, XLSX, ZIP)")
-    print("- Audio formats: Fully implemented (MP3, WAV, OGG, FLAC, AAC)")
-    print("- Video formats: Fully implemented (MP4, WebM, AVI, MKV, MOV)")
-    print("\nSee ROADMAP.md for detailed status report.")
-
-
 def process_file(input_path: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> bool:
     """
     Process a single file.
@@ -183,32 +160,11 @@ def process_file(input_path: str, output_path: Optional[str] = None, options: Op
                 print(f"  - {error}", file=sys.stderr)
             
             return False
-    
+
     except Exception as e:
-        logger.error(f"Error processing {input_path}", {'error': str(e)})
-        print(f"Error processing {input_path}: {str(e)}", file=sys.stderr)
+        logger.error(f"Error processing {input_path}: {e}")
+        print(f"Error processing {input_path}: {e}", file=sys.stderr)
         return False
-
-
-def progress_callback(current: int, total: int, current_file: str, pbar: Optional[tqdm.tqdm] = None) -> None:
-    """
-    Callback function for progress reporting.
-    
-    Args:
-        current: Current file number.
-        total: Total number of files.
-        current_file: Path to the current file being processed.
-        pbar: Optional tqdm progress bar instance.
-    """
-    if pbar:
-        pbar.update(1)
-        pbar.set_description(f"Processing {os.path.basename(current_file)}")
-    else:
-        # Calculate percentage
-        percent = (current / total) * 100 if total > 0 else 0
-        # Simple progress output
-        sys.stdout.write(f"\rProcessing {current}/{total} files ({percent:.1f}%): {os.path.basename(current_file)}")
-        sys.stdout.flush()
 
 
 def process_directory(
@@ -232,7 +188,7 @@ def process_directory(
         BatchResult object with processing results.
     """
     # Configure batch processor
-    batch_processor.set_max_batch_size(options.get('batch_size', 100))
+    batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
     batch_processor.set_continue_on_error(options.get('continue_on_error', True))
     batch_processor.set_max_workers(options.get('max_workers', 4) if options.get('parallel', False) else 1)
     
@@ -271,30 +227,10 @@ def process_directory(
             pbar.close()
 
 
-def list_normalizers() -> None:
-    """List all available text normalizers."""
-    print("Omni-Converter Text Normalizers\n===============================\n\n")
-
-    normalizers = processing_pipeline.normalizer.applied_normalizers
-
-    for normalizer in sorted(normalizers):
-        print(f"- {normalizer}")
-
-    print("\nUse --normalizers option to specify which normalizers to apply.")
-    print("Example: --normalizers whitespace,line_endings")
 
 
-def list_output_formats() -> None:
-    """List all available output formats."""
-    print("Omni-Converter Output Formats\n============================\n\n")
 
-    formats = processing_pipeline.formatter.available_formats
-    
-    for fmt in sorted(formats):
-        print(f"- {fmt}")
-    
-    print("\nUse -f or --format option to specify the output format.")
-    print("Example: -f json")
+
 
 
 def main() -> int:
@@ -352,7 +288,7 @@ def main() -> int:
         'format': args.format,
         'verbose': args.verbose,
         'sanitize': args.sanitize,
-        'batch_size': args.batch_size,
+        'max_batch_size': args.max_batch_size,
         'continue_on_error': args.continue_on_error,
         'max_workers': args.max_workers,
         'parallel': args.parallel,
@@ -397,8 +333,8 @@ def main() -> int:
                 os.makedirs(output_dir, exist_ok=True)
                 logger.info(f"Created output directory: {output_dir}")
             except Exception as e:
-                logger.error(f"Failed to create output directory: {str(e)}")
-                print(f"Error: Failed to create output directory {output_dir}: {str(e)}", 
+                logger.error(f"Failed to create output directory: {e}")
+                print(f"Error: Failed to create output directory {output_dir}: {e}", 
                       file=sys.stderr)
                 return 1
         
@@ -427,7 +363,7 @@ def main() -> int:
         # Print resource usage if verbose
         if args.verbose:
             from managers.resource_monitor import resource_monitor
-            usage = resource_monitor.get_current_usage()
+            usage = resource_monitor.current_usage
             print("\nResource Usage:")
             print(f"CPU: {usage.get('cpu_percent', 'N/A')}%")
             print(f"Memory: {usage.get('memory_mb', 'N/A')} MB")

@@ -82,20 +82,8 @@ class ProcessingPipeline:
         Initialize a processing pipeline.
         
         Args:
-            configs: A pydantic model containing the configuration settings.
+            configs: A pydantic model containing configuration settings.
             resources: A dictionary of callable classes and functions for the class to use.
-
-
-            detector: The format detector to use. If None, the global format_detector
-                will be used.
-            validator: The validator to use for validating input files. If None, a
-                new BasicValidator will be created.
-            extractor: The content extractor to use. If None, a new ContentExtractor
-                will be created.
-            normalizer: The text normalizer to use. If None, a new TextNormalizer
-                will be created.
-            formatter: The output formatter to use. If None, a new OutputFormatter
-                will be created.
         """
         self.configs = configs
         self.resources = resources

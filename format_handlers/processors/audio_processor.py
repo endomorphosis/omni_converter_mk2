@@ -6,15 +6,14 @@ speech-to-text capabilities using the OpenAI Whisper library.
 """
 
 import os
-import io
 import tempfile
-from typing import Any, Dict, List, Tuple, Optional, BinaryIO
+from typing import Any, Dict, List, Tuple
 from datetime import timedelta
 
 from format_handlers.processors.base_processor import BaseProcessor
 from utils.logger import logger
 from utils.configs import configs
-from utils.try_except_decorator import try_except
+from utils.common.try_except_decorator import try_except
 
 try:
     import whisper
@@ -307,28 +306,21 @@ class WhisperAudioProcessor(AudioProcessor):
                 
                 # Extract common properties
                 duration_seconds = len(audio) / 1000.0
-                duration = str(timedelta(seconds=duration_seconds))
-                channels = audio.channels
-                sample_width = audio.sample_width
-                frame_rate = audio.frame_rate
-                frame_width = audio.frame_width
-                
                 # Calculate average loudness (dBFS)
-                loudness = audio.dBFS
-                
+
                 # Build metadata dictionary
                 metadata = {
                     'format': format_name,
                     'duration_seconds': duration_seconds,
-                    'duration': duration,
-                    'channels': channels,
-                    'sample_width_bytes': sample_width,
-                    'frame_rate_hz': frame_rate,
-                    'frame_width_bytes': frame_width,
-                    'loudness_dbfs': loudness,
+                    'duration': str(timedelta(seconds=duration_seconds)),
+                    'channels': audio.channels,
+                    'sample_width_bytes': audio.sample_width,
+                    'frame_rate_hz': audio.frame_rate,
+                    'frame_width_bytes': audio.frame_width,
+                    'loudness_dbfs': audio.dBFS,
                     'file_size_bytes': len(data)
                 }
-                
+
                 # Add additional metadata from mediainfo
                 if info:
                     for key, value in info.items():
@@ -416,7 +408,7 @@ class WhisperAudioProcessor(AudioProcessor):
             except Exception:
                 pass
 
-    
+    @try_except(raise_=True, exception_type=ValueError, msg="Error transcribing audio")
     def transcribe_audio(self, data: bytes, format_name: str, options: Dict[str, Any]) -> str:
         """
         Transcribe speech to text from an audio file using Whisper.
@@ -439,68 +431,64 @@ class WhisperAudioProcessor(AudioProcessor):
         
         if not PYDUB_AVAILABLE:
             raise ValueError("pydub is not available for audio processing")
+
+        # Save audio data to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
+            temp_file.write(data)
+            temp_file_path = temp_file.name
         
         try:
-            # Save audio data to a temporary file
-            with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
-                temp_file.write(data)
-                temp_file_path = temp_file.name
+            # Parse options
+            language = options.get("language")
+            task = options.get("task", "transcribe")  # Default to transcribe
             
+            # Transcribe the audio
+            result = self.model.transcribe(
+                temp_file_path,
+                language=language,
+                task=task
+            )
+            
+            # Extract the transcribed text
+            text = result.get("text", "")
+            
+            # Extract segments with timestamps if available
+            segments = []
+            if "segments" in result:
+                for segment in result["segments"]:
+                    segments.append({
+                        "start": segment.get("start"),
+                        "end": segment.get("end"),
+                        "text": segment.get("text")
+                    })
+            
+            # Combine them into a nicely formatted transcript
+            transcript = text.strip()
+            
+            # Add detailed transcript with timestamps if segments are available
+            if segments:
+                detailed_transcript = []
+                for segment in segments:
+                    start_time = segment.get("start")
+                    if start_time is not None:
+                        start_str = str(timedelta(seconds=int(start_time)))
+                        detailed_transcript.append(f"[{start_str}] {segment.get('text', '')}")
+                    else:
+                        detailed_transcript.append(segment.get("text", ""))
+                
+                transcript += "\n\n--- Transcript with Timestamps ---\n\n"
+                transcript += "\n".join(detailed_transcript)
+            
+            return transcript
+            
+        finally:
+            # Remove temporary file
             try:
-                # Parse options
-                language = options.get("language")
-                task = options.get("task", "transcribe")  # Default to transcribe
-                
-                # Transcribe the audio
-                result = self.model.transcribe(
-                    temp_file_path,
-                    language=language,
-                    task=task
-                )
-                
-                # Extract the transcribed text
-                text = result.get("text", "")
-                
-                # Extract segments with timestamps if available
-                segments = []
-                if "segments" in result:
-                    for segment in result["segments"]:
-                        segments.append({
-                            "start": segment.get("start"),
-                            "end": segment.get("end"),
-                            "text": segment.get("text")
-                        })
-                
-                # Combine them into a nicely formatted transcript
-                transcript = text.strip()
-                
-                # Add detailed transcript with timestamps if segments are available
-                if segments:
-                    detailed_transcript = []
-                    for segment in segments:
-                        start_time = segment.get("start")
-                        if start_time is not None:
-                            start_str = str(timedelta(seconds=int(start_time)))
-                            detailed_transcript.append(f"[{start_str}] {segment.get('text', '')}")
-                        else:
-                            detailed_transcript.append(segment.get("text", ""))
-                    
-                    transcript += "\n\n--- Transcript with Timestamps ---\n\n"
-                    transcript += "\n".join(detailed_transcript)
-                
-                return transcript
-                
-            finally:
-                # Remove temporary file
-                try:
-                    os.unlink(temp_file_path)
-                except Exception:
-                    pass
-                
-        except Exception as e:
-            logger.error(f"Error transcribing audio: {e}")
-            raise ValueError(f"Error transcribing audio: {e}")
-    
+                os.unlink(temp_file_path)
+            except Exception:
+                pass
+            
+
     def process_audio(self, data: bytes, format_name: str, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
         """
         Process an audio file completely, extracting metadata, waveform, and transcribing if available.

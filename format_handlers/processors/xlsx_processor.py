@@ -31,7 +31,7 @@ class XlsxProcessor(DocumentProcessor):
     
     def __init__(self):
         """Initialize the XLSX processor."""
-        self.supported_formats = ["xlsx"]
+        self._supported_formats = ["xlsx"]
     
     def can_process(self, format_name: str) -> bool:
         """
@@ -44,8 +44,9 @@ class XlsxProcessor(DocumentProcessor):
             True if this processor can handle the format and openpyxl is available,
             False otherwise.
         """
-        return OPENPYXL_AVAILABLE and format_name.lower() in self.supported_formats
+        return OPENPYXL_AVAILABLE and format_name.lower() in self._supported_formats
     
+    @property
     def supported_formats(self) -> List[str]:
         """
         Get the list of formats supported by this processor.
@@ -53,7 +54,7 @@ class XlsxProcessor(DocumentProcessor):
         Returns:
             A list of format names supported by this processor.
         """
-        return self.supported_formats if OPENPYXL_AVAILABLE else []
+        return self._supported_formats if OPENPYXL_AVAILABLE else []
     
     def get_processor_info(self) -> Dict[str, Any]:
         """
@@ -64,7 +65,7 @@ class XlsxProcessor(DocumentProcessor):
         """
         info = {
             "name": "XlsxProcessor",
-            "supported_formats": self.supported_formats,
+            "supported_formats": self._supported_formats,
             "available": OPENPYXL_AVAILABLE
         }
         

@@ -33,11 +33,16 @@ class TestInterfaceFactory(unittest.TestCase):
         Creates a mock Configs and initializes an InterfaceFactory instance
         with the mocked dependency for isolation in unit testing.
         """
+        self.resources = {
+            'python_api': MagicMock(spec=PythonAPI),
+            'cli': None,
+        }
+
         # Mock Configs
-        self.mock_config_manager = MagicMock(spec=Configs)
+        self.configs = MagicMock(spec=Configs)
         
         # Create factory with mocked dependencies
-        self.factory = InterfaceFactory(custom_config_manager=self.mock_config_manager)
+        self.factory = InterfaceFactory(resources=self.resources,configs=self.configs)
     
     def test_init(self):
         """
@@ -46,7 +51,7 @@ class TestInterfaceFactory(unittest.TestCase):
         Verifies that the InterfaceFactory correctly stores the provided Configs
         instance during initialization, making it available for interfaces it creates.
         """
-        self.assertEqual(self.factory.configs, self.mock_config_manager)
+        self.assertEqual(self.factory.configs, self.configs)
     
     def test_create_api(self):
         """
@@ -63,7 +68,7 @@ class TestInterfaceFactory(unittest.TestCase):
         self.assertIsInstance(api, PythonAPI)
         
         # Check that it uses the factory's config manager
-        self.assertEqual(api.configs, self.mock_config_manager)
+        self.assertEqual(api.configs, self.configs)
     
     def test_create_cli(self):
         """
@@ -78,13 +83,13 @@ class TestInterfaceFactory(unittest.TestCase):
     
     def test_get_config_manager(self):
         """
-        Test the get_config_manager method for accessing the configuration manager.
+        Test the configs method for accessing the configuration manager.
         
         Verifies that the factory provides access to its Configs instance,
         allowing components to retrieve configuration settings directly if needed.
         """
-        configs = self.factory.get_config_manager()
-        self.assertEqual(configs, self.mock_config_manager)
+        configs = self.factory.configs
+        self.assertEqual(configs, self.configs)
     
     def test_create_interface_api(self):
         """

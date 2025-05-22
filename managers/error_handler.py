@@ -90,8 +90,9 @@ class ErrorHandler:
         
         # Log the error
         self.logger.error(error_message, context)
-    
-    def get_error_statistics(self) -> Dict[str, Any]:
+
+    @property
+    def error_statistics(self) -> Dict[str, Any]:
         """
         Get error statistics.
         
@@ -140,6 +141,7 @@ class ErrorHandler:
             for error_type, count in sorted_errors[:limit]
         ]
     
+    @property
     def has_errors(self) -> bool:
         """
         Check if any errors have been handled.
@@ -164,9 +166,12 @@ class ErrorHandler:
         
         if isinstance(error_type, type) and issubclass(error_type, Exception):
             error_type = error_type.__name__
-            
+
         return self.error_counters.get(error_type, 0)
 
+resources = {
+    "logger": logger,
+}
 
 # Global error handler instance
 error_handler = ErrorHandler()

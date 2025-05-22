@@ -92,7 +92,7 @@ from interfaces.interface_factory import interface_factory
 api = interface_factory.create_api()
 
 # Get the configuration manager
-configs = interface_factory.get_config_manager()
+configs = interface_factory.configs
 
 # Set configuration
 configs.set_config_value('output.format', 'json')

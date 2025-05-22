@@ -24,8 +24,24 @@ from unittest.mock import MagicMock, patch
 import threading
 import time
 
-from managers.resource_monitor import ResourceMonitor
+import psutil
 
+from managers.resource_monitor import ResourceMonitor
+from utils.resource_monitor.dependencies.psutil import PsUtil
+from utils.configs import configs, Configs
+
+resources = {
+    "get_cpu_usage": PsUtil._get_cpu_usage,
+    "get_virtual_memory_in_percent": PsUtil._get_virtual_memory_in_percent,
+    "get_memory_info": PsUtil._get_memory_info,
+    "get_memory_rss_usage_in_mb": PsUtil._get_memory_rss_usage_in_mb,
+    "get_memory_vms_usage_in_mb": PsUtil._get_memory_vms_usage_in_mb,
+    "get_disk_usage": PsUtil._get_disk_usage_in_percent,
+    "get_open_files": PsUtil._get_num_open_files,
+    "get_shared_memory_usage_in_mb": PsUtil._get_shared_memory_usage_in_mb
+}
+# Note we convert GB to MB because 
+# the psutil library returns memory in MB
 
 class TestResourceMonitor(unittest.TestCase):
     """Test the ResourceMonitor class."""
@@ -33,12 +49,13 @@ class TestResourceMonitor(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Create a resource monitor with test limits
-        self.resource_monitor = ResourceMonitor(
-            cpu_limit=80.0,
-            memory_limit=500,  # 500 MB
-            monitoring_interval=0.1  # Short interval for tests
-        )
-    
+        self.configs = configs
+        self.configs.resources.memory_limit_gb = 0.5  # 500 MB
+        self.configs.resources.cpu_limit_percent = 80.0
+        self.configs.resources.monitoring_interval_seconds = 0.1  # Short interval for tests
+
+        self.resource_monitor = ResourceMonitor(resources=resources, configs=self.configs)
+
     def tearDown(self):
         """Clean up test fixtures."""
         # Stop any active monitoring
@@ -47,21 +64,20 @@ class TestResourceMonitor(unittest.TestCase):
     
     def test_init(self):
         """Test initialization."""
-        self.assertEqual(self.resource_monitor.cpu_limit, 80.0)
-        self.assertEqual(self.resource_monitor.memory_limit, 500)
+        self.assertEqual(self.resource_monitor.cpu_limit_percent, 80.0)
+        self.assertEqual(self.resource_monitor.memory_limit, 512.0)
         self.assertEqual(self.resource_monitor.monitoring_interval, 0.1)
         self.assertFalse(self.resource_monitor.active_monitoring)
         self.assertIsNone(self.resource_monitor.monitoring_thread)
         self.assertIn("cpu", self.resource_monitor.current_usage)
         self.assertIn("memory", self.resource_monitor.current_usage)
-    
-    @patch('managers.resource_monitor.HAS_PSUTIL', True)
-    @patch('managers.resource_monitor.psutil')
+
+    @patch('utils.resource_monitor.dependencies.psutil.psutil')
     def test_start_monitoring(self, mock_psutil):
         """Test starting resource monitoring."""
         # Configure mock for psutil
         mock_psutil.cpu_percent.return_value = 10.0
-        process_mock = MagicMock()
+        process_mock = MagicMock(spec=psutil.Process)
         process_mock.memory_info.return_value.rss = 100 * 1024 * 1024  # 100 MB in bytes
         mock_psutil.Process.return_value = process_mock
         mock_psutil.virtual_memory.return_value.percent = 50.0
@@ -81,20 +97,8 @@ class TestResourceMonitor(unittest.TestCase):
         
         # Check that monitoring has stopped
         self.assertFalse(self.resource_monitor.active_monitoring)
-    
-    @patch('managers.resource_monitor.HAS_PSUTIL', False)
-    def test_start_monitoring_without_psutil(self):
-        """Test starting monitoring without psutil available."""
-        # Try to start monitoring
-        result = self.resource_monitor.start_monitoring()
-        
-        # Should return False since psutil is not available
-        self.assertFalse(result)
-        self.assertFalse(self.resource_monitor.active_monitoring)
-        self.assertIsNone(self.resource_monitor.monitoring_thread)
-    
-    @patch('managers.resource_monitor.HAS_PSUTIL', True)
-    @patch('managers.resource_monitor.psutil')
+
+    @patch('utils.resource_monitor.dependencies.psutil.psutil')
     def test_get_resource_usage(self, mock_psutil):
         """Test getting resource usage."""
         # Configure mock for psutil
@@ -115,39 +119,32 @@ class TestResourceMonitor(unittest.TestCase):
         self.assertEqual(usage["memory_percent"], 40.0)
         self.assertEqual(usage["disk_usage"], 50.0)
         self.assertEqual(usage["open_files"], 3)
+
     
-    @patch('managers.resource_monitor.HAS_PSUTIL', False)
-    def test_get_resource_usage_without_psutil(self):
-        """Test getting resource usage without psutil available."""
-        # Get resource usage
-        usage = self.resource_monitor._get_resource_usage()
-        
-        # Should return default values
-        self.assertEqual(usage["cpu"], 0.0)
-        self.assertEqual(usage["memory"], 0)
-    
-    @patch('managers.resource_monitor.HAS_PSUTIL', True)
-    @patch('managers.resource_monitor.psutil')
+    @patch('utils.resource_monitor.dependencies.psutil.psutil')
     def test_get_current_usage(self, mock_psutil):
         """Test getting current usage."""
         # Configure mock for psutil
+        psutil.Process.memory_info
         mock_psutil.cpu_percent.return_value = 20.0
-        process_mock = MagicMock()
+        process_mock = MagicMock(spec="psutil.Process")
+        process_mock.memory_info = MagicMock() # NOTE We have to mock the attributes in order to use them.
         process_mock.memory_info.return_value.rss = 150 * 1024 * 1024  # 150 MB in bytes
         mock_psutil.Process.return_value = process_mock
         mock_psutil.virtual_memory.return_value.percent = 30.0
         mock_psutil.disk_usage.return_value.percent = 40.0
+        process_mock.open_files = MagicMock()
         process_mock.open_files.return_value = ["file1"]
         
         # Get current usage without active monitoring
-        usage = self.resource_monitor.get_current_usage()
+        usage = self.resource_monitor.current_usage
         
         # Check usage values
         self.assertEqual(usage["cpu"], 20.0)
         self.assertEqual(usage["memory"], 150.0)  # Should be converted to MB
     
-    @patch('managers.resource_monitor.HAS_PSUTIL', True)
-    @patch('managers.resource_monitor.psutil')
+    
+    @patch('utils.resource_monitor.dependencies.psutil.psutil')
     def test_is_resource_available(self, mock_psutil):
         """Test checking if resources are available.
         
@@ -169,7 +166,7 @@ class TestResourceMonitor(unittest.TestCase):
         mock_psutil.Process.return_value = process_mock
         
         # Check if resources are available
-        available, reason = self.resource_monitor.is_resource_available()
+        available, reason = self.resource_monitor.is_resource_available
         
         # Should report resources available
         self.assertTrue(available)
@@ -179,7 +176,7 @@ class TestResourceMonitor(unittest.TestCase):
         mock_psutil.cpu_percent.return_value = 90.0
         
         # Check if resources are available
-        available, reason = self.resource_monitor.is_resource_available()
+        available, reason = self.resource_monitor.is_resource_available
         
         # Should report resources not available due to high CPU
         self.assertFalse(available)
@@ -190,7 +187,7 @@ class TestResourceMonitor(unittest.TestCase):
         process_mock.memory_info.return_value.rss = 600 * 1024 * 1024  # 600 MB in bytes
         
         # Check if resources are available
-        available, reason = self.resource_monitor.is_resource_available()
+        available, reason = self.resource_monitor.is_resource_available
         
         # Should report resources not available due to high memory
         self.assertFalse(available)
@@ -199,27 +196,27 @@ class TestResourceMonitor(unittest.TestCase):
     def test_set_resource_limits(self):
         """Test setting resource limits."""
         # Set new limits
-        self.resource_monitor.set_resource_limits(cpu_limit=60.0, memory_limit=300)
+        self.resource_monitor.set_resource_limits(cpu_limit_percent=60.0, memory_limit=300)
         
         # Check if limits were updated
-        self.assertEqual(self.resource_monitor.cpu_limit, 60.0)
+        self.assertEqual(self.resource_monitor.cpu_limit_percent, 60.0)
         self.assertEqual(self.resource_monitor.memory_limit, 300)
         
         # Test bounds checking for CPU
-        self.resource_monitor.set_resource_limits(cpu_limit=150.0)
+        self.resource_monitor.set_resource_limits(cpu_limit_percent=150.0)
         
         # CPU should be clamped to 100%
-        self.assertEqual(self.resource_monitor.cpu_limit, 100.0)
+        self.assertEqual(self.resource_monitor.cpu_limit_percent, 100.0)
         
         # Test with negative values
-        self.resource_monitor.set_resource_limits(cpu_limit=-10.0, memory_limit=-100)
+        self.resource_monitor.set_resource_limits(cpu_limit_percent=-10.0, memory_limit=-100)
         
         # Should be clamped to 0
-        self.assertEqual(self.resource_monitor.cpu_limit, 0.0)
+        self.assertEqual(self.resource_monitor.cpu_limit_percent, 0.0)
         self.assertEqual(self.resource_monitor.memory_limit, 0)
     
-    @patch('managers.resource_monitor.HAS_PSUTIL', True)
-    @patch('managers.resource_monitor.psutil')
+    
+    @patch('utils.resource_monitor.dependencies.psutil.psutil')
     def test_get_resource_summary(self, mock_psutil):
         """Test getting resource summary."""
         # Configure mock for psutil
@@ -232,7 +229,7 @@ class TestResourceMonitor(unittest.TestCase):
         process_mock.open_files.return_value = ["file1", "file2"]
         
         # Get resource summary
-        summary = self.resource_monitor.get_resource_summary()
+        summary = self.resource_monitor.resource_summary
         
         # Check summary structure
         self.assertIn("current", summary)
@@ -246,7 +243,7 @@ class TestResourceMonitor(unittest.TestCase):
         
         # Check limits
         self.assertEqual(summary["limits"]["cpu_percent"], 80.0)
-        self.assertEqual(summary["limits"]["memory_mb"], 500)
+        self.assertEqual(summary["limits"]["memory_mb"], 512.0)
         
         # Check monitoring status
         self.assertFalse(summary["monitoring_active"])

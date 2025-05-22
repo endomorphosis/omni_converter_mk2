@@ -20,6 +20,8 @@ from utils.format_detector import format_detector
 from format_handlers.base_handler import BaseFormatHandler, Content
 from format_handlers.processors.ocr_processor import ocr_processor
 
+from utils.common.try_except_decorator import try_except
+
 
 class ImageHandler(BaseFormatHandler):
     """
@@ -28,7 +30,7 @@ class ImageHandler(BaseFormatHandler):
     Handles common image formats like JPEG, PNG, GIF, WebP, and SVG.
     Extracts metadata and generates basic descriptions for images.
     
-    # TODO: Implement OCR functionality for text extraction from images.
+    # TODO: Implement full OCR functionality for text extraction from images.
     Note: For full OCR functionality, additional packages would be required.
     This is a simplified implementation focused on metadata extraction.
     """
@@ -71,11 +73,14 @@ class ImageHandler(BaseFormatHandler):
             ext = ext.lower().lstrip('.')
             
             # Handle special cases
-            if ext in ['jpg', 'jpeg']:
-                format_name = 'jpeg'
-            elif ext in ['png', 'gif', 'webp', 'svg']:
-                format_name = ext
-        
+            match ext:
+                case 'jpg' | 'jpeg':
+                    format_name = 'jpeg'
+                case 'png' | 'gif' | 'webp' | 'svg':
+                    format_name = ext
+                case _:
+                    pass
+
         if not format_name or format_name not in self.supported_formats:
             raise ValueError(f"Unsupported format: {format_name}")
         
@@ -201,10 +206,9 @@ class ImageHandler(BaseFormatHandler):
                 return content
             
         except Exception as e:
-            logger.error(f"Error extracting content from {format_name} image: {file_path}", 
-                        {'error': str(e)})
-            raise
-    
+            logger.error(f"Error extracting content from {format_name} image: {file_path}\n{e}")
+            raise e
+
     def _extract_svg_content(self, file_path: str, format_name: str) -> Content:
         """
         Extract content from an SVG file.
@@ -300,9 +304,8 @@ class ImageHandler(BaseFormatHandler):
             return content
             
         except Exception as e:
-            logger.error(f"Error extracting content from SVG image: {file_path}", 
-                        {'error': str(e)})
-            raise
+            logger.error(f"Error extracting content from SVG image: {file_path}\n{e}")
+            raise e
 
 
 # Global image handler instance

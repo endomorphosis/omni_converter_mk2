@@ -855,21 +855,22 @@ class TextQualityTest(unittest.TestCase):
     def test_text_quality(self):
         """Test text quality for different file types."""
         try:
+            # TODO
             # This would be the actual import in a real implementation
             # from omni_converter import Converter
             # converter = Converter()
-            
+
             # Track overall statistics
             total_files = 0
             total_quality_score = 0
-            
+
             # Process each category
             for category, files in self.test_files.items():
                 print(f"\nTesting text quality for {category} files:")
                 category_files = 0
                 category_quality_score = 0
                 category_results = []
-                
+
                 # Test each file in the category
                 for file_data in files:
                     print(f"\nProcessing file: {file_data['file_name']}")

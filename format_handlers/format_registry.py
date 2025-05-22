@@ -4,10 +4,11 @@ Format registry for the Omni-Converter.
 This module provides a centralized registry for format handlers, making it easy to
 find the appropriate handler for a given file format.
 """
-
 import os
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from typing import Any, Callable, Dict, List, Optional
 
+
+from utils.configs import Configs, configs
 from utils.logger import logger
 from utils.format_detector import format_detector
 from format_handlers.base_handler import FormatHandler, Content
@@ -30,11 +31,19 @@ class FormatRegistry:
         format_to_handler_map (dict): Mapping from format name to handler name.
     """
     
-    def __init__(self, configs=None,resources=None):
+    def __init__(self, 
+                 configs: Configs = None,
+                 resources: dict[str, Callable] = None
+                ) -> None:
         """Initialize the format registry."""
+        self.configs = configs
+        self.resources = resources
+        
+        self.ext_to_format: dict[str, str] = self.resources['ext_to_format']()
+
         self.handlers: Dict[str, FormatHandler] = {}
         self.format_to_handler_map: Dict[str, str] = {}
-        
+
         # Register default handlers
         self._register_default_handlers(resources)
     
@@ -118,36 +127,8 @@ class FormatRegistry:
         # If format detection fails, try using file extension
         if not format_name:
             _, ext = os.path.splitext(file_path)
-            ext = ext.lower().lstrip('.')
             # Map common extensions to formats
-            ext_to_format = {
-                'html': 'html', 'htm': 'html', 
-                'xml': 'xml',
-                'txt': 'text', 'text': 'text',
-                'csv': 'csv',
-                'ics': 'calendar',
-                'jpg': 'jpeg', 'jpeg': 'jpeg', 
-                'png': 'png', 
-                'gif': 'gif',
-                'webp': 'webp',
-                'svg': 'svg',
-                'pdf': 'pdf',
-                'json': 'json',
-                'docx': 'docx',
-                'xlsx': 'xlsx',
-                'zip': 'zip',
-                'mp3': 'mp3',
-                'wav': 'wav', 'wave': 'wav',
-                'ogg': 'ogg', 'oga': 'ogg',
-                'flac': 'flac',
-                'aac': 'aac', 'm4a': 'aac',
-                'mp4': 'mp4', 'm4v': 'mp4',
-                'webm': 'webm',
-                'avi': 'avi',
-                'mkv': 'mkv',
-                'mov': 'mov', 'qt': 'mov'
-            }
-            format_name = ext_to_format.get(ext)
+            format_name = self.ext_to_format.get(ext.lower().lstrip('.'))
         
         if not format_name:
             return None
@@ -233,6 +214,44 @@ class FormatRegistry:
         
         return categories
 
+
+def map_common_extensions_to_formats() -> Dict[str, str]:
+    """
+    Map common file extensions to their respective formats.
+    # TODO - This should be auto-updated somehow.
+    
+    Returns:
+        A dictionary mapping file extensions to format names.
+    """
+    return {
+        'html': 'html', 'htm': 'html', 
+        'xml': 'xml',
+        'txt': 'text', 'text': 'text',
+        'csv': 'csv',
+        'ics': 'calendar',
+        'jpg': 'jpeg', 'jpeg': 'jpeg', 
+        'png': 'png', 
+        'gif': 'gif',
+        'webp': 'webp',
+        'svg': 'svg',
+        'pdf': 'pdf',
+        'json': 'json', 'jsonl': 'json',
+        'docx': 'docx',
+        'xlsx': 'xlsx',
+        'zip': 'zip',
+        'mp3': 'mp3',
+        'wav': 'wav', 'wave': 'wav',
+        'ogg': 'ogg', 'oga': 'ogg',
+        'flac': 'flac',
+        'aac': 'aac', 'm4a': 'aac',
+        'mp4': 'mp4', 'm4v': 'mp4',
+        'webm': 'webm',
+        'avi': 'avi',
+        'mkv': 'mkv',
+        'mov': 'mov', 'qt': 'mov'
+    }
+
+
 resources = {
     "handlers": {
         "text": text_handler,
@@ -240,7 +259,8 @@ resources = {
         "application": application_handler,
         "audio": audio_handler,
         "video": video_handler
-    }
+    },
+    "ext_to_format": map_common_extensions_to_formats
 }
 
 # Global format registry instance

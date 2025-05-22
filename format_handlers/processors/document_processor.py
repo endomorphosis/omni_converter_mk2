@@ -8,7 +8,22 @@ application formats like PDF, DOCX, XLSX, etc.
 from abc import abstractmethod
 from typing import Any, Dict, List, Tuple, Optional, BinaryIO
 
+
+from pydantic import BaseModel, Field
+
+
 from format_handlers.processors.base_processor import BaseProcessor
+
+
+class Metadata(BaseModel):
+    """
+    Metadata class for processing.
+    
+    This class is used to define the metadata structure for documents.
+    """
+    title: Optional[str] = Field(None, description="Title of the document")
+
+
 
 class DocumentProcessor(BaseProcessor):
     """
