@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 from core.processing_pipeline import processing_pipeline
-from utils.format_detector import format_detector
+from core.format_detector import format_detector
 
 
 class ProcessingSpeedTest(unittest.TestCase):

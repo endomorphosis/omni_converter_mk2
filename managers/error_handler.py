@@ -7,7 +7,7 @@ This module provides the ErrorHandler class for centralizing error handling and 
 import traceback
 from typing import Any, Dict, List, Optional, Set, Type, Union
 
-from utils.logger import logger
+from logger import logger
 
 
 class ErrorHandler:

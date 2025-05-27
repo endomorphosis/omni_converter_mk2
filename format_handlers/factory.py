@@ -7,240 +7,395 @@ and manages their dependencies.
 """
 from typing import Any, Callable, Dict, List, Optional, Set, Union
 
-from utils.configs import Configs
-from utils.format_detector import format_detector
-from utils.logger import logger
+from configs import Configs
+from logger import logger
+from core.format_detector import format_detector
+
+from format_handlers.constants import Constants
+
 
 # Import handler factory functions
-from format_handlers.refactored_audio_handler import create_audio_handler
-from format_handlers.refactored_image_handler import create_image_handler
-from format_handlers.refactored_text_handler import create_text_handler
-from format_handlers.refactored_video_handler import create_video_handler
+from format_handlers.audio_handler import create_audio_handler
+from format_handlers.image_handler import create_image_handler
+from format_handlers.text_handler import create_text_handler
+from format_handlers.video_handler import create_video_handler
+from format_handlers.application_handler import create_application_handler
 from format_handlers.unified_handler import map_extension_to_format
-from format_handlers.refactored_format_registry import create_format_registry
-
-# Import processor modules
-from utils.dependency_modules.pil_processor import PIL_AVAILABLE
-from utils.dependency_modules.svg_processor import (
-    extract_svg_metadata, 
-    generate_svg_description, 
-    process_svg_file
-)
-from utils.dependency_modules.pytesseract_processor import (
-    OCR_AVAILABLE,
-    can_process as ocr_can_process,
-    extract_text as ocr_extract_text,
-    extract_features as ocr_extract_features
-)
-
-# Import text processor modules
-try:
-    from utils.dependency_modules.beautiful_soup_processor import (
-        SOUP_AVAILABLE
-    )
-except ImportError:
-    SOUP_AVAILABLE = False
-    logger.info("BeautifulSoup processor not available")
-
-try:
-    from utils.dependency_modules.lxml_processor import (
-        LXML_AVAILABLE
-    )
-except ImportError:
-    LXML_AVAILABLE = False
-    logger.info("lxml processor not available")
-
-try:
-    from utils.dependency_modules.icalendar_processor import (
-        ICALENDAR_AVAILABLE
-    )
-except ImportError:
-    ICALENDAR_AVAILABLE = False
-    logger.info("icalendar processor not available")
-
-try:
-    from utils.dependency_modules.csv_processor import (
-        PANDAS_AVAILABLE
-    )
-except ImportError:
-    PANDAS_AVAILABLE = False
-    logger.info("pandas processor not available")
-
-# Import video processor modules
-try:
-    from utils.dependency_modules.pymediainfo_processor import (
-        MEDIAINFO_AVAILABLE
-    )
-except ImportError:
-    MEDIAINFO_AVAILABLE = False
-    logger.info("pymediainfo processor not available")
-
-try:
-    from utils.dependency_modules.cv2_processor import (
-        CV2_AVAILABLE
-    )
-except ImportError:
-    CV2_AVAILABLE = False
-    logger.info("OpenCV (cv2) processor not available")
-
-try:
-    from utils.dependency_modules.ffmpeg_processor import (
-        FFMPEG_AVAILABLE
-    )
-except ImportError:
-    FFMPEG_AVAILABLE = False
-    logger.info("FFmpeg processor not available")
+from format_handlers.format_registry import create_format_registry
 
 
+def _snake_to_pascal_case(name: str) -> str:
+    """
+    Convert a snake_case string to PascalCase.
+    
+    Args:
+        name: The snake_case string to convert.
+        
+    Returns:
+        The converted PascalCase string.
+    """
+    return ''.join(word.capitalize() for word in name.split('_'))
+
+
+import importlib
+from unittest.mock import MagicMock
+from typing import TypeVar
+
+
+Processor = TypeVar('Processor')
+
+
+def make_processor(
+    processor: str = None,
+    resources: dict[str, Any] = None,
+    dependencies: dict[str, bool] = None,
+    supported_formats: set[str] = None,
+    critical_resources: list[str] = None,
+    configs= None,
+) -> 'Processor':
+    """
+    Factory function to create an instance of XlsxProcessor.
+    
+    Returns:
+        An instance of XlsxProcessor, or a MagicMock if the processor is not available.
+    """
+    by_ability_folder = 'format_handlers.processors.by_ability'
+    by_mime_type_folder = 'format_handlers.processors.by_mime_type'
+    dependency_folder = 'format_handlers.dependency_modules'
+
+    processor_module = None
+
+    resources = {
+        "supported_formats": supported_formats,
+        "processor_name": processor,
+        "processor_available": True,
+        "can_process": True,
+    }
+
+    # Import the processor module dynamically based on the processor name.
+    for folder in [by_ability_folder, by_mime_type_folder]:
+        try:
+            processor_module = importlib.import_module(f'{folder}.{processor}')
+            processor = getattr(processor_module, _snake_to_pascal_case(processor), None)
+            break
+        except ImportError:
+            continue
+
+    # Try dependencies in order until one works
+    dependency_found = False
+    for name, dependency in dependencies.items():
+        if dependency:  # Check if this dependency is available
+            file_name = f'_{name}_processor'
+            try:
+                # Try to import the dependency module
+                module = importlib.import_module(f'{dependency_folder}.{file_name}')
+                
+                # Add critical resources from this dependency module
+                for func in critical_resources:
+                    match func:
+                        case str():
+                            resources[func] = getattr(module, func, None)
+                        case tuple():
+                            # If it's a tuple, assume it contains the processor name and function.
+                            func_name, processor_ref = func
+                            resources[func_name] = getattr(processor_ref, func_name, None)
+                        case _:
+                            logger.error(f"Unknown resource type: {func}")
+                            raise ValueError(f"Unknown resource type: {func}")
+                
+                resources["processor_name"] = name
+                dependency_found = True
+                break  # Found working dependency, stop trying others
+                
+            except ImportError as e:
+                logger.debug(f"Dependency module {file_name} not found: {e}")
+                continue  # Try next dependency
+            except Exception as e:
+                logger.exception(f"Unexpected {type(e).__name__} importing {file_name}: {e}")
+                continue  # Try next dependency
+
+    # If no dependencies were found, return a mock
+    if not dependency_found:
+        return _mock_processor(processor)
+    
+    # Create and return the processor instance
+    return processor(resources=resources, configs=configs)
+
+def _mock_processor(processor: str) -> MagicMock:
+    logger.warning(f"{processor} processor not available, returning mock processor instead.")
+    mock_processor = MagicMock(spec=processor)
+    mock_processor.processor_name.return_value = "mock"
+    mock_processor.can_process.return_value = False
+    return mock_processor
+
+# TODO 
 def initialize_processors(resources: Dict[str, Any]) -> Dict[str, Any]:
     """
     Initialize processor dependencies for handlers.
-    
+
     Args:
         resources: Resources dictionary with dependencies.
         
     Returns:
         Dictionary of processor instances.
     """
-    processors = {}
+    # NOTE order of dependency dictionaries are *important.*
+    # Specialized dependencies are checked first, then more general ones.
+
+    processors: dict[str, Processor] = {}
     
-    # === Image Processors ===
-    
-    # PIL processor
-    if PIL_AVAILABLE:
-        from utils.dependency_modules.pil_processor import (
-            extract_image_metadata,
-            generate_image_description,
-            process_image_file
+    # === Ability Processors ===
+    from configs import configs
+
+    # Text processor (ability)
+    if Constants.TEXT_PROCESSOR_AVAILABLE:
+        text_resources = {
+            "supported_formats": Constants.SUPPORTED_TEXT_FORMATS_SET,
+            "processor_name": 'text_processor',
+            "dependencies": {
+                "generic_text": Constants.GENERIC_TEXT_AVAILABLE,
+            },
+            "critical_resources": [
+                "extract_text", "extract_metadata", "extract_structure",
+                "get_version"
+            ],
+        }
+        processors["text_processor"] = make_processor(
+            processor=text_resources["processor_name"],
+            dependencies=text_resources["dependencies"],
+            supported_formats=text_resources["supported_formats"],
+            critical_resources=text_resources["critical_resources"],
+            configs=configs,
         )
-        processors["pil_processor"] = {
-            "extract_image_metadata": extract_image_metadata,
-            "generate_image_description": generate_image_description,
-            "process_image_file": process_image_file
+
+    # Image processor (ability)
+    if Constants.IMAGE_PROCESSOR_AVAILABLE:
+        image_resources = {
+            "supported_formats": Constants.SUPPORTED_IMAGE_FORMATS_SET,
+            "processor_name": 'image_processor',
+            "dependencies": {
+                "pil": Constants.PIL_AVAILABLE,
+                "openai": Constants.OPENAI_AVAILABLE,
+                "pytesseract": Constants.PYTESSERACT_AVAILABLE,
+            },
+            "critical_resources": [
+                "extract_text", "extract_metadata", "extract_structure",
+                "get_version"
+            ],
         }
-    else:
-        logger.warning("PIL not available, using basic image processing")
-        processors["pil_processor"] = None
+        processors["image_processor"] = make_processor(
+            processor=image_resources["processor_name"],
+            dependencies=image_resources["dependencies"],
+            supported_formats=image_resources["supported_formats"],
+            critical_resources=image_resources["critical_resources"],
+            configs=configs,
+        )
+
+    # Video processor
+    if Constants.VIDEO_PROCESSOR_AVAILABLE:
+        video_frame_resources = {
+            "supported_formats": Constants.SUPPORTED_VIDEO_FORMATS_SET,
+            "processor_name": 'video_processor',
+            "dependencies": {
+                "ffmpeg": Constants.FFMPEG_AVAILABLE,
+                "cv2": Constants.CV2_AVAILABLE,
+                "pymediainfo": Constants.PYMEDIAINFO_AVAILABLE,
+            },
+            "critical_resources": [
+                "extract_metadata", "extract_frames", "extract_text", "process_video_frames", "get_version"
+            ],
+        }
+        processors["video_processor"] = make_processor(
+            processor=video_frame_resources["processor_name"],
+            dependencies=video_frame_resources["dependencies"],
+            supported_formats=video_frame_resources["supported_formats"],
+            critical_resources=video_frame_resources["critical_resources"],
+            configs=configs,
+        )
+
+    # OCR processor (ability)
+    if Constants.PYTESSERACT_AVAILABLE or Constants.OPENAI_AVAILABLE:
+        ocr_resources = {
+            "supported_formats": Constants.SUPPORTED_IMAGE_FORMATS_SET,
+            "processor_name": 'ocr_processor',
+            "dependencies": {
+                "openai": Constants.OPENAI_AVAILABLE,
+                "pytesseract": Constants.PYTESSERACT_AVAILABLE,
+            },
+            "critical_resources": [
+                "can_process", "extract_text", "extract_features",
+                "get_version"
+            ],
+        }
+        processors["ocr_processor"] = make_processor(
+            processor=ocr_resources["processor_name"],
+            dependencies=ocr_resources["dependencies"],
+            supported_formats=ocr_resources["supported_formats"],
+            critical_resources=ocr_resources["critical_resources"],
+            configs=configs,
+        )
+
+
+    # === MIME-Type Specific Processors ===
     
+    # XLSX processor (MIME-type specific)
+    if Constants.XLSX_PROCESSOR_AVAILABLE:
+        xlsx_resources = {
+            "supported_formats": Constants.SUPPORTED_XLSX_FORMATS_SET,
+            "processor_name": 'xlsx_processor',
+            "dependencies": {
+                "openpyxl": Constants.OPENPYXL_AVAILABLE,
+                "pandas": Constants.PANDAS_AVAILABLE,
+            },
+            "critical_resources": [
+                "extract_text", "extract_metadata", "extract_structure", "open_xlsx_file",
+                "get_version"
+            ],
+        }
+        if processors.get("image_processor"):
+            xlsx_resources["critical_resources"].append(('extract_images', processors["image_processor"]))
+
+        processors["xlsx_processor"] = make_processor(
+            processor=xlsx_resources["processor_name"],
+            dependencies=xlsx_resources["dependencies"],
+            supported_formats=xlsx_resources["supported_formats"],
+            critical_resources=xlsx_resources["critical_resources"],
+            configs=configs,
+        )
+
     # SVG processor
-    processors["svg_processor"] = {
-        "extract_svg_metadata": extract_svg_metadata,
-        "generate_svg_description": generate_svg_description,
-        "process_svg_file": process_svg_file
-    }
-    
-    # OCR processor
-    if OCR_AVAILABLE:
-        processors["ocr_processor"] = {
-            "can_process": ocr_can_process,
-            "extract_text": ocr_extract_text,
-            "extract_features": ocr_extract_features
+    if Constants.SVG_PROCESSOR_AVAILABLE:
+        svg_resources = {
+            "supported_formats": Constants.SUPPORTED_SVG_FORMATS_SET,
+            "processor_name": 'svg_processor',
+            "dependencies": {
+                "generic_svg": Constants.GENERIC_SVG_AVAILABLE,
+            },
+            "critical_resources": [
+                "extract_svg_metadata", "generate_svg_description", "process_svg_file", "get_version"
+            ],
         }
-    else:
-        logger.warning("OCR not available, text extraction from images will be limited")
-        processors["ocr_processor"] = None
+        processors["svg_processor"] = make_processor(
+            processor=svg_resources["processor_name"],
+            dependencies=svg_resources["dependencies"],
+            supported_formats=svg_resources["supported_formats"],
+            critical_resources=svg_resources["critical_resources"],
+            configs=configs,
+        )
     
     # === Text Processors ===
     
-    # BeautifulSoup processor
-    if SOUP_AVAILABLE:
-        from utils.dependency_modules.beautiful_soup_processor import process_html
-        processors["beautiful_soup_processor"] = {
-            "process_html": process_html
+    # HTML processor
+    if Constants.HTML_PROCESSOR_AVAILABLE:
+        html_resources = {
+            "supported_formats": Constants.SUPPORTED_HTML_FORMATS_SET,
+            "processor_name": 'html_processor',
+            "dependencies": {
+                "bs4": Constants.BS4_AVAILABLE,
+            },
+            "critical_resources": [
+                "process_html", "get_version"
+            ],
         }
-    else:
-        logger.warning("BeautifulSoup not available, using basic HTML processing")
-        processors["beautiful_soup_processor"] = None
+        processors["html_processor"] = make_processor(
+            processor=html_resources["processor_name"],
+            dependencies=html_resources["dependencies"],
+            supported_formats=html_resources["supported_formats"],
+            critical_resources=html_resources["critical_resources"],
+            configs=configs,
+        )
     
-    # lxml processor
-    if LXML_AVAILABLE:
-        from utils.dependency_modules.lxml_processor import process_xml
-        processors["lxml_processor"] = {
-            "process_xml": process_xml
+    # XML processor
+    if Constants.XML_PROCESSOR_AVAILABLE:
+        xml_resources = {
+            "supported_formats": Constants.SUPPORTED_XML_FORMATS_SET,
+            "processor_name": 'xml_processor',
+            "dependencies": {
+                "lxml": Constants.LXML_AVAILABLE,
+            },
+            "critical_resources": [
+                "process_xml", "get_version"
+            ],
         }
-    else:
-        logger.warning("lxml not available, using basic XML processing")
-        processors["lxml_processor"] = None
+        processors["xml_processor"] = make_processor(
+            processor=xml_resources["processor_name"],
+            dependencies=xml_resources["dependencies"],
+            supported_formats=xml_resources["supported_formats"],
+            critical_resources=xml_resources["critical_resources"],
+            configs=configs,
+        )
     
-    # icalendar processor
-    if ICALENDAR_AVAILABLE:
-        from utils.dependency_modules.icalendar_processor import process_calendar
-        processors["icalendar_processor"] = {
-            "process_calendar": process_calendar
+    # Calendar processor
+    if Constants.CALENDAR_PROCESSOR_AVAILABLE:
+        calendar_resources = {
+            "supported_formats": Constants.SUPPORTED_CALENDAR_FORMATS_SET,
+            "processor_name": 'calendar_processor',
+            "dependencies": {
+                "icalendar": Constants.ICALENDAR_AVAILABLE,
+            },
+            "critical_resources": [
+                "process_calendar", "get_version"
+            ],
         }
-    else:
-        logger.warning("icalendar not available, using basic calendar processing")
-        processors["icalendar_processor"] = None
+        processors["calendar_processor"] = make_processor(
+            processor=calendar_resources["processor_name"],
+            dependencies=calendar_resources["dependencies"],
+            supported_formats=calendar_resources["supported_formats"],
+            critical_resources=calendar_resources["critical_resources"],
+            configs=configs,
+        )
     
     # CSV processor
-    if PANDAS_AVAILABLE:
-        from utils.dependency_modules.csv_processor import process_csv
-        processors["csv_processor"] = {
-            "process_csv": process_csv
+    if Constants.CSV_PROCESSOR_AVAILABLE:
+        csv_resources = {
+            "supported_formats": Constants.SUPPORTED_CSV_FORMATS_SET,
+            "processor_name": 'csv_processor',
+            "dependencies": {
+                "pandas": Constants.PANDAS_AVAILABLE,
+            },
+            "critical_resources": [
+                "process_csv", "get_version"
+            ],
         }
-    else:
-        logger.warning("pandas not available, using basic CSV processing")
-        processors["csv_processor"] = None
-    
-    # === Video Processors ===
-    
-    # pymediainfo processor
-    if MEDIAINFO_AVAILABLE:
-        from utils.dependency_modules.pymediainfo_processor import (
-            extract_metadata,
-            generate_text_description,
-            process_video_metadata,
-            is_available as mediainfo_is_available
+        processors["csv_processor"] = make_processor(
+            processor=csv_resources["processor_name"],
+            dependencies=csv_resources["dependencies"],
+            supported_formats=csv_resources["supported_formats"],
+            critical_resources=csv_resources["critical_resources"],
+            configs=configs,
         )
-        processors["pymediainfo_processor"] = {
-            "extract_metadata": extract_metadata,
-            "generate_text_description": generate_text_description,
-            "process_video_metadata": process_video_metadata,
-            "is_available": mediainfo_is_available
-        }
-    else:
-        logger.warning("pymediainfo not available, video metadata extraction will be limited")
-        processors["pymediainfo_processor"] = None
-    
-    # OpenCV processor
-    if CV2_AVAILABLE:
-        from utils.dependency_modules.cv2_processor import (
-            get_video_properties,
-            extract_frame,
-            extract_multiple_frames,
-            process_video_frames,
-            is_available as cv2_is_available
-        )
-        processors["cv2_processor"] = {
-            "get_video_properties": get_video_properties,
-            "extract_frame": extract_frame,
-            "extract_multiple_frames": extract_multiple_frames,
-            "process_video_frames": process_video_frames,
-            "is_available": cv2_is_available
-        }
-    else:
-        logger.warning("OpenCV (cv2) not available, frame extraction will be limited")
-        processors["cv2_processor"] = None
-    
-    # FFmpeg processor
-    if FFMPEG_AVAILABLE:
-        from utils.dependency_modules.ffmpeg_processor import (
-            extract_thumbnail,
-            extract_multiple_frames as ffmpeg_extract_frames,
-            get_video_info,
-            process_video_file as ffmpeg_process_video,
-            is_available as ffmpeg_is_available
-        )
-        processors["ffmpeg_processor"] = {
-            "extract_thumbnail": extract_thumbnail,
-            "extract_multiple_frames": ffmpeg_extract_frames,
-            "get_video_info": get_video_info,
-            "process_video_file": ffmpeg_process_video,
-            "is_available": ffmpeg_is_available
-        }
-    else:
-        logger.warning("FFmpeg not available, video processing will be limited")
-        processors["ffmpeg_processor"] = None
+
+    # === Application Processors ===
+
+    # PDF processor
+    processors["pdf_processor"] = make_processor(
+        processor="pdf_processor",
+        resources={},
+        dependencies={
+            "pypdf2": Constants.PYPDF2_AVAILABLE,
+        },
+        supported_formats={"pdf"},
+        critical_resources=[
+            "extract_text", "extract_metadata", "extract_structure", 
+            "get_version"
+        ],
+        configs=configs,
+    )
+
+    # DOCX processor
+    processors["docx_processor"] = make_processor(
+        processor="docx_processor",
+        resources={},
+        dependencies={
+            "python_docx": Constants.PYTHON_DOCX_PROCESSOR_AVAILABLE,
+        },
+        supported_formats={"docx"},
+        critical_resources=[
+            "extract_text", "extract_metadata", "extract_structure", 
+            "get_version"
+        ],
+        configs=configs,
+    )
     
     return processors
 
@@ -269,8 +424,7 @@ def create_all_handlers(resources: Optional[Dict[str, Any]] = None, configs: Opt
         "image": create_image_handler,
         "text": create_text_handler,
         "video": create_video_handler,
-        # TODO Add other handlers as they are refactored
-        # "application": create_application_handler,
+        "application": create_application_handler,
     }
     
     # Add any additional resources
@@ -299,6 +453,7 @@ def initialize_format_registry(resources: Optional[Dict[str, Any]] = None, confi
         Configured FormatRegistry instance.
     """
     # Create handler factories
+    logger.debug("Creating handler factories...")
     handler_factories = create_all_handlers(resources, configs)
     
     # Prepare resources for the registry
@@ -315,5 +470,5 @@ def initialize_format_registry(resources: Optional[Dict[str, Any]] = None, confi
                 registry_resources[key] = value
     
     # Create and return the registry
-    logger.info("Initializing format registry with IoC pattern")
+    logger.info("Initializing format registry...")
     return create_format_registry(registry_resources, configs)

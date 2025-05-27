@@ -16,7 +16,7 @@ from typing import Dict, List, Any, Tuple
 from managers.batch_processor import batch_processor
 from core.processing_pipeline import processing_pipeline
 from managers.error_handler import error_handler
-from utils.configs import configs
+from configs import configs
 
 
 class ErrorHandlingTest(unittest.TestCase):

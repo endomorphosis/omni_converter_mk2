@@ -12,7 +12,7 @@ import tempfile
 from io import BytesIO
 
 # Import the processor to test
-from format_handlers.processors.docx_processor import DocxProcessor, PYTHON_DOCX_AVAILABLE
+from format_handlers.processors.python_docx_processor import DocxProcessor, PYTHON_DOCX_AVAILABLE
 
 # Create a sample DOCX for testing
 SAMPLE_DOCX_DATA = None  # This will be populated in setUpModule if python-docx is available

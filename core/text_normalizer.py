@@ -3,14 +3,14 @@ Text normalizer module for the Omni-Converter.
 
 This module provides the TextNormalizer class for normalizing text content.
 """
-
 import re
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from pydantic import Field
 
-from format_handlers.base_handler import Content
-from utils.logger import logger
+from format_handlers.unified_handler import Content
+from configs import Configs
+from logger import logger
 
 
 class NormalizedContent(Content):
@@ -50,8 +50,17 @@ class TextNormalizer:
         normalizers (Dict[str, NormalizerFunc]): Dictionary of normalizer functions.
     """
     
-    def __init__(self):
-        """Initialize a text normalizer."""
+    def __init__(self, resources: Dict[str, Any], configs: Configs):
+        """
+        Initialize a text normalizer.
+        
+        Args:
+            resources: A dictionary of callable objects and dependencies.
+            configs: A pydantic model containing configuration settings.
+        """
+        self.resources = resources
+        self.configs = configs
+        
         self.normalizers: Dict[str, NormalizerFunc] = {}
         
         # Register default normalizers
@@ -64,7 +73,8 @@ class TextNormalizer:
         self.register_normalizer("empty_lines", self._normalize_empty_lines)
         self.register_normalizer("unicode", self._normalize_unicode)
     
-    def _normalize_whitespace(self, text: str) -> str:
+    @staticmethod
+    def _normalize_whitespace(text: str) -> str:
         """
         Normalize whitespace in text.
         
@@ -80,7 +90,8 @@ class TextNormalizer:
         # Replace multiple spaces with a single space
         return re.sub(r" {2,}", " ", text)
     
-    def _normalize_line_endings(self, text: str) -> str:
+    @staticmethod
+    def _normalize_line_endings(text: str) -> str:
         """
         Normalize line endings in text.
         
@@ -93,7 +104,8 @@ class TextNormalizer:
         # Replace all types of line endings with Unix-style line endings
         return text.replace("\r\n", "\n").replace("\r", "\n")
     
-    def _normalize_empty_lines(self, text: str) -> str:
+    @staticmethod
+    def _normalize_empty_lines(text: str) -> str:
         """
         Normalize empty lines in text.
         
@@ -106,7 +118,8 @@ class TextNormalizer:
         # Replace three or more consecutive newlines with two newlines
         return re.sub(r"\n{3,}", "\n\n", text)
     
-    def _normalize_unicode(self, text: str) -> str:
+    @staticmethod
+    def _normalize_unicode(text: str) -> str:
         """
         Normalize Unicode characters in text.
         
@@ -119,11 +132,37 @@ class TextNormalizer:
         # Replace non-breaking spaces with regular spaces
         text = text.replace("\u00A0", " ")
 
-        for pattern, repl in [ # TODO - Validate this.
-            (r"[\u2012-\u2015]", "-"), # Replace various dash characters with a standard dash
-            (r"[\u2018\u2019]", "'"),  # Replace various quote characters with standard quote
-            (r"[\u201C\u201D]", '"'),  # Horizontal bar
-        ]:
+        # Normalize various Unicode characters to their ASCII equivalents
+        unicode_replacements = [
+            # Dash characters
+            (r"[\u2010-\u2015]", "-"),     # Hyphen, non-breaking hyphen, figure dash, en dash, em dash, horizontal bar
+            (r"[\u2212]", "-"),            # Minus sign
+            # Quote characters
+            (r"[\u2018\u2019]", "'"),      # Left and right single quotation marks
+            (r"[\u201A\u201B]", "'"),      # Single low-9 quotation mark, single high-reversed-9 quotation mark
+            (r"[\u201C\u201D]", '"'),      # Left and right double quotation marks
+            (r"[\u201E\u201F]", '"'),      # Double low-9 quotation mark, double high-reversed-9 quotation mark
+            (r"[\u2039\u203A]", "'"),      # Single left and right-pointing angle quotation marks
+            (r"[\u00AB\u00BB]", '"'),      # Left and right-pointing double angle quotation marks
+            # Apostrophe variants
+            (r"[\u02BC\u2032]", "'"),      # Modifier letter apostrophe, prime
+            # Space characters
+            (r"[\u2000-\u200A]", " "),     # Various space characters (en quad, em quad, thin space, etc.)
+            (r"[\u202F\u205F]", " "),      # Narrow no-break space, medium mathematical space
+            # Ellipsis
+            (r"\u2026", "..."),            # Horizontal ellipsis
+            # Bullet points
+            (r"[\u2022\u2023\u2043]", "*"), # Bullet, triangular bullet, hyphen bullet
+            # Mathematical symbols
+            (r"\u00D7", "x"),              # Multiplication sign
+            (r"\u00F7", "/"),              # Division sign
+            # Currency symbols (convert to text representations)
+            (r"\u00A3", "GBP "),           # Pound sign
+            (r"\u00A5", "JPY "),           # Yen sign
+            (r"\u20AC", "EUR "),           # Euro sign
+        ]
+        
+        for pattern, repl in unicode_replacements:
             text = re.sub(pattern, repl, text)
         return text
     

@@ -12,58 +12,51 @@ This document tracks the tasks and issues related to implementing Inversion of C
 
 ## Completed Tasks
 
-- [x] Create 'deprecated' folder for storing obsolete files
-- [x] Finalize `unified_handler.py` implementation
-  - [x] Fix indentation issues
-  - [x] Complete the `map_extension_to_format` function to handle all supported extensions
-  - [x] Remove inheritance in favor of composition
-  - [x] Centralize resource extraction in constructor
-  - [x] Implement proper error handling
-- [x] Refactor audio handler to use the new pattern
-  - [x] Create `refactored_audio_handler.py` using composition
-  - [x] Convert class methods to standalone functions
-  - [x] Add factory function for dependency injection
-- [x] Create a refactored format registry implementation
-  - [x] Implement with resource injection
-  - [x] Add factory functions for handler creation
-- [x] Add a factory module for centralized component creation
-  - [x] Implement handler factory functions
-  - [x] Add initialization function for format registry
-- [x] Create utils/dependency_modules/ directory for isolated third-party dependencies
-  - [x] Create pil_processor.py for PIL-based image processing
-  - [x] Create svg_processor.py for SVG file handling
-  - [x] Create pytesseract_processor.py for OCR functionality
-  - [x] Create skeleton_vllm_processor.py as placeholder for advanced ML-based processing
-  - [x] Create beautiful_soup_processor.py for HTML processing
-  - [x] Create lxml_processor.py for XML processing
-  - [x] Create icalendar_processor.py for calendar file handling
-  - [x] Create csv_processor.py for CSV handling
-- [x] Refactor image handler to use the new IoC pattern
-  - [x] Create `refactored_image_handler.py` using composition
-  - [x] Extract PIL, SVG, and OCR dependencies to dedicated modules
-  - [x] Implement fail-fast approach for required resources
-- [x] Refactor text handler to use the new IoC pattern
-  - [x] Create `refactored_text_handler.py` using composition
-  - [x] Extract HTML, XML, calendar, and CSV dependencies to dedicated modules
-  - [x] Ensure all text-based formats are properly handled
-- [x] Update factory.py to include new handlers
-  - [x] Add image handler to factory
-  - [x] Add text handler to factory
-  - [x] Add initialization for all processors
+### IoC Architecture Implementation
+- [x] **Complete IoC refactoring with dependency injection pattern**
+  - [x] Implement standardized processor pattern across ALL processors
+  - [x] Create centralized factory system in factory.py
+  - [x] Establish "types determine processors" principle
+  - [x] Fix circular references in constants.py
+  - [x] Clean up and simplify make_processor function
+  - [x] Implement multi-dependency fallback system
+
+### Processor Architecture
+- [x] **Establish two-tier processor system**
+  - [x] Ability processors (image_processor, text_processor, video_processor, ocr_processor)
+  - [x] MIME-type specific processors (xlsx_processor, pdf_processor, html_processor, etc.)
+  - [x] Hierarchical delegation (specific → ability → dependency modules)
+
+### Factory System
+- [x] **Standardize ALL processors to follow exact pattern**:
+  1. Check `Constants.PROCESSOR_AVAILABLE`
+  2. Create `processor_resources` dictionary
+  3. Optional resource modifications
+  4. Call `make_processor()` with unpacked resources
+  5. Store in `processors[processor_name]`
+
+### Dependency Management
+- [x] **Create isolated dependency modules**
+  - [x] Format: `dependency_modules/_library_processor.py`
+  - [x] Contains raw functions using third-party libraries
+  - [x] Automatic mocking when dependencies unavailable
+  - [x] Multi-dependency fallback (e.g., openpyxl → pandas for XLSX)
+
+### Constants System
+- [x] **Centralize all availability checking**
+  - [x] Library availability properties (PIL_AVAILABLE, OPENPYXL_AVAILABLE)
+  - [x] Processor availability properties (IMAGE_PROCESSOR_AVAILABLE)
+  - [x] Format sets (SUPPORTED_XLSX_FORMATS_SET)
+  - [x] Use @_classproperty for class-level properties
+
+### Documentation
+- [x] **Create comprehensive architecture documentation**
+  - [x] Document IoC pattern and dependency injection
+  - [x] Explain processor hierarchy and delegation
+  - [x] Document factory system and standardized patterns
+  - [x] Create ARCHITECTURE.md with complete system overview
 
 ## Remaining Tasks
-
-- [ ] Update remaining format handlers to use the new IoC pattern
-  - [x] Refactor `video_handler.py` to use the new pattern
-  - [ ] Refactor `application_handler.py` to use the new pattern
-
-- [ ] Create additional processor modules for remaining dependencies
-  - [x] Create pymediainfo_processor.py for video metadata extraction
-  - [x] Create cv2_processor.py for video frame extraction
-  - [x] Create ffmpeg_processor.py for video processing
-  - [ ] Create pdf_processor.py for PDF handling
-  - [ ] Create docx_processor.py for DOCX handling
-  - [ ] Create xlsx_processor.py for XLSX handling
 
 - [ ] Update main.py and other modules to use the new registry
   - [ ] Replace global format_registry with factory-created instance
@@ -80,6 +73,11 @@ This document tracks the tasks and issues related to implementing Inversion of C
   - [ ] Update handler documentation to reflect the new pattern
   - [ ] Create diagrams illustrating the new architecture
   - [ ] Document the preservation strategy for obsolete files
+
+- [ ] Move all availability constants from factory.py to constants.py
+  - [ ] Consolidate all processor availability checks in one location
+  - [ ] Update imports in factory.py to use constants from constants.py
+  - [ ] Ensure consistent naming convention for availability flags
 
 ## Implementation Notes
 

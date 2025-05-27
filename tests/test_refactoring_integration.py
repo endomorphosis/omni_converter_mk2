@@ -17,9 +17,9 @@ from core.output_formatter import OutputFormatter
 from core.text_normalizer import TextNormalizer
 from core.content_extractor import ContentExtractor
 from format_handlers.format_registry import FormatRegistry
-from utils.configs import configs, Configs
-from utils.format_detector import format_detector
-from utils.validator import BasicValidator
+from configs import configs, Configs
+from core.format_detector import format_detector
+from core.validator import BasicValidator
 
 # Classes being refactored
 from core.processing_result import ProcessingResult

@@ -3,10 +3,9 @@ Processing result module for the Omni-Converter.
 
 This module provides the ProcessingResult class for tracking the result of processing a file.
 """
-
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -35,7 +34,7 @@ class ProcessingResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
     content_hash: str = ""
     timestamp: datetime = field(default_factory=datetime.now)
-    
+
     def add_error(self, error: str) -> None:
         """
         Add an error to the result.

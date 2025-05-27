@@ -4,15 +4,14 @@ Output formatter module for the Omni-Converter.
 This module provides the OutputFormatter class for formatting extracted content
 into different output formats.
 """
-
+from dataclasses import dataclass, field
 import json
 import os
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
-from format_handlers.base_handler import Content
-from core.text_normalizer import NormalizedContent
-from utils.logger import logger
+from format_handlers.unified_handler import Content
+from configs import Configs
+from logger import logger
 
 
 @dataclass
@@ -91,15 +90,24 @@ class OutputFormatter:
         default_format (str): The default output format.
     """
     
-    def __init__(self, default_format: str = "txt"):
+    def __init__(self, resources: Dict[str, Any], configs: Configs):
         """
         Initialize an output formatter.
         
         Args:
-            default_format: The default output format.
+            resources: A dictionary of callable objects and dependencies.
+            configs: A pydantic model containing configuration settings.
         """
+        self.resources = resources
+        self.configs = configs
+        
+        # Extract required resources
+        self.normalized_content = self.resources["normalized_content"]
+        
+        # Get default format from config or use 'txt' as fallback
+        self.default_format = self.configs.get_config_value('output.default_format', 'txt')
+        
         self.output_formats: Dict[str, FormatterFunc] = {}
-        self.default_format = default_format
         
         # Register default formatters
         self._register_default_formatters()
@@ -164,7 +172,7 @@ class OutputFormatter:
             md += "\n"
         
         # Add normalization info if available
-        if isinstance(content, NormalizedContent) and content.normalized_by:
+        if isinstance(content, self.normalized_content) and content.normalized_by:
             md += "## Normalization\n\n"
             md += "Applied normalizers:\n\n"
             for normalizer in content.normalized_by:

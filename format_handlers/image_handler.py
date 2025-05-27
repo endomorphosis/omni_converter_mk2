@@ -1,312 +1,255 @@
 """
-Image format handlers for the Omni-Converter.
+Image format handlers for the Omni-Converter using IoC pattern.
 
-This module provides handlers for image formats like JPEG, PNG, GIF, etc.
-It uses a combination of basic metadata extraction and OCR (Optical Character Recognition)
-for extracting text from images.
+This module provides handlers for image formats like JPEG, PNG, GIF, WebP, and SVG
+using dependency injection for better modularity and testability, without inheritance.
 """
 
 import os
-import io
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from PIL import Image
-from PIL.ExifTags import TAGS
-
 from utils.filesystem import FileSystem
-from utils.logger import logger
-from utils.format_detector import format_detector
-from format_handlers.base_handler import BaseFormatHandler, Content
-from format_handlers.processors.ocr_processor import ocr_processor
+from configs import Configs
+from logger import logger
+from format_handlers.unified_handler import BaseFormatHandler, Content, create_handler, map_extension_to_format
+from format_handlers.constants import Constants
+from core.format_detector import format_detector
 
-from utils.common.try_except_decorator import try_except
 
-
-class ImageHandler(BaseFormatHandler):
+def create_image_handler(resources: Dict[str, Any], configs: Optional[Configs] = None) -> BaseFormatHandler:
     """
-    Handler for image-based formats.
+    Create an image handler instance with injected dependencies.
     
-    Handles common image formats like JPEG, PNG, GIF, WebP, and SVG.
-    Extracts metadata and generates basic descriptions for images.
-    
-    # TODO: Implement full OCR functionality for text extraction from images.
-    Note: For full OCR functionality, additional packages would be required.
-    This is a simplified implementation focused on metadata extraction.
+    Args:
+        resources: Resources dictionary with dependencies.
+            Must contain:
+            - pil_processor: PIL-based image processor
+            - svg_processor: SVG-specific processor
+            - ocr_processor: OCR processor for text extraction
+        configs: Configuration settings.
+        
+    Returns:
+        BaseFormatHandler instance configured for image formats.
     """
+    # Format-specific file extensions # TODO These need to be moved to the constants file.
+    format_extensions = {
+        'jpeg': ['.jpg', '.jpeg'],
+        'png': ['.png'],
+        'gif': ['.gif'],
+        'webp': ['.webp'],
+        'svg': ['.svg']
+    }
     
-    def __init__(self):
-        """Initialize the image handler."""
-        super().__init__(
-            handler_name="ImageHandler",
-            supported_formats={"jpeg", "png", "gif", "webp", "svg"},
-            capabilities={
-                'category': 'image',
-                'preserves_structure': False,
-                'extracts_metadata': True,
-                'supports_ocr': True if ocr_processor.supported_formats else 'basic'
-            }
-        )
+    # Prepare parsers with the appropriate functions
+    parsers = {
+        "image": {
+            "jpeg": process_image_file,
+            "png": process_image_file,
+            "gif": process_image_file,
+            "webp": process_image_file,
+            "svg": process_svg_file
+        }
+    }
     
-    def do_extraction(self, file_path: str, options: Dict[str, Any]) -> Content:
-        """
-        Extract content from an image file.
-        
-        Args:
-            file_path: The path to the file.
-            options: Extraction options.
-            
-        Returns:
-            The extracted content.
-            
-        Raises:
-            ValueError: If the file format is not supported.
-            Exception: If an error occurs during extraction.
-        """
-        # Detect format if not provided in options
-        format_name = options.get('format')
-        if not format_name:
-            format_name, _ = format_detector.detect_format(file_path)
-            
-            # Override format detection based on file extension if needed
-            _, ext = os.path.splitext(file_path)
-            ext = ext.lower().lstrip('.')
-            
-            # Handle special cases
-            match ext:
-                case 'jpg' | 'jpeg':
-                    format_name = 'jpeg'
-                case 'png' | 'gif' | 'webp' | 'svg':
-                    format_name = ext
-                case _:
-                    pass
+    # Extract required processors from resources - fail fast if missing
+    pil_processor = resources["pil_processor"]
+    svg_processor = resources["svg_processor"]
+    ocr_processor = resources["ocr_processor"]
+    
+    # Define capabilities based on available processors
+    capabilities = dict(Constants.IMAGE_HANDLER_CAPABILITIES)
+    capabilities['supports_ocr'] = True
+    
+    # Additional resources specific to image handling
+    image_resources = {
+        "pil_processor": pil_processor,
+        "svg_processor": svg_processor,
+        "ocr_processor": ocr_processor,
+        "format_extensions": format_extensions
+    }
+    
+    # Create and return the handler
+    return create_handler(
+        handler_name="ImageHandler",
+        format_detector=format_detector,
+        ext_to_format=map_extension_to_format,
+        supported_formats=Constants.SUPPORTED_IMAGE_FORMATS_SET,
+        capabilities=capabilities,
+        parsers=parsers,
+        resources_extra=image_resources,
+        configs=configs
+    )
 
-        if not format_name or format_name not in self.supported_formats:
-            raise ValueError(f"Unsupported format: {format_name}")
+
+def process_image_file(file_content: Any, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+    """
+    Process an image file and extract content.
+    
+    Args:
+        file_content: The file content to process (typically binary).
+        options: Processing options including format information.
+            Must contain:
+            - file_path: Path to the image file
+            - format: Format of the image file
+            - pil_processor: PIL-based image processor
         
-        logger.debug(f"Extracting content from {format_name} image: {file_path}")
+    Returns:
+        Tuple of (text content, metadata, sections).
         
-        # Special handling for SVG since it's text-based
-        if format_name == 'svg':
-            return self._extract_svg_content(file_path, format_name)
+    Raises:
+        ValueError: If the file format is not supported.
+        Exception: If an error occurs during processing.
+    """
+    # Extract key information from the options - fail fast if missing
+    file_path = options["file_path"]
+    format_name = options["format"]
+    pil_processor = options["pil_processor"]
+    
+    try:
+        # Extract metadata using PIL
+        metadata, sections = pil_processor.extract_image_metadata(file_path, format_name, options)
         
-        # For other image formats, use PIL
-        try:
-            # Use a context manager to ensure file is closed
-            with Image.open(file_path) as img:
-                width, height = img.size
-                img_format = img.format
-                img_mode = img.mode
-                
-                # Extract EXIF data if available (primarily for JPEG)
-                exif_data = {}
-                if format_name == 'jpeg' and hasattr(img, '_getexif') and img._getexif():
-                    exif = img._getexif()
-                    if exif:
-                        for tag_id, value in exif.items():
-                            tag = TAGS.get(tag_id, tag_id)
-                            exif_data[tag] = str(value)
-                
-                # Create a basic text description of the image
-                text_content = [f"Image: {os.path.basename(file_path)}"]
-                text_content.append(f"Format: {img_format}")
-                text_content.append(f"Dimensions: {width}x{height} pixels")
-                text_content.append(f"Color Mode: {img_mode}")
-                
-                # Add key EXIF data to the description
-                if exif_data:
-                    text_content.append("\nMetadata:")
-                    for key in ['Make', 'Model', 'DateTime', 'ExposureTime', 
-                            'FNumber', 'ISOSpeedRatings', 'FocalLength']:
-                        if key in exif_data:
-                            text_content.append(f"  {key}: {exif_data[key]}")
-                
-                # Create metadata
-                metadata = {
-                    'format': format_name,
-                    'width': width,
-                    'height': height,
-                    'color_mode': img_mode,
-                    'exif': exif_data
+        # Generate text description
+        text_content = pil_processor.generate_image_description(file_path, metadata)
+        
+        # Use OCR processor if available
+        ocr_processor = options["ocr_processor"]
+        ocr_text = None
+        ocr_sections = []
+        
+        if ocr_processor.can_process(format_name):
+            try:
+                # Read file as binary for OCR processing
+                ocr_options = {
+                    'language': 'eng',  # Default to English if not specified
+                    'include_boxes': False  # Default to no bounding boxes
                 }
                 
-                # Create sections
-                sections = [
-                    {
-                        'type': 'image_info',
-                        'content': f"Image: {width}x{height} {img_mode}"
-                    }
-                ]
+                # Override defaults with provided options if they exist
+                if 'language' in options:
+                    ocr_options['language'] = options['language']
+                if 'include_text_boxes' in options:
+                    ocr_options['include_boxes'] = options['include_text_boxes']
                 
-                if exif_data:
-                    sections.append({
-                        'type': 'metadata',
-                        'content': exif_data
-                    })
+                # Extract text with OCR
+                ocr_text = ocr_processor.extract_text(file_content.as_binary, ocr_options)
                 
-                # Add OCR section using the OCR processor if available
-                ocr_text = None
-                if ocr_processor.can_process(format_name):
-                    try:
-                        # Read file as binary for OCR processing
-                        file_data = FileSystem.read_file(file_path, 'rb').as_binary
-                        
-                        # Process with OCR
-                        ocr_options = {
-                            'language': options.get('language', 'eng'),
-                            'include_boxes': options.get('include_text_boxes', False)
-                        }
-                        
-                        # Extract text with OCR
-                        ocr_text = ocr_processor.extract_text(file_data, ocr_options)
-                        
-                        # Add OCR text to the content
-                        if ocr_text:
-                            text_content.append("\nOCR Text:")
-                            text_content.append(ocr_text)
-                            
-                            # Add OCR text to sections
-                            sections.append({
-                                'type': 'ocr_text',
-                                'content': ocr_text
-                            })
-                            
-                            # Try to extract additional features if requested
-                            if options.get('extract_features', False):
-                                try:
-                                    features = ocr_processor.extract_features(
-                                        file_data, 
-                                        {**ocr_options, 'include_boxes': True}
-                                    )
-                                    sections.extend(features)
-                                except Exception as e:
-                                    logger.warning(f"Failed to extract image features: {e}")
-                    except Exception as e:
-                        logger.warning(f"OCR processing failed: {e}")
-                        sections.append({
-                            'type': 'ocr_text',
-                            'content': f"OCR processing failed: {e}"
-                        })
-                else:
-                    # Add a placeholder if OCR is not available
-                    sections.append({
+                # Add OCR text to sections
+                if ocr_text:
+                    ocr_sections.append({
                         'type': 'ocr_text',
-                        'content': "OCR text extraction not available for this format."
+                        'content': ocr_text
                     })
-                
-                # Create content object
-                content = Content(
-                    text="\n".join(text_content),
-                    metadata=metadata,
-                    sections=sections,
-                    source_format=format_name,
-                    source_path=file_path
-                )
-                
-                return content
-            
-        except Exception as e:
-            logger.error(f"Error extracting content from {format_name} image: {file_path}\n{e}")
-            raise e
+                    
+                    # Try to extract additional features if requested
+                    if 'extract_features' in options and options['extract_features']:
+                        try:
+                            features = ocr_processor.extract_features(
+                                file_content.as_binary, 
+                                {**ocr_options, 'include_boxes': True}
+                            )
+                            ocr_sections.extend(features)
+                        except Exception as e:
+                            logger.warning(f"Failed to extract image features: {e}")
+            except Exception as e:
+                logger.warning(f"OCR processing failed: {e}")
+                ocr_sections.append({
+                    'type': 'ocr_text',
+                    'content': f"OCR processing failed: {e}"
+                })
+        else:
+            # Add a placeholder if OCR is not available for this format
+            ocr_sections.append({
+                'type': 'ocr_text',
+                'content': f"OCR text extraction not available for {format_name} format."
+            })
+        
+        # Add OCR text to content if available
+        if ocr_text:
+            text_content.append("\nOCR Text:")
+            text_content.append(ocr_text)
+        
+        # Add OCR sections to sections
+        sections.extend(ocr_sections)
+        
+        return "\n".join(text_content), metadata, sections
+        
+    except Exception as e:
+        logger.error(f"Error extracting content from {format_name} image: {file_path}\n{e}")
+        raise
 
-    def _extract_svg_content(self, file_path: str, format_name: str) -> Content:
-        """
-        Extract content from an SVG file.
+
+def process_svg_file(file_content: Any, options: Dict[str, Any]) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+    """
+    Process an SVG file and extract content.
+    
+    Args:
+        file_content: The file content to process (text).
+        options: Processing options including format information.
+            Must contain:
+            - file_path: Path to the SVG file
+            - svg_processor: SVG-specific processor
         
-        SVG is a text-based XML format, so we can extract more meaningful content.
+    Returns:
+        Tuple of (text content, metadata, sections).
         
-        Args:
-            file_path: The path to the file.
-            format_name: The format of the file.
-            
-        Returns:
-            The extracted content.
-        """
-        try:
-            # Read the SVG file
-            file_content = FileSystem.read_file(file_path, 'r')
-            svg_text = file_content.get_as_text()
-            
-            # Extract basic info from the SVG
-            import re
-            
-            # Try to extract dimensions
-            width = height = "Unknown"
-            width_match = re.search(r'width="([^"]*)"', svg_text)
-            if width_match:
-                width = width_match.group(1)
-            
-            height_match = re.search(r'height="([^"]*)"', svg_text)
-            if height_match:
-                height = height_match.group(1)
-            
-            # Extract text content from SVG tags that might contain text
-            text_elements = re.findall(r'<text[^>]*>(.*?)</text>', svg_text, re.DOTALL)
-            title_elements = re.findall(r'<title[^>]*>(.*?)</title>', svg_text, re.DOTALL)
-            desc_elements = re.findall(r'<desc[^>]*>(.*?)</desc>', svg_text, re.DOTALL)
-            
-            # Create a text description
-            text_content = [f"SVG Image: {os.path.basename(file_path)}"]
-            text_content.append(f"Dimensions: {width}x{height}")
-            
-            if title_elements:
-                text_content.append(f"Title: {title_elements[0]}")
-            
-            if desc_elements:
-                text_content.append(f"Description: {desc_elements[0]}")
-            
-            if text_elements:
-                text_content.append("\nText content:")
-                for text in text_elements:
-                    text_content.append(text.strip())
-            
-            # Create metadata
-            metadata = {
+    Raises:
+        ValueError: If the file format is not supported.
+        Exception: If an error occurs during processing.
+    """
+    # Extract key information from the options - fail fast if missing
+    file_path = options["file_path"]
+    svg_processor = options["svg_processor"]
+    
+    try:
+        # Process SVG using the dedicated processor
+        return svg_processor.process_svg_file(file_content, options)
+        
+    except Exception as e:
+        logger.error(f"Error extracting content from SVG image: {file_path}\n{e}")
+        raise
+
+
+def extract_basic(file_path: str, format_name: str) -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+    """
+    Basic extraction when specific processors are not available.
+    
+    Args:
+        file_path: The path to the image file.
+        format_name: The format of the image file.
+        
+    Returns:
+        A tuple of (text content, metadata, sections).
+    """
+    # Get basic file information
+    file_size = os.path.getsize(file_path)
+    file_name = os.path.basename(file_path)
+    
+    # Build basic metadata
+    metadata = {
+        'format': format_name,
+        'file_size_bytes': file_size,
+        'file_name': file_name
+    }
+    
+    # Generate basic description
+    text_content = [f"Image File: {file_name}"]
+    text_content.append(f"Format: {format_name.upper()}")
+    text_content.append(f"File Size: {file_size} bytes")
+    text_content.append("")
+    text_content.append("Note: Detailed image information not available.")
+    if format_name != 'svg':
+        text_content.append("Install PIL for enhanced image metadata extraction.")
+    
+    # Create basic sections
+    sections = [
+        {
+            'type': 'image_info',
+            'content': {
                 'format': format_name,
-                'width': width,
-                'height': height,
-                'title': title_elements[0] if title_elements else None,
-                'description': desc_elements[0] if desc_elements else None
+                'file_size': file_size
             }
-            
-            # Create sections
-            sections = [
-                {
-                    'type': 'image_info',
-                    'content': f"SVG Image: {width}x{height}"
-                }
-            ]
-            
-            if title_elements or desc_elements:
-                sections.append({
-                    'type': 'metadata',
-                    'content': {
-                        'title': title_elements[0] if title_elements else None,
-                        'description': desc_elements[0] if desc_elements else None
-                    }
-                })
-            
-            if text_elements:
-                sections.append({
-                    'type': 'text_content',
-                    'content': text_elements
-                })
-            
-            # Create content object
-            content = Content(
-                text="\n".join(text_content),
-                metadata=metadata,
-                sections=sections,
-                source_format=format_name,
-                source_path=file_path
-            )
-            
-            return content
-            
-        except Exception as e:
-            logger.error(f"Error extracting content from SVG image: {file_path}\n{e}")
-            raise e
-
-
-# Global image handler instance
-image_handler = ImageHandler()
+        }
+    ]
+    
+    return "\n".join(text_content), metadata, sections

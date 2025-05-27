@@ -15,7 +15,7 @@ import numpy as np
 from io import BytesIO
 
 # Import the processor to test
-from format_handlers.processors.audio_processor import (
+from format_handlers.processors.by_ability.audio_processor import (
     WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
 )
 

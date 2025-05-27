@@ -14,7 +14,7 @@ from typing import Dict, Any
 from io import BytesIO
 
 from utils.filesystem import FileSystem
-from utils.logger import test_logger
+from logger import test_logger
 from format_handlers.application_handler import ApplicationHandler
 
 

@@ -12,8 +12,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel, Field
 
 
-from utils.configs import configs, Configs
-from utils.logger import logger
+from configs import configs, Configs
+from logger import logger
 from format_handlers.base_handler import Content
 from core.validation_result import ValidationResult
 

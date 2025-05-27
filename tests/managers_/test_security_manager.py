@@ -28,7 +28,7 @@ import shutil
 
 from format_handlers.base_handler import Content
 from managers.security_manager import SecurityManager, SecurityResult, SanitizedContent
-from utils.configs import Configs, configs
+from configs import Configs, configs
 
 from managers.constants import Constants
 resources = { # NOTE: Since these are constants, we can use them directly

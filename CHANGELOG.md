@@ -5,7 +5,59 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2025-05-22
+## [3.1.0-dev] - 2025-05-27 - Complete IoC Architecture Implementation (TESTING REQUIRED)
+
+### Added
+- **Complete core module IoC architecture** with standardized dependency injection
+  - Implemented core/factory.py with factory functions for all core components
+  - Created centralized processing_pipeline factory with dependency injection
+  - Added fail-fast approach for missing core dependencies
+  - Followed exact IoC pattern from CLAUDE.md specification
+- **Complete format handlers IoC architecture** with standardized dependency injection
+  - Implemented "types determine processors" principle across ALL processors
+  - Created two-tier processor hierarchy: ability processors + MIME-type specific
+  - Built centralized factory system with consistent processor creation pattern
+  - Added multi-dependency fallback system (e.g., openpyxl → pandas for XLSX)
+  - Implemented automatic processor mocking for missing dependencies
+- **Comprehensive architecture documentation** (`format_handlers/ARCHITECTURE.md`)
+  - System overview with processor hierarchy and delegation patterns
+  - Dependency injection examples and extension points
+  - Complete architectural patterns and benefits documentation
+- **Enhanced constants system** 
+  - Fixed circular reference issues with @_classproperty
+  - Centralized all availability checking and format definitions
+  - Added processor-specific format sets and availability properties
+
+### Changed
+- **Refactored ALL core components** to follow IoC pattern
+  - ContentExtractor: Added resources/configs parameters, moved registry to resources
+  - OutputFormatter: Added resources/configs parameters, moved NormalizedContent to resources
+  - TextNormalizer: Added resources/configs parameters, maintained normalizer functionality
+  - FormatDetector: Completed _init_format_extensions method implementation
+  - BasicValidator: Enhanced with full dependency injection, removed direct format_detector import
+- **Simplified core module exports**
+  - core/__init__.py now only exports processing_pipeline from factory
+  - Removed all direct imports and broken global instances
+  - Clean separation between core components and external dependencies
+- **Complete format_handlers/factory.py overhaul**
+  - Standardized ALL processors to follow exact 5-step pattern
+  - Simplified make_processor function with proper fallback logic
+  - Eliminated duplicate imports and cleaned up architecture
+- **Reorganized processor hierarchy**
+  - Ability processors: text_processor, image_processor, video_processor, ocr_processor
+  - MIME-type processors: xlsx_processor, pdf_processor, html_processor, csv_processor
+  - Clear delegation: specific → ability → dependency modules
+- **Consolidated video processing**
+  - Video frames now handled by image_processor (frames are images)
+  - Metadata extraction handled by MIME-type specific processors
+
+### Status
+- ⚠️ **CRITICAL: REQUIRES COMPREHENSIVE TESTING** 
+- ⚠️ **BOTH** core and format handler architectures implemented but untested
+- ⚠️ Integration with main application pending (needs core factory integration)
+- ⚠️ Backward compatibility needs verification for entire system
+
+## [2.0.0] - 2025-05-22 - Previous IoC Implementation
 
 ### Added
 - Implemented Inversion of Control (IoC) pattern across all format handlers
@@ -16,6 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created centralized format registry with injected handlers
   - Added fail-fast approach for required resources
   - Extracted all third-party libraries to isolated modules
+- Created processor modules for application format handling
+  - Added `pdf_processor.py` for PDF document processing with PyPDF2
+  - Added `docx_processor.py` for DOCX document processing with python-docx
+  - Added `xlsx_processor.py` for XLSX spreadsheet processing with openpyxl
 
 ### Changed
 - Refactored all format handlers to use composition instead of inheritance
@@ -23,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Refactored `image_handler.py` to use IoC pattern
   - Refactored `text_handler.py` to use IoC pattern
   - Refactored `video_handler.py` to use IoC pattern
+  - Refactored `application_handler.py` to use IoC pattern
   - Updated factory.py to centralize handler creation
   - Preserved backward compatibility throughout refactoring
   - Moved obsolete code to deprecated/ directory instead of deleting

@@ -5,11 +5,11 @@ This module provides the ContentExtractor class for extracting content from file
 based on their format.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
-from format_handlers.base_handler import Content
-from format_handlers.format_registry import format_registry
-from utils.logger import logger
+from format_handlers.unified_handler import Content
+from configs import Configs
+from logger import logger
 
 
 class ContentExtractor:
@@ -23,18 +23,25 @@ class ContentExtractor:
         registry: The format registry to use for extraction.
     """
     
-    def __init__(self, registry=None):
+    def __init__(self, resources: Dict[str, Any], configs: Configs):
         """
         Initialize a content extractor.
         
         Args:
-            registry: The format registry to use for extraction. If None, the global
-                registry will be used.
+            resources: A dictionary of callable objects and dependencies.
+            configs: A pydantic model containing configuration settings.
         """
-        self.registry = registry or format_registry
+        self.resources = resources
+        self.configs = configs
+        
+        # Extract required resources
+        self.registry = self.resources["registry"]
     
     def extract_content(
-        self, file_path: str, format_name: Optional[str] = None, options: Optional[Dict[str, Any]] = None
+        self, 
+        file_path: str, 
+        format_name: Optional[str] = None, 
+        options: Optional[Dict[str, Any]] = None
     ) -> Content:
         """
         Extract content from a file.

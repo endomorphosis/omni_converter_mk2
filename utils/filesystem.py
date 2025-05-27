@@ -4,17 +4,14 @@ Filesystem utility functions for the Omni-Converter.
 This module provides filesystem utility functions for the Omni-Converter,
 including file reading, writing, and information retrieval.
 """
-
-import os
 import glob
 import magic
-import shutil
 import mimetypes
+import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union, BinaryIO
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
 
 
-import pydantic
 
 def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
     """

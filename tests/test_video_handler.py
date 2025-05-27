@@ -13,7 +13,7 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from format_handlers.video_handler import VideoHandler, MEDIAINFO_AVAILABLE
+from format_handlers.video_handler import VideoHandler, PYMEDIAINFO_AVAILABLE
 from format_handlers.base_handler import Content
 
 
@@ -87,7 +87,7 @@ class TestVideoHandler(unittest.TestCase):
         # Test with unsupported format
         self.assertFalse(self.handler.can_handle("dummy_path.txt", "txt"))
     
-    @patch('format_handlers.video_handler.MEDIAINFO_AVAILABLE', False)
+    @patch('format_handlers.video_handler.PYMEDIAINFO_AVAILABLE', False)
     @patch('format_handlers.video_handler.format_detector')
     @patch('os.path.getsize')
     def test_extract_basic(self, mock_getsize, mock_detector):
@@ -125,7 +125,7 @@ class TestVideoHandler(unittest.TestCase):
             self.assertEqual(content.sections[0]['type'], "video_info")
             # The sections length can be more than 1 if thumbnail extraction is enabled
     
-    @unittest.skipIf(not MEDIAINFO_AVAILABLE, "pymediainfo not available")
+    @unittest.skipIf(not PYMEDIAINFO_AVAILABLE, "pymediainfo not available")
     @patch('pymediainfo.MediaInfo.parse')
     def test_extract_with_mediainfo(self, mock_mediainfo_parse):
         """
@@ -144,7 +144,7 @@ class TestVideoHandler(unittest.TestCase):
         This test is skipped if pymediainfo is not available in the environment.
         """
         # Skip if mediainfo is not installed
-        if not MEDIAINFO_AVAILABLE:
+        if not PYMEDIAINFO_AVAILABLE:
             self.skipTest("pymediainfo not available")
         
         # Setup mocks

@@ -21,8 +21,8 @@ import psutil
 from core.processing_pipeline import processing_pipeline
 from managers.batch_processor import batch_processor
 from managers.resource_monitor import resource_monitor
-from utils.format_detector import format_detector
-from utils.configs import configs
+from core.format_detector import format_detector
+from configs import configs
 
 
 class ResourceUtilizationTest(unittest.TestCase):

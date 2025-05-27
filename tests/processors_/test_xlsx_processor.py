@@ -9,7 +9,7 @@ import io
 import unittest
 from unittest.mock import patch, MagicMock
 
-from format_handlers.processors.xlsx_processor import XlsxProcessor, OPENPYXL_AVAILABLE
+from deprecated.processors.xlsx_processor import XlsxProcessor, OPENPYXL_AVAILABLE
 from format_handlers.processors.document_processor import DocumentProcessor
 
 # Skip these tests if openpyxl is not available

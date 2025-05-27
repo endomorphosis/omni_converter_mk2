@@ -1,4 +1,4 @@
-# Omni-Converter:  Core Architecture
+# Omni-Converter:  Core Architecture - Last Updated 5-27-2025
 
 ## 1. Format Detection and Handling System
 - Simple file signature and extension-based detection
@@ -43,7 +43,8 @@
 
 ## 7. API and Interfaces
 - Command-line interface with basic options
-- Simple Python API for programmatic access
+- Python API for programmatic access
+- Simple GUI interface for future extensibility
 - Clean separation of core functionality from interfaces
 - Configuration file support for persistent settings
 

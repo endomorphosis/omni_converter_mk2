@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 
 from managers.security_manager import security_manager
-from utils.validator import BasicValidator 
+from core.validator import BasicValidator 
 from core.processing_pipeline import processing_pipeline
 from managers.batch_processor import batch_processor
 

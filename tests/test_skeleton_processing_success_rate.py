@@ -14,9 +14,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 
-from core.processing_pipeline import processing_pipeline, ProcessingResult
-from utils.format_detector import format_detector
-from utils.validator import BasicValidator
+from core.processing_pipeline import processing_pipeline
+from core.format_detector import format_detector
+from core.validator import BasicValidator
 
 
 class ProcessingSuccessRateTest(unittest.TestCase):

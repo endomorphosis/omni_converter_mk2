@@ -28,7 +28,7 @@ import psutil
 
 from managers.resource_monitor import ResourceMonitor
 from utils.resource_monitor.dependencies.psutil import PsUtil
-from utils.configs import configs, Configs
+from configs import configs, Configs
 
 resources = {
     "get_cpu_usage": PsUtil._get_cpu_usage,

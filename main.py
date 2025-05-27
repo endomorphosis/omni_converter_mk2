@@ -1,5 +1,6 @@
 
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Omni-Converter: Convert various file formats to plaintext.
 
@@ -16,13 +17,8 @@ from typing import Any, Dict, Optional
 import tqdm
 
 
-from utils.configs import configs
-from utils.logger import logger
-from format_handlers.text_handler import text_handler
-from format_handlers.image_handler import image_handler
-from format_handlers.application_handler import application_handler
-from format_handlers.audio_handler import audio_handler
-from format_handlers.video_handler import video_handler
+from configs import configs
+from logger import logger
 from format_handlers.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
 from managers.batch_processor import batch_processor
@@ -225,12 +221,6 @@ def process_directory(
         # Clean up progress bar
         if pbar:
             pbar.close()
-
-
-
-
-
-
 
 
 def main() -> int:

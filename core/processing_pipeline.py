@@ -4,56 +4,16 @@ Processing pipeline module for the Omni-Converter.
 This module provides the ProcessingPipeline class for orchestrating the conversion
 of files to plaintext.
 """
-
-import os
 import hashlib
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Optional
 
-from pydantic import BaseModel, Field, PositiveInt, FilePath
 
-from utils.format_detector import format_detector
-from utils.validator import BasicValidator
-from utils.logger import logger
-from utils.configs import configs, Configs
-from format_handlers.format_registry import format_registry
-from core.content_extractor import ContentExtractor
-from core.text_normalizer import TextNormalizer, NormalizedContent
-from core.output_formatter import OutputFormatter
-from core.processing_result import ProcessingResult
+from logger import logger
+from configs import Configs
 
 
 # Type for status listener functions
-StatusListenerFunc = Callable[[str, Dict[str, Any]], None]
-
-
-class PipelineStatus(BaseModel):
-    """
-    Status of the processing pipeline.
-    
-    This class represents the current status of the processing pipeline,
-    including statistics and the current state.
-    
-    Attributes:
-        total_files (int): Total number of files processed.
-        successful_files (int): Number of files processed successfully.
-        failed_files (int): Number of files that failed processing.
-        current_file (str): Path to the file currently being processed.
-        is_processing (bool): Whether the pipeline is currently processing a file.
-    """
-    total_files: PositiveInt = 0
-    successful_files: PositiveInt = 0
-    failed_files: PositiveInt = 0
-    current_file: FilePath = ""
-    is_processing: bool = False
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to a dictionary.
-        
-        Returns:
-            A dictionary representation of the pipeline status.
-        """
-        self.model_dump()
+StatusListenerFunc = Callable[[str, dict[str, Any]], None]
 
 
 class ProcessingPipeline:
@@ -75,8 +35,8 @@ class ProcessingPipeline:
     
     def __init__(
         self,
-        configs: Configs = None,
         resources: dict[str, Callable] = None,
+        configs: Configs = None,
     ):
         """
         Initialize a processing pipeline.
@@ -93,16 +53,17 @@ class ProcessingPipeline:
         self.extractor = self.resources['extractor']
         self.normalizer = self.resources['normalizer']
         self.formatter = self.resources['formatter']
+        self.processing_result = self.resources['processing_result']
 
-        self._status = PipelineStatus()
-        self._listeners: List[StatusListenerFunc] = []
+        self._status = self.resources['pipeline_status']
+        self._listeners: list[StatusListenerFunc] = []
 
     def process_file(
         self,
         file_path: str,
         output_path: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None
-    ) -> ProcessingResult:
+        options: Optional[dict[str, Any]] = None
+    ) -> Any:
         """
         Process a single file.
         
@@ -113,7 +74,7 @@ class ProcessingPipeline:
             options: Optional processing options.
             
         Returns:
-            The result of processing the file.
+            ProcessingResult: The result of processing the file.
             
         Raises:
             FileNotFoundError: If the file does not exist.
@@ -148,7 +109,7 @@ class ProcessingPipeline:
                 logger.error(error_message, {'file_path': file_path})
                 
                 # Create failure result
-                result = ProcessingResult(
+                result = self.processing_result(
                     success=False,
                     file_path=file_path,
                     output_path=output_path,
@@ -200,7 +161,7 @@ class ProcessingPipeline:
             content_hash = hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
             
             # Create success result
-            result = ProcessingResult(
+            result = self.processing_result(
                 success=True,
                 file_path=file_path,
                 output_path=output_path,
@@ -227,7 +188,7 @@ class ProcessingPipeline:
             logger.exception(f"Error processing {file_path}: {e}")
             
             # Create failure result
-            result = ProcessingResult(
+            result = self.processing_result(
                 success=False,
                 file_path=file_path,
                 output_path=output_path,
@@ -250,7 +211,7 @@ class ProcessingPipeline:
             self._notify_listeners("processing_completed", {'file_path': file_path})
     
     @property
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """
         Get the current status of the pipeline.
         
@@ -269,7 +230,7 @@ class ProcessingPipeline:
         if listener not in self._listeners:
             self._listeners.append(listener)
     
-    def _notify_listeners(self, event: str, data: Dict[str, Any]) -> None:
+    def _notify_listeners(self, event: str, data: dict[str, Any]) -> None:
         """
         Notify all registered listeners of an event.
         
@@ -283,15 +244,3 @@ class ProcessingPipeline:
             except Exception as e:
                 logger.exception(f"Error in listener: {e}")
 
-
-resources = {
-    "validator": BasicValidator(),
-    "detector": format_detector,
-    "extractor": ContentExtractor(),
-    "normalizer": TextNormalizer(),
-    "formatter": OutputFormatter()
-}
-
-
-# Global pipeline instance
-processing_pipeline = ProcessingPipeline(configs=configs, resources=resources)

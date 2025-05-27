@@ -19,7 +19,7 @@ import string
 
 
 from core.processing_pipeline import processing_pipeline
-from utils.validator import BasicValidator
+from core.validator import BasicValidator
 
 
 class TextQualityTest(unittest.TestCase):

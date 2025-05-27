@@ -5,17 +5,13 @@ This module provides a programmatic interface to the Omni-Converter functionalit
 allowing Python applications to convert files to text without using the command-line interface.
 """
 import os
+from pathlib import Path
 from typing import Any, Dict, Callable, List, Optional, Union
 
 
-from utils.configs import configs, Configs
-from utils.logger import logger
-from format_handlers.format_registry import format_registry
-from core.processing_pipeline import processing_pipeline
-from core.processing_result import ProcessingResult
-from managers.batch_processor import batch_processor
-from managers.batch_result import BatchResult
-from managers.resource_monitor import resource_monitor
+from configs import Configs
+from logger import logger
+
 
 
 class PythonAPI:
@@ -31,6 +27,11 @@ class PythonAPI:
         resource_monitor: The resource monitor to use.
     """
     
+    from core.processing_result import ProcessingResult
+    from managers.batch_processor import batch_processor
+    from managers.batch_result import BatchResult
+    from managers.resource_monitor import resource_monitor
+
     def __init__(
         self,
         resources: dict[str, Callable] = None,
@@ -51,6 +52,8 @@ class PythonAPI:
 
         self.batch_processor = self.resources['batch_processor']
         self.resource_monitor = self.resources['resource_monitor']
+        self.format_registry = self.resources['format_registry']
+        self.processing_pipeline = self.resources['processing_pipeline']
 
     def convert_file(
         self,
@@ -86,7 +89,7 @@ class PythonAPI:
             options = self._get_default_options()
         
         # Process the file using the processing pipeline
-        result = processing_pipeline.process_file(file_path, output_path, options)
+        result = self.processing_pipeline.process_file(file_path, output_path, options)
         
         return result
     
@@ -95,7 +98,7 @@ class PythonAPI:
         file_paths: Union[List[str], str],
         output_dir: Optional[str] = None,
         options: Optional[Dict[str, Any]] = None,
-        show_progress: bool = False
+        show_progress: bool = False # TODO Unused argument. Implement.
     ) -> BatchResult:
         """
         Convert multiple files to text.
@@ -132,12 +135,12 @@ class PythonAPI:
             # Get memory limit in MB, ensure it's properly converted from GB if needed
             memory_limit = options.get("max_memory")
             if memory_limit is not None:
-                # Verify it's a reasonable value (between 1024MB and 32GB)
-                if memory_limit < 1024:  # Less than 1GB, might be in GB units
+                # Verify it's a reasonable value (between 1024MB and 32GB) # TODO Magic numbers need to be checked and replaced with constants.
+                if memory_limit < 1024:  # Less than 1GB, might be in GB units # TODO Check if this is correct.
                     memory_limit *= 1024  # Convert to MB
                 
                 # Cap at a reasonable maximum to prevent excessive values
-                max_reasonable_memory = 32 * 1024  # 32GB
+                max_reasonable_memory = 32 * 1024  # 32GB # TODO Magic number needs to be checked and replaced with constants.
                 if memory_limit > max_reasonable_memory:
                     logger.warning(f"Memory limit of {memory_limit}MB exceeds maximum reasonable value. "
                                   f"Capping at {max_reasonable_memory}MB")
@@ -166,7 +169,7 @@ class PythonAPI:
         Returns:
             A dictionary mapping format categories to lists of supported formats.
         """
-        return format_registry.get_formats_by_category()
+        return self.format_registry.get_formats_by_category()
     
     def set_config(self, config_dict: Dict[str, Any]) -> bool:
         """
@@ -202,7 +205,7 @@ class PythonAPI:
         Returns:
             Default options as a dictionary.
         """
-        options = {
+        options = { # TODO All these options should be set in the config file.
             # Output options
             "format": self.configs.get_config_value("output.format", "txt"),
             "include_metadata": self.configs.get_config_value("output.include_metadata", True),
@@ -229,10 +232,75 @@ class PythonAPI:
         return options
 
 
-resources = {
-    "batch_processor": batch_processor,
-    "resource_monitor": resource_monitor,
-}
 
-# Create a global API instance for easy import and use
-api = PythonAPI(resources=resources, configs=configs)
+class Convert(PythonAPI):
+    """
+    Public class for object-oriented access to the Omni-Converter.
+    Similar to Pathlib's Path class, this class provides a simple interface.
+    """
+
+    def __init__(self, path=None, *args, **kwargs):
+        """
+        Initialize the Convert class.
+        
+        Args:
+            args: Positional arguments for PythonAPI.
+            kwargs: Keyword arguments for PythonAPI.
+        """
+        from configs import configs, Configs
+        from core.processing_result import ProcessingResult
+        from managers.batch_processor import batch_processor
+        from managers.batch_result import BatchResult
+        from managers.resource_monitor import resource_monitor
+
+        resources = {
+            "batch_processor": batch_processor,
+            "resource_monitor": resource_monitor,
+        }
+        super().__init__(resources=resources, configs=configs)
+        
+        self.target_file = None
+        self.target_dir = None
+
+        if path:
+            path = Path(path)
+            if path.is_file():
+                self.target_file = path
+            elif path.is_dir():
+                self.target_dir = path
+            else:
+                raise ValueError(f"Invalid path: {path}. Must be a valid file or directory.")
+
+    def walk_and_convert(self, path: str = None, recursive: bool = False) -> None:
+        """
+        Walk through a directory and convert all files.
+        
+        Args:
+            path: The path to the directory to convert. If None, uses the current target directory.
+            recursive: Whether to walk through subdirectories. Default is False.
+        """
+        # TODO Implement this method
+        pass
+
+    def estimate_file_count(self, path: str = None, recursive: bool = False) -> int:
+        """
+        Estimate the number of files in a directory that can potentially be converted.
+        
+        Args:
+            path: The path to the directory to convert. If None, uses the current target directory.
+            recursive: Whether to walk through subdirectories. Default is False.
+        """
+        # TODO Implement this method
+        pass
+    
+    def convert(self, path: str = None, output_path: str = None, options: Optional[Dict[str, Any]] = None) -> Any:
+        """
+        Convert a file or directory to text.
+        
+        Args:
+        """
+        return super().convert_file(
+            file_path=path or self.target_file,
+            output_path=output_path,
+            options=options
+        )

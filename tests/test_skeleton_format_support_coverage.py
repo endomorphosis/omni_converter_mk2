@@ -10,7 +10,7 @@ import json
 import unittest
 from datetime import datetime
 
-from utils.format_detector import format_detector
+from core.format_detector import format_detector
 from format_handlers.format_registry import format_registry
 from core.content_extractor import ContentExtractor
 

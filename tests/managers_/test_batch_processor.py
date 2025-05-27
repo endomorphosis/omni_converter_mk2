@@ -26,8 +26,8 @@ import tempfile
 import shutil
 from typing import Any, Dict, List
 
-from utils.configs import configs, Configs
-from utils.logger import logger
+from configs import configs, Configs
+from logger import logger
 
 from core.processing_result import ProcessingResult
 from managers.batch_processor import BatchProcessor, make_resources

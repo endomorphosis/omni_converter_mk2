@@ -14,7 +14,7 @@ interface contracts.
 import unittest
 from abc import ABC
 
-from format_handlers.processors.base_processor import BaseProcessor
+from deprecated.processors.base_processor import BaseProcessor
 from format_handlers.processors.document_processor import DocumentProcessor
 
 

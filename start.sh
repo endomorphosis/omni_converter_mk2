@@ -9,6 +9,11 @@ source venv/bin/activate
 # Echo to indicate the start of the Python script
 echo "*** BEGIN PROGRAM ***"
 
+# Import .env variables
+set -a 
+source .env 
+set +a
+
 # Run the Python script
 python main.py # main.py
 

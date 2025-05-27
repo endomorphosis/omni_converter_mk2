@@ -20,3 +20,5 @@ nltk
 rouge
 pyyaml
 opencv-contrib-python-headless # https://pypi.org/project/opencv-python/ NOTE: 56.1 mb
+jinja2 # for templating
+rouge-score # for rouge score

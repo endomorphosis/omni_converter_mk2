@@ -10,7 +10,7 @@ import inspect
 from typing import Any, Callable, Coroutine, Optional
 
 
-from utils.logger import logger
+from logger import logger
 
 
 def try_except(func: Callable = lambda x: x, 

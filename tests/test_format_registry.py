@@ -10,7 +10,7 @@ from unittest.mock import patch, MagicMock
 
 from format_handlers.format_registry import FormatRegistry, format_registry
 from format_handlers.base_handler import FormatHandler, Content
-from utils.format_detector import format_detector
+from core.format_detector import format_detector
 
 
 class MockHandler(FormatHandler):

@@ -1,6 +1,45 @@
 # Format Handlers Refactoring Changelog
 
-## [In Progress] - Inversion of Control Implementation
+## [In Progress] - IoC Architecture Implementation (v3.0.0-dev)
+
+### Added
+- **IoC architecture with dependency injection pattern**
+  - Standardized processor pattern across ALL processors
+  - Centralized factory system for processor creation
+  - "Types determine processors" principle implementation
+  - Two-tier processor hierarchy (ability + MIME-type specific)
+- **ARCHITECTURE.md documentation**
+  - System overview with examples and patterns
+  - Processor hierarchy and delegation documentation
+  - Dependency injection patterns and extension points
+- **Factory system standardization**
+  - Consistent pattern for all processor creation
+  - Multi-dependency fallback system
+  - Automatic processor mocking for missing dependencies
+- **Enhanced constants system**
+  - Fixed circular reference issues
+  - Added @_classproperty for availability checking
+  - Centralized format sets and processor availability
+
+### Changed
+- **Refactored factory.py**
+  - Simplified make_processor function
+  - Implemented clean processor creation pattern
+  - Added proper multi-dependency fallback logic
+- **Reorganized processor hierarchy**
+  - Ability processors: text_processor, image_processor, video_processor, ocr_processor
+  - MIME-type processors: xlsx_processor, pdf_processor, html_processor, etc.
+  - Clear delegation chain: specific → ability → dependency modules
+- **Consolidated video processing**
+  - Video frames handled by image_processor
+  - Metadata extraction by MIME-type specific processors
+
+### Status
+- ⚠️ **REQUIRES TESTING** - Architecture implemented but not yet tested
+- ⚠️ Integration with main application pending
+- ⚠️ Test coverage needs implementation
+
+## [Previous] - Inversion of Control Implementation
 
 ### Added
 - Created `unified_handler.py` to implement IoC pattern via dependency injection
@@ -47,6 +86,16 @@
   - Implemented handlers with proper fallback mechanisms
   - Added graceful degradation for missing dependencies
   - Used composition to combine multiple processing approaches
+- Created `refactored_application_handler.py` following the IoC pattern
+  - Extracted PDF, DOCX, and XLSX dependencies to dedicated processor modules
+  - Implemented handlers with proper fallback mechanisms for missing libraries
+  - Added graceful degradation when specialized libraries are unavailable
+  - Used composition to handle multiple document formats
+- Created application-specific processor modules
+  - Added `pdf_processor.py` for PDF document processing with PyPDF2
+  - Added `docx_processor.py` for DOCX document processing with python-docx
+  - Added `xlsx_processor.py` for XLSX spreadsheet processing with openpyxl
+  - All processors implement fail-fast approach for missing dependencies
 
 ### Changed
 - Refactored `format_registry.py` to accept resources and configs as constructor parameters

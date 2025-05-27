@@ -1,5 +1,5 @@
 from utils.common.try_except_decorator import try_except
-from utils.logger import logger
+from logger import logger
 
 file_errors = (
     IOError, # Error when opening

@@ -4,7 +4,7 @@ Simple test for XLSX processor functionality.
 
 import io
 import sys
-from format_handlers.processors.xlsx_processor import XlsxProcessor, OPENPYXL_AVAILABLE
+from deprecated.processors.xlsx_processor import XlsxProcessor, OPENPYXL_AVAILABLE
 
 def main():
     """Run a simple test of the XLSX processor."""

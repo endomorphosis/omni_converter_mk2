@@ -177,3 +177,8 @@ pytest-*.xml
 pytest-*/
 
 tools/
+logs/*
+!logs/_logs_go_here.txt
+
+# experimental features
+frontend/

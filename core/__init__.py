@@ -13,10 +13,17 @@ The core processing system is the heart of the Omni-Converter, handling the
 conversion of input files to plaintext output.
 
 Implementation Status:
-    - ProcessingPipeline: 🔄 In Progress
-    - FormatDetector: ✅ Complete
-    - BasicValidator: ✅ Complete 
-    - ContentExtractor: 🔄 In Progress
-    - TextNormalizer: ❌ Not Started
-    - OutputFormatter: ❌ Not Started
+    - ProcessingPipeline: ✅ Complete (IoC Pattern)
+    - FormatDetector: ✅ Complete (IoC Pattern)
+    - BasicValidator: ✅ Complete (IoC Pattern)
+    - ContentExtractor: ✅ Complete (IoC Pattern)
+    - TextNormalizer: ✅ Complete (IoC Pattern)
+    - OutputFormatter: ✅ Complete (IoC Pattern)
 """
+
+# Import only the processing pipeline from factory
+from .factory import processing_pipeline
+
+__all__ = [
+    'processing_pipeline',
+]

@@ -12,7 +12,8 @@ import tempfile
 from io import BytesIO
 
 # Import the processor to test
-from format_handlers.processors.pdf_processor import PyPDF2Processor, PYPDF2_AVAILABLE
+from format_handlers.constants import Constants
+from format_handlers.processors.by_mime_type.pdf_processor import PyPDF2Processor
 
 # Create a sample PDF for testing
 SAMPLE_PDF_DATA = None  # This will be populated in setUpModule
@@ -22,7 +23,7 @@ def setUpModule():
     global SAMPLE_PDF_DATA
     
     # Skip creating test data if PyPDF2 is not available
-    if not PYPDF2_AVAILABLE:
+    if not Constants.PYPDF2_AVAILABLE:
         return
     
     # Create a simple test PDF
@@ -66,7 +67,7 @@ def setUpModule():
         SAMPLE_PDF_DATA = None
 
 
-@unittest.skipIf(not PYPDF2_AVAILABLE, "PyPDF2 not available")
+@unittest.skipIf(not Constants.PYPDF2_AVAILABLE, "PyPDF2 not available")
 class TestPyPDF2Processor(unittest.TestCase):
     """Test the PyPDF2Processor class."""
     

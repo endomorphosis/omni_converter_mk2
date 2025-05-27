@@ -13,10 +13,10 @@ from pydantic import BaseModel, Field
 from pydantic.types import PastDatetime
 
 from utils.filesystem import FileSystem
-from utils.configs import Configs, configs
-from utils.logger import logger
+from configs import Configs, configs
+from logger import logger
 from utils.common.try_except_decorator import try_except
-from utils.format_detector import format_detector
+from core.format_detector import format_detector
 
 class Content(BaseModel):
     """
@@ -118,7 +118,7 @@ class BaseFormatHandler:
     
     def __init__(
         self,
-        resources: Dict[str, Any],
+        resources: dict[str, Callable] = None,
         configs: Optional[Configs] = None
     ):
         """
@@ -454,6 +454,28 @@ supported_formats.update(Constants.SUPPORTED_APPLICATION_FORMATS_SET)
 # This is just a placeholder for the resources dictionary
 # It will be properly initialized when the unified handler is instantiated
 # with resources injected by the caller
+
+from .dependency_modules import (
+    _bs4_processor,
+    calibre_processor,
+    cv2_processor,
+    factory,
+    ffmpeg_processor,
+    generic_html_processor,
+    generic_svg_processor,
+    icalendar_processor,
+    lxml_processor,
+    openai_processor,
+    openpyxl_processor,
+    pandas_processor,
+    pil_processor,
+    pymediainfo_processor,
+    pypdf2_processor,
+    pytesseract_processor,
+    skeleton_vllm_processor,
+    skeleton_xml_processor,
+)
+
 resources = {
     "parsers": {
         "application": {},  # Will contain parsers for application formats (pdf, json, docx, etc.)

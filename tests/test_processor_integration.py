@@ -18,10 +18,11 @@ from format_handlers.audio_handler import audio_handler
 from format_handlers.image_handler import image_handler
 
 # Import processors
-from format_handlers.processors.pdf_processor import PyPDF2Processor, PYPDF2_AVAILABLE
-from format_handlers.processors.audio_processor import WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
-from format_handlers.processors.ocr_processor import TESSERACT_AVAILABLE
-from format_handlers.processors.docx_processor import PYTHON_DOCX_AVAILABLE
+from format_handlers.constants import Constants
+from format_handlers.processors.by_mime_type.pdf_processor import PyPDF2Processor
+from format_handlers.processors.by_ability.audio_processor import WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
+from format_handlers.processors.by_ability.ocr_processor import TESSERACT_AVAILABLE
+from format_handlers.processors.python_docx_processor import PYTHON_DOCX_AVAILABLE
 
 
 class TestProcessorIntegration(unittest.TestCase):

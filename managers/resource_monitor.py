@@ -9,8 +9,8 @@ import threading
 from typing import Any, Callable, Optional
 
 
-from utils.configs import configs, Configs
-from utils.logger import logger
+from configs import configs, Configs
+from logger import logger
 from utils.common.try_except_decorator import try_except
 
 

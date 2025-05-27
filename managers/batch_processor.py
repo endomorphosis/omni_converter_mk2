@@ -11,10 +11,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Union
 
 
-from utils.logger import logger
-from utils.configs import configs, Configs
-from utils.filesystem import FileSystem
-from utils.format_detector import format_detector
+from logger import logger
+from configs import configs, Configs
 from core.processing_pipeline import processing_pipeline
 from core.processing_result import ProcessingResult
 from managers.batch_result import BatchResult

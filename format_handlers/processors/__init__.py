@@ -18,31 +18,31 @@ Available processors:
 
 # Import processors for easy access
 try:
-    from format_handlers.processors.pdf_processor import pdf_processor
+    from format_handlers.processors.by_mime_type.pdf_processor import pdf_processor
 except ImportError:
     pass
 
 try:
-    from format_handlers.processors.docx_processor import docx_processor
+    from format_handlers.processors.python_docx_processor import docx_processor
 except ImportError:
     pass
 
 try:
-    from format_handlers.processors.xlsx_processor import xlsx_processor
+    from deprecated.processors.xlsx_processor import xlsx_processor
 except ImportError:
     pass
 
 try:
-    from format_handlers.processors.audio_processor import whisper_processor
+    from format_handlers.processors.by_ability.audio_processor import whisper_processor
 except ImportError:
     pass
 
 try:
-    from format_handlers.processors.ocr_processor import ocr_processor
+    from format_handlers.processors.by_ability.ocr_processor import ocr_processor
 except ImportError:
     pass
     
 try:
-    from format_handlers.processors.video_processor import video_processor
+    from format_handlers.processors.by_ability.video_processor import video_processor
 except ImportError:
     pass
