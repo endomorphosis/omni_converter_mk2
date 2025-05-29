@@ -3,7 +3,7 @@ Embeddings utilities for working with document embeddings.
 Provides tools for creating, storing, and searching vector embeddings for documents.
 """
 import os
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 import numpy as np
 
 try:
@@ -22,8 +22,8 @@ class EmbeddingsManager:
     
     def __init__(
         self,
-        resources: Dict[str, Any],
-        configs: Optional[Dict[str, Any]] = None
+        resources: dict[str, Any],
+        configs: Optional[dict[str, Any]] = None
     ):
         """
         Initialize the embeddings manager with dependency injection.
@@ -67,8 +67,8 @@ class EmbeddingsManager:
     
     def cosine_similarity(
         self, 
-        vec1: List[float], 
-        vec2: List[float]
+        vec1: list[float], 
+        vec2: list[float]
     ) -> float:
         """
         Calculate cosine similarity between two vectors.
@@ -98,8 +98,8 @@ class EmbeddingsManager:
     def store_embedding(
         self, 
         doc_id: str, 
-        embedding: List[float], 
-        metadata: Optional[Dict[str, Any]] = None
+        embedding: list[float], 
+        metadata: Optional[dict[str, Any]] = None
     ) -> bool:
         """
         Store an embedding with optional metadata.
@@ -129,7 +129,7 @@ class EmbeddingsManager:
             logger.error(f"Error storing embedding: {e}")
             return False
     
-    def get_embedding(self, doc_id: str) -> Optional[Dict[str, Any]]:
+    def get_embedding(self, doc_id: str) -> Optional[dict[str, Any]]:
         """
         Get a stored embedding by document ID.
         
@@ -143,9 +143,9 @@ class EmbeddingsManager:
     
     def search_similar(
         self, 
-        query_embedding: List[float], 
+        query_embedding: list[float], 
         top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Search for similar documents by embedding.
         
@@ -180,8 +180,8 @@ class EmbeddingsManager:
 
 
 def create_embeddings_manager(
-    resources: Dict[str, Any],
-    configs: Optional[Dict[str, Any]] = None
+    resources: dict[str, Any],
+    configs: Optional[dict[str, Any]] = None
 ) -> EmbeddingsManager:
     """
     Factory function to create an EmbeddingsManager instance.

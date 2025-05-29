@@ -13,15 +13,15 @@ import platform
 import tempfile
 import multiprocessing
 from datetime import datetime
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Any, Optional
 
 # Import psutil for actual resource monitoring
 import psutil
 
 from core.processing_pipeline import processing_pipeline
-from managers.batch_processor import batch_processor
-from managers.resource_monitor import resource_monitor
-from core.format_detector import format_detector
+from monitors.batch_processor import batch_processor
+from monitors._resource_monitor import resource_monitor
+from file_format_detector.file_format_detector import file_format_detector
 from configs import configs
 
 
@@ -60,7 +60,7 @@ class ResourceUtilizationTest(unittest.TestCase):
             }
         }
 
-    def _get_system_info(self) -> Dict[str, Any]:
+    def _get_system_info(self) -> dict[str, Any]:
         """Get system information for context.
         
         Returns:
@@ -76,7 +76,7 @@ class ResourceUtilizationTest(unittest.TestCase):
         }
         return system_info
 
-    def _create_test_batches(self) -> List[Dict[str, Any]]:
+    def _create_test_batches(self) -> list[dict[str, Any]]:
         """Create test batch data.
         
         Returns:
@@ -137,13 +137,13 @@ class ResourceUtilizationTest(unittest.TestCase):
         
         return batches
 
-    def _find_files_of_category(self, test_files_dir: str, category: str, extensions: List[str]) -> List[Dict[str, Any]]:
+    def _find_files_of_category(self, test_files_dir: str, category: str, extensions: list[str]) -> list[dict[str, Any]]:
         """Find test files of a specific category.
         
         Args:
             test_files_dir: Path to test files directory
             category: File category (text, image, etc.)
-            extensions: List of file extensions to look for
+            extensions: list of file extensions to look for
             
         Returns:
             List of dictionaries with file information
@@ -324,7 +324,7 @@ class ResourceUtilizationTest(unittest.TestCase):
             # Make sure to stop monitoring
             self.resource_monitor.stop_monitoring()
 
-    def _simulate_batch_processing(self, batch: Dict[str, Any]) -> None:
+    def _simulate_batch_processing(self, batch: dict[str, Any]) -> None:
         """
         Simulate batch processing to test resource monitoring.
         

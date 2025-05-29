@@ -11,11 +11,11 @@ import random
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Any, Tuple
 
-from managers.batch_processor import batch_processor
+from monitors.batch_processor import batch_processor
 from core.processing_pipeline import processing_pipeline
-from managers.error_handler import error_handler
+from monitors.error_monitor.error_monitor import error_monitor
 from configs import configs
 
 
@@ -49,7 +49,7 @@ class ErrorHandlingTest(unittest.TestCase):
             }
         }
 
-    def _create_test_batches(self) -> List[Dict[str, Any]]:
+    def _create_test_batches(self) -> list[dict[str, Any]]:
         """Create test batch data with varying corruption levels.
         
         Returns:
@@ -143,7 +143,7 @@ class ErrorHandlingTest(unittest.TestCase):
         
         return test_batches
 
-    def _find_valid_files(self, test_files_dir: str) -> List[Dict[str, Any]]:
+    def _find_valid_files(self, test_files_dir: str) -> list[dict[str, Any]]:
         """Find valid test files in the test_files directory.
         
         Args:
@@ -233,7 +233,7 @@ class ErrorHandlingTest(unittest.TestCase):
         
         return valid_files
 
-    def _find_corrupt_files(self, test_files_dir: str) -> List[Dict[str, Any]]:
+    def _find_corrupt_files(self, test_files_dir: str) -> list[dict[str, Any]]:
         """Find corrupt test files in the test_files directory.
         
         Args:
@@ -324,11 +324,11 @@ class ErrorHandlingTest(unittest.TestCase):
         
         return corrupt_files
 
-    def _add_simulated_batches(self, test_batches: List[Dict[str, Any]]) -> None:
+    def _add_simulated_batches(self, test_batches: list[dict[str, Any]]) -> None:
         """Add simulated test batches with varying corruption ratios.
         
         Args:
-            test_batches: List of test batches to add to
+            test_batches: list of test batches to add to
         """
         # Create different batches with varying corruption levels
         corruption_ratios = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
@@ -409,7 +409,7 @@ class ErrorHandlingTest(unittest.TestCase):
                 'simulated': True
             })
 
-    def _process_batch(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_batch(self, batch: dict[str, Any]) -> dict[str, Any]:
         """Process a batch of files and measure error handling effectiveness.
         
         Args:

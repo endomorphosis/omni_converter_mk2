@@ -1,7 +1,7 @@
 """
 Test the security manager module.
 
-This test suite validates the SecurityManager component against several criteria:
+This test suite validates the SecurityMonitor component against several criteria:
 
 1. Security Effectiveness (Target: 100% prevention of code execution)
    - Tests verify detection and rejection of executable files
@@ -26,25 +26,26 @@ from unittest.mock import MagicMock, patch
 import tempfile
 import shutil
 
-from format_handlers.base_handler import Content
-from managers.security_manager import SecurityManager, SecurityResult, SanitizedContent
-from configs import Configs, configs
+from core.content_extractor.content import Content
+from monitors.security_monitor._security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
+from configs import configs
 
-from managers.constants import Constants
+from monitors._monitor_constants import Constants
+
 resources = { # NOTE: Since these are constants, we can use them directly
-    "dangerous_patterns": Constants.SecurityManager.DANGEROUS_PATTERNS_REGEX,
-    "executable_extensions": Constants.SecurityManager.EXECUTABLE_EXTENSIONS,
-    "file_size_limits_in_bytes": Constants.SecurityManager.FILE_SIZE_LIMITS_IN_BYTES,
-    "format_names": Constants.SecurityManager.FORMAT_NAMES,
-    "pii_detection_regex": Constants.SecurityManager.PII_DETECTION_REGEX,
-    "remove_active_content_regex": Constants.SecurityManager.REMOVE_ACTIVE_CONTENT_REGEX,
-    "remove_scripts_regex": Constants.SecurityManager.REMOVE_SCRIPTS_REGEX,
-    "security_rules": Constants.SecurityManager.SECURITY_RULES,
-    "sensitive_keys": Constants.SecurityManager.SENSITIVE_KEYS
+    "dangerous_patterns": Constants.SecurityMonitor.DANGEROUS_PATTERNS_REGEX,
+    "executable_extensions": Constants.SecurityMonitor.EXECUTABLE_EXTENSIONS,
+    "file_size_limits_in_bytes": Constants.SecurityMonitor.FILE_SIZE_LIMITS_IN_BYTES,
+    "format_names": Constants.SecurityMonitor.FORMAT_NAMES,
+    "pii_detection_regex": Constants.SecurityMonitor.PII_DETECTION_REGEX,
+    "remove_active_content_regex": Constants.SecurityMonitor.REMOVE_ACTIVE_CONTENT_REGEX,
+    "remove_scripts_regex": Constants.SecurityMonitor.REMOVE_SCRIPTS_REGEX,
+    "security_rules": Constants.SecurityMonitor.SECURITY_RULES,
+    "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS
 }
 
 class TestSecurityManager(unittest.TestCase):
-    """Test the SecurityManager class."""
+    """Test the SecurityMonitor class."""
     
     def setUp(self):
         """Set up test fixtures."""
@@ -52,7 +53,7 @@ class TestSecurityManager(unittest.TestCase):
         self.mock_resources = copy.deepcopy(resources)
 
         # Create a security manager
-        self.security_manager = SecurityManager(resources=self.mock_resources, configs=self.mock_configs)
+        self.security_monitor = SecurityMonitor(resources=self.mock_resources, configs=self.mock_configs)
 
         # Create a temp directory for test files
         self.temp_dir = tempfile.mkdtemp()
@@ -88,14 +89,14 @@ class TestSecurityManager(unittest.TestCase):
 
     def test_init(self):
         """Test initialization."""
-        self.assertIn("default", self.security_manager._file_size_limits)
-        self.assertIn("text", self.security_manager._file_size_limits)
-        self.assertIn("image", self.security_manager._file_size_limits)
-        self.assertIn("audio", self.security_manager._file_size_limits)
-        self.assertIn("video", self.security_manager._file_size_limits)
-        self.assertIn("application", self.security_manager._file_size_limits)
-        self.assertEqual(len(self.security_manager.allowed_formats), 0)
-        self.assertTrue(self.security_manager._security_rules["reject_executable"])
+        self.assertIn("default", self.security_monitor._file_size_limits)
+        self.assertIn("text", self.security_monitor._file_size_limits)
+        self.assertIn("image", self.security_monitor._file_size_limits)
+        self.assertIn("audio", self.security_monitor._file_size_limits)
+        self.assertIn("video", self.security_monitor._file_size_limits)
+        self.assertIn("application", self.security_monitor._file_size_limits)
+        self.assertEqual(len(self.security_monitor.allowed_formats), 0)
+        self.assertTrue(self.security_monitor._security_rules["reject_executable"])
 
     def test_security_result_init(self):
         """Test SecurityResult initialization."""
@@ -179,7 +180,7 @@ class TestSecurityManager(unittest.TestCase):
     
     def test_validate_security_normal_file(self):
         """Test validating a normal file."""
-        result = self.security_manager.validate_security(self.test_file_path, format_name="plain")
+        result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
         
         self.assertTrue(result.is_safe)
         self.assertEqual(len(result.issues), 0)
@@ -189,7 +190,7 @@ class TestSecurityManager(unittest.TestCase):
     
     def test_validate_security_large_file(self):
         """Test validating a file that exceeds size limits."""
-        result = self.security_manager.validate_security(self.large_file_path, format_name="plain")
+        result = self.security_monitor.validate_security(self.large_file_path, format_name="plain")
         
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
@@ -198,7 +199,7 @@ class TestSecurityManager(unittest.TestCase):
     
     def test_validate_security_executable_file(self):
         """Test validating an executable file."""
-        result = self.security_manager.validate_security(self.executable_file_path)
+        result = self.security_monitor.validate_security(self.executable_file_path)
         
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
@@ -209,7 +210,7 @@ class TestSecurityManager(unittest.TestCase):
     def test_validate_security_nonexistent_file(self):
         """Test validating a file that doesn't exist."""
         nonexistent_path = os.path.join(self.temp_dir, "nonexistent.txt")
-        result = self.security_manager.validate_security(nonexistent_path)
+        result = self.security_monitor.validate_security(nonexistent_path)
         
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
@@ -219,29 +220,29 @@ class TestSecurityManager(unittest.TestCase):
     def test_validate_security_disallowed_format(self):
         """Test validating a file with a disallowed format."""
         # Set allowed formats
-        self.security_manager.set_allowed_formats(["html", "pdf"])
+        self.security_monitor.set_allowed_formats(["html", "pdf"])
         
-        result = self.security_manager.validate_security(self.test_file_path, format_name="plain")
+        result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
         
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
         self.assertIn("not allowed", result.issues[0])
         
         # Reset allowed formats for other tests
-        self.security_manager.set_allowed_formats([])
+        self.security_monitor.set_allowed_formats([])
     
     def test_is_file_safe(self):
         """Test checking if a file is safe."""
         # Normal file should be safe
-        self.assertTrue(self.security_manager.is_file_safe(self.test_file_path))
+        self.assertTrue(self.security_monitor.is_file_safe(self.test_file_path))
         
         # Executable file should not be safe
-        self.assertFalse(self.security_manager.is_file_safe(self.executable_file_path))
+        self.assertFalse(self.security_monitor.is_file_safe(self.executable_file_path))
     
     def test_sanitize_content_with_scripts(self):
         """Test sanitizing content with scripts.
         
-        This test validates the content sanitization functionality of the SecurityManager,
+        This test validates the content sanitization functionality of the SecurityMonitor,
         specifically addressing the "Security Effectiveness" criteria for script removal.
         It verifies that:
         
@@ -276,7 +277,7 @@ class TestSecurityManager(unittest.TestCase):
         )
         
         # Sanitize content
-        sanitized = self.security_manager.sanitize_content(content)
+        sanitized = self.security_monitor.sanitize_content(content)
         
         # Check that scripts were removed
         self.assertNotIn("<script>", sanitized.text)
@@ -310,7 +311,7 @@ class TestSecurityManager(unittest.TestCase):
         )
         
         # Sanitize content
-        sanitized = self.security_manager.sanitize_content(content)
+        sanitized = self.security_monitor.sanitize_content(content)
         
         # Check that active content was removed
         self.assertNotIn("<iframe", sanitized.text)
@@ -336,7 +337,7 @@ class TestSecurityManager(unittest.TestCase):
         )
         
         # Sanitize content
-        sanitized = self.security_manager.sanitize_content(content)
+        sanitized = self.security_monitor.sanitize_content(content)
         
         # Check that personal data was removed
         self.assertNotIn("user@example.com", sanitized.text)
@@ -361,10 +362,10 @@ class TestSecurityManager(unittest.TestCase):
         )
         
         # Configure security manager to remove metadata
-        self.security_manager.set_security_rules({"remove_metadata": True})
+        self.security_monitor.set_security_rules({"remove_metadata": True})
         
         # Sanitize content
-        sanitized = self.security_manager.sanitize_content(content)
+        sanitized = self.security_monitor.sanitize_content(content)
         
         # Check that sensitive metadata was removed
         self.assertNotIn("author", sanitized.metadata)
@@ -377,7 +378,7 @@ class TestSecurityManager(unittest.TestCase):
         self.assertIn("remove_metadata", sanitized.sanitization_applied)
         
         # Reset security rules
-        self.security_manager.set_security_rules({"remove_metadata": False})
+        self.security_monitor.set_security_rules({"remove_metadata": False})
     
     def test_sanitize_content_with_sanitization_disabled(self):
         """Test sanitizing content with sanitization disabled."""
@@ -400,10 +401,10 @@ class TestSecurityManager(unittest.TestCase):
         )
         
         # Disable sanitization
-        self.security_manager.set_security_rules({"sanitize_content": False})
+        self.security_monitor.set_security_rules({"sanitize_content": False})
         
         # Sanitize content
-        sanitized = self.security_manager.sanitize_content(content)
+        sanitized = self.security_monitor.sanitize_content(content)
         
         # Content should be unchanged
         self.assertEqual(sanitized.text, html_with_scripts)
@@ -411,69 +412,69 @@ class TestSecurityManager(unittest.TestCase):
         self.assertEqual(sanitized.sanitization_applied, ["none"])
         
         # Reset security rules
-        self.security_manager.set_security_rules({"sanitize_content": True})
+        self.security_monitor.set_security_rules({"sanitize_content": True})
     
     def test_set_security_rules(self):
         """Test setting security rules."""
         # Set new rules
-        self.security_manager.set_security_rules({
+        self.security_monitor.set_security_rules({
             "reject_executable": False,
             "remove_scripts": False,
             "unknown_rule": True  # Should be ignored
         })
         
         # Check if rules were updated
-        self.assertFalse(self.security_manager._security_rules["reject_executable"])
-        self.assertFalse(self.security_manager._security_rules["remove_scripts"])
-        self.assertNotIn("unknown_rule", self.security_manager._security_rules)
+        self.assertFalse(self.security_monitor._security_rules["reject_executable"])
+        self.assertFalse(self.security_monitor._security_rules["remove_scripts"])
+        self.assertNotIn("unknown_rule", self.security_monitor._security_rules)
     
     def test_set_allowed_formats(self):
         """Test setting allowed formats."""
         # Initially all formats are allowed
-        self.assertEqual(len(self.security_manager.allowed_formats), 0)
+        self.assertEqual(len(self.security_monitor.allowed_formats), 0)
         
         # Set allowed formats
         formats = ["html", "pdf", "plain"]
-        self.security_manager.set_allowed_formats(formats)
+        self.security_monitor.set_allowed_formats(formats)
         
         # Check if formats were updated
-        self.assertEqual(len(self.security_manager.allowed_formats), 3)
-        self.assertIn("html", self.security_manager.allowed_formats)
-        self.assertIn("pdf", self.security_manager.allowed_formats)
-        self.assertIn("plain", self.security_manager.allowed_formats)
+        self.assertEqual(len(self.security_monitor.allowed_formats), 3)
+        self.assertIn("html", self.security_monitor.allowed_formats)
+        self.assertIn("pdf", self.security_monitor.allowed_formats)
+        self.assertIn("plain", self.security_monitor.allowed_formats)
         
         # Reset for other tests
-        self.security_manager.set_allowed_formats([])
+        self.security_monitor.set_allowed_formats([])
     
     def test_set_file_size_limits(self):
         """Test setting file size limits."""
         # Set new limits
-        self.security_manager.set_file_size_limits({
+        self.security_monitor.set_file_size_limits({
             "text": 20 * 1024 * 1024,  # 20 MB
             "new_category": 30 * 1024 * 1024  # 30 MB
         })
         
         # Check if limits were updated
-        self.assertEqual(self.security_manager._file_size_limits["text"], 20 * 1024 * 1024)
-        self.assertEqual(self.security_manager._file_size_limits["new_category"], 30 * 1024 * 1024)
+        self.assertEqual(self.security_monitor._file_size_limits["text"], 20 * 1024 * 1024)
+        self.assertEqual(self.security_monitor._file_size_limits["new_category"], 30 * 1024 * 1024)
         
         # Other limits should remain unchanged
-        self.assertEqual(self.security_manager._file_size_limits["default"], 100 * 1024 * 1024)
+        self.assertEqual(self.security_monitor._file_size_limits["default"], 100 * 1024 * 1024)
     
     def test_is_executable(self):
         """Test checking if a file is executable."""
         # Test a non-executable file
-        self.assertFalse(self.security_manager._is_executable(self.test_file_path))
+        self.assertFalse(self.security_monitor._is_executable(self.test_file_path))
         
         # Test an executable file
-        self.assertTrue(self.security_manager._is_executable(self.executable_file_path))
+        self.assertTrue(self.security_monitor._is_executable(self.executable_file_path))
         
         # Test a file with executable extension
         exe_file_path = os.path.join(self.temp_dir, "test.exe")
         with open(exe_file_path, 'w') as f:
             f.write("This is not a real executable")
         
-        self.assertTrue(self.security_manager._is_executable(exe_file_path))
+        self.assertTrue(self.security_monitor._is_executable(exe_file_path))
 
 
 if __name__ == "__main__":

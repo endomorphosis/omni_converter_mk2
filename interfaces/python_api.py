@@ -6,10 +6,12 @@ allowing Python applications to convert files to text without using the command-
 """
 import os
 from pathlib import Path
-from typing import Any, Dict, Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 
-from configs import Configs
+from types_ import Configs, Logger, BatchResult, ProcessingResult
+
+
 from logger import logger
 
 
@@ -26,11 +28,6 @@ class PythonAPI:
         batch_processor: The batch processor to use.
         resource_monitor: The resource monitor to use.
     """
-    
-    from core.processing_result import ProcessingResult
-    from managers.batch_processor import batch_processor
-    from managers.batch_result import BatchResult
-    from managers.resource_monitor import resource_monitor
 
     def __init__(
         self,
@@ -50,16 +47,17 @@ class PythonAPI:
         self.configs = configs
         self.resources = resources
 
-        self.batch_processor = self.resources['batch_processor']
-        self.resource_monitor = self.resources['resource_monitor']
-        self.format_registry = self.resources['format_registry']
-        self.processing_pipeline = self.resources['processing_pipeline']
+        self._batch_processor = self.resources['batch_processor']
+        self._resource_monitor = self.resources['resource_monitor']
+        self._format_registry = self.resources['format_registry']
+        self._processing_pipeline = self.resources['processing_pipeline']
+        self._logger: Logger = self.resources['logger']
 
     def convert_file(
         self,
         file_path: str,
         output_path: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None
+        options: Optional[dict[str, Any]] = None
     ) -> ProcessingResult:
         """
         Convert a single file to text.
@@ -89,22 +87,22 @@ class PythonAPI:
             options = self._get_default_options()
         
         # Process the file using the processing pipeline
-        result = self.processing_pipeline.process_file(file_path, output_path, options)
+        result = self._processing_pipeline.process_file(file_path, output_path, options)
         
         return result
     
     def convert_batch(
         self,
-        file_paths: Union[List[str], str],
+        file_paths: Union[list[str], str],
         output_dir: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None,
+        options: Optional[dict[str, Any]] = None,
         show_progress: bool = False # TODO Unused argument. Implement.
     ) -> BatchResult:
         """
         Convert multiple files to text.
         
         Args:
-            file_paths: List of file paths to convert, or a directory to recursively process.
+            file_paths: list of file paths to convert, or a directory to recursively process.
             output_dir: Directory to write output files to. 
                 If None, text is still extracted but not written to files.
             options: Conversion options. If None, default options are used.
@@ -119,15 +117,15 @@ class PythonAPI:
         
         # Configure batch processor from options
         if "max_batch_size" in options:
-            self.batch_processor.set_max_batch_size(options["max_batch_size"])
+            self._batch_processor.set_max_batch_size(options["max_batch_size"])
         
         if "continue_on_error" in options:
-            self.batch_processor.set_continue_on_error(options["continue_on_error"])
+            self._batch_processor.set_continue_on_error(options["continue_on_error"])
         
         if "max_workers" in options and "parallel" in options and options["parallel"]:
-            self.batch_processor.set_max_workers(options["max_workers"])
+            self._batch_processor.set_max_workers(options["max_workers"])
         else:
-            self.batch_processor.set_max_workers(1)  # Sequential mode
+            self._batch_processor.set_max_workers(1)  # Sequential mode
         
         # Configure resource limits if specified
         if ("max_cpu" in options and options["max_cpu"] is not None) or \
@@ -146,13 +144,13 @@ class PythonAPI:
                                   f"Capping at {max_reasonable_memory}MB")
                     memory_limit = max_reasonable_memory
             
-            self.resource_monitor.set_resource_limits(
+            self._resource_monitor.set_resource_limits(
                 cpu_limit_percent=options.get("max_cpu"),
                 memory_limit=memory_limit
             )
         
         # Process the batch
-        batch_result = self.batch_processor.process_batch(
+        batch_result = self._batch_processor.process_batch(
             file_paths=file_paths,
             output_dir=output_dir,
             options=options,
@@ -162,16 +160,16 @@ class PythonAPI:
         return batch_result
     
     @property
-    def supported_formats(self) -> Dict[str, List[str]]:
+    def supported_formats(self) -> dict[str, list[str]]:
         """
         Get all supported formats, organized by category.
         
         Returns:
             A dictionary mapping format categories to lists of supported formats.
         """
-        return self.format_registry.get_formats_by_category()
+        return self._format_registry.get_formats_by_category()
     
-    def set_config(self, config_dict: Dict[str, Any]) -> bool:
+    def set_config(self, config_dict: dict[str, Any]) -> bool:
         """
         Set multiple configuration values at once.
         
@@ -189,7 +187,7 @@ class PythonAPI:
         except Exception:
             return False
     
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """
         Get the current configuration.
         
@@ -198,7 +196,7 @@ class PythonAPI:
         """
         return self.configs.current_config
     
-    def _get_default_options(self) -> Dict[str, Any]:
+    def _get_default_options(self) -> dict[str, Any]:
         """
         Get default options from configuration.
         
@@ -239,6 +237,10 @@ class Convert(PythonAPI):
     Similar to Pathlib's Path class, this class provides a simple interface.
     """
 
+
+
+
+    
     def __init__(self, path=None, *args, **kwargs):
         """
         Initialize the Convert class.
@@ -247,15 +249,12 @@ class Convert(PythonAPI):
             args: Positional arguments for PythonAPI.
             kwargs: Keyword arguments for PythonAPI.
         """
-        from configs import configs, Configs
-        from core.processing_result import ProcessingResult
-        from managers.batch_processor import batch_processor
-        from managers.batch_result import BatchResult
-        from managers.resource_monitor import resource_monitor
+        from batch_processor import make_batch_processor
+        from monitors._resource_monitor import make_resource_monitor
 
         resources = {
-            "batch_processor": batch_processor,
-            "resource_monitor": resource_monitor,
+            "batch_processor": make_batch_processor(),
+            "resource_monitor": make_resource_monitor(),
         }
         super().__init__(resources=resources, configs=configs)
         
@@ -293,7 +292,7 @@ class Convert(PythonAPI):
         # TODO Implement this method
         pass
     
-    def convert(self, path: str = None, output_path: str = None, options: Optional[Dict[str, Any]] = None) -> Any:
+    def convert(self, path: str = None, output_path: str = None, options: Optional[dict[str, Any]] = None) -> Any:
         """
         Convert a file or directory to text.
         

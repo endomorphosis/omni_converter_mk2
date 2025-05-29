@@ -26,7 +26,7 @@ import time
 
 import psutil
 
-from managers.resource_monitor import ResourceMonitor
+from monitors._resource_monitor import ResourceMonitor
 from utils.resource_monitor.dependencies.psutil import PsUtil
 from configs import configs, Configs
 

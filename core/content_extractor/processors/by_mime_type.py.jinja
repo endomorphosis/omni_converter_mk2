@@ -1,0 +1,69 @@
+from typing import Any, Callable, TypeVar
+from unittest.mock import MagicMock
+
+{% for type_var in type_vars %}
+{{ type_var.name }} = TypeVar('{{ type_var.name }}')  # {{ type_var.description }}
+{% endfor %}
+
+
+class {{ class_name }}:
+    """
+    {{ class_docstring }}
+
+    Attributes:
+        configs: Configuration settings for the processor.
+        resources: Dictionary containing callable functions and metadata to implement processing.
+        NOTE resources must include:
+            self._logger: Callable for logging messages.
+{% for resource in required_resources %}
+            {{ resource.name }}: {{ resource.description }}
+{% endfor %}
+
+    Example Output:
+        ```
+        {{ example_output }}
+        ```
+    """
+    
+    def __init__(self, resources: dict[str, Callable] = None, configs=None) -> None:
+        """Initialize the {{ format_name }} processor."""
+        self.configs = configs
+        self.resources = resources
+        self._logger = self.resources["logger"]
+
+{% for resource in resource_assignments %}
+        self.{{ resource.attribute }}: {{ resource.type }} = self.resources["{{ resource.key }}"]
+{% endfor %}
+
+{% for optional_resource in optional_resources %}
+        # Optional {{ optional_resource.description }}
+        self.{{ optional_resource.attribute }}: {{ optional_resource.type }} = self.resources["{{ optional_resource.key }}"]
+{% endfor %}
+
+{% for method in methods %}
+    def {{ method.name }}(self{% for param in method.parameters %}, {{ param.name }}: {{ param.type }}{% if param.default %} = {{ param.default }}{% endif %}{% endfor %}) -> {{ method.returns.type }}:
+        """
+        {{ method.docstring }}
+        
+        Args:
+{% for param in method.parameters %}
+            {{ param.name }}: {{ param.description }}
+{% endfor %}
+            
+        Returns:
+            {{ method.returns.description }}
+{% if method.raises %}
+            
+        Raises:
+{% for raise_item in method.raises %}
+            {{ raise_item.exception }}: {{ raise_item.description }}
+{% endfor %}
+{% endif %}
+        """
+{% if method.body %}
+        {{ method.body | indent(8, true) }}
+{% else %}
+        pass
+{% endif %}
+
+{% endfor %}

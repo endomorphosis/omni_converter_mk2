@@ -5,7 +5,7 @@ This module provides the ProcessingResult class for tracking the result of proce
 """
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -21,8 +21,8 @@ class ProcessingResult:
         file_path (str): The path to the input file.
         output_path (str): The path to the output file.
         format (str): The detected format of the input file.
-        errors (List[str]): List of errors encountered during processing.
-        metadata (Dict[str, Any]): Metadata about the processing.
+        errors (list[str]): list of errors encountered during processing.
+        metadata (dict[str, Any]): Metadata about the processing.
         content_hash (str): Hash of the content for verification.
         timestamp (datetime): Time when the processing was completed.
     """
@@ -30,8 +30,8 @@ class ProcessingResult:
     file_path: str
     output_path: str = ""
     format: str = ""
-    errors: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     content_hash: str = ""
     timestamp: datetime = field(default_factory=datetime.now)
 
@@ -55,7 +55,7 @@ class ProcessingResult:
         """
         self.metadata[key] = value
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert to a dictionary.
         
@@ -85,7 +85,7 @@ class ProcessingResult:
             return "No errors"
         
         return "\n".join(f"- {error}" for error in self.errors)
-    
+
     def __str__(self) -> str:
         """
         Get a string representation of the result.

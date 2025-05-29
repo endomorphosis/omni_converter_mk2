@@ -13,16 +13,16 @@ from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
 
-from format_handlers.application_handler import application_handler
-from format_handlers.audio_handler import audio_handler
-from format_handlers.image_handler import image_handler
+from core.content_extractor.application_handler import application_handler
+from core.content_extractor.audio_handler import audio_handler
+from core.content_extractor.image_handler import image_handler
 
 # Import processors
-from format_handlers.constants import Constants
-from format_handlers.processors.by_mime_type.pdf_processor import PyPDF2Processor
-from format_handlers.processors.by_ability.audio_processor import WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
-from format_handlers.processors.by_ability.ocr_processor import TESSERACT_AVAILABLE
-from format_handlers.processors.python_docx_processor import PYTHON_DOCX_AVAILABLE
+from core.content_extractor.constants import Constants
+from core.content_extractor.processors.by_mime_type.pdf_processor import PyPDF2Processor
+from core.content_extractor.processors.by_ability.audio_processor import WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
+from core.content_extractor.processors.by_ability.ocr_processor import TESSERACT_AVAILABLE
+from core.content_extractor.processors.python_docx_processor import PYTHON_DOCX_AVAILABLE
 
 
 class TestProcessorIntegration(unittest.TestCase):
@@ -103,7 +103,7 @@ class TestProcessorIntegration(unittest.TestCase):
             mock_read_file.return_value = mock_file_content
             
             # Call the handler
-            with patch('format_handlers.application_handler.format_detector.detect_format') as mock_detect:
+            with patch('format_handlers.application_handler.file_format_detector.detect_format') as mock_detect:
                 mock_detect.return_value = ("pdf", 0.9)
                 
                 # Try to extract content
@@ -115,7 +115,7 @@ class TestProcessorIntegration(unittest.TestCase):
                 # Check content
                 self.assertEqual(content.metadata.get("title"), "Test PDF")
     
-    @patch('format_handlers.application_handler.format_detector.detect_format')
+    @patch('format_handlers.application_handler.file_format_detector.detect_format')
     @patch('format_handlers.processors.pdf_processor.pdf_processor.can_process')
     def test_application_handler_fallback(self, mock_can_process, mock_detect):
         """Test that the application handler falls back when the processor is not available."""
@@ -156,7 +156,7 @@ class TestProcessorIntegration(unittest.TestCase):
             mock_read_file.return_value = mock_file_content
             
             # Call the handler
-            with patch('format_handlers.audio_handler.format_detector.detect_format') as mock_detect:
+            with patch('format_handlers.audio_handler.file_format_detector.detect_format') as mock_detect:
                 mock_detect.return_value = ("mp3", 0.9)
                 
                 # Try to extract content
@@ -169,7 +169,7 @@ class TestProcessorIntegration(unittest.TestCase):
                 self.assertEqual(content.metadata.get("duration"), "0:01:00")
     
     @unittest.skipIf(not PYDUB_AVAILABLE, "pydub not available")
-    @patch('format_handlers.audio_handler.format_detector.detect_format')
+    @patch('format_handlers.audio_handler.file_format_detector.detect_format')
     @patch('format_handlers.processors.audio_processor.whisper_processor.can_process')
     @patch('format_handlers.audio_handler.AudioHandler._extract_with_pydub')
     def test_audio_handler_fallback(self, mock_extract_with_pydub, mock_can_process, mock_detect):
@@ -214,7 +214,7 @@ class TestProcessorIntegration(unittest.TestCase):
             mock_read_file.return_value = mock_file_content
             
             # Call the handler
-            with patch('format_handlers.image_handler.format_detector.detect_format') as mock_detect:
+            with patch('format_handlers.image_handler.file_format_detector.detect_format') as mock_detect:
                 mock_detect.return_value = ("png", 0.9)
                 
                 # Try to extract content
@@ -231,7 +231,7 @@ class TestProcessorIntegration(unittest.TestCase):
                 # Check that OCR text is in the main text content
                 self.assertIn("Test Image OCR Text", content.text)
     
-    @patch('format_handlers.image_handler.format_detector.detect_format')
+    @patch('format_handlers.image_handler.file_format_detector.detect_format')
     @patch('format_handlers.processors.ocr_processor.ocr_processor.can_process')
     def test_image_handler_ocr_fallback(self, mock_can_process, mock_detect):
         """Test that the image handler falls back when OCR is not available."""
@@ -306,7 +306,7 @@ class TestProcessorIntegration(unittest.TestCase):
             mock_read_file.return_value = mock_file_content
             
             # Call the handler
-            with patch('format_handlers.application_handler.format_detector.detect_format') as mock_detect:
+            with patch('format_handlers.application_handler.file_format_detector.detect_format') as mock_detect:
                 mock_detect.return_value = ("docx", 0.9)
                 
                 # Try to extract content
@@ -318,7 +318,7 @@ class TestProcessorIntegration(unittest.TestCase):
                 # Check content
                 self.assertEqual(content.metadata.get("title"), "Test DOCX")
     
-    # @patch('format_handlers.application_handler.format_detector.detect_format')
+    # @patch('format_handlers.application_handler.file_format_detector.detect_format')
     # @patch('format_handlers.processors.docx_processor.docx_processor.can_process')
     # def test_application_handler_docx_fallback(self, mock_can_process, mock_detect):
     #     """Test that the application handler falls back when the DOCX processor is not available."""

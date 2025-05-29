@@ -3,6 +3,7 @@ Logging utility for the Omni-Converter.
 
 This module provides logging functionality for the Omni-Converter.
 """
+from functools import cached_property
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -40,7 +41,7 @@ def get_logger(name: str,
     # Create 'logs' directory in the current working directory if it doesn't exist
     logs_dir = Path.cwd() / 'logs'
     logs_dir.mkdir(parents=True, exist_ok=True)
-    
+
     log_file_path = logs_dir / log_file_name
     file_handler = RotatingFileHandler(log_file_path.resolve(), maxBytes=max_size, backupCount=backup_count)
 
@@ -55,6 +56,24 @@ def get_logger(name: str,
     logger.addHandler(file_handler)
 
     return logger
+
+class _Logger:
+    """Singleton class to manage logger instances."""
+    
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.logger = get_logger(__name__)
+        return cls._instance
+
+    def __init__(self, resources=None, configs=None):
+        pass
+
+    @cached_property
+    def logger(self):
+        return self._instance.logger
 
 # Global logger instances
 logger = get_logger(__name__, log_file_name='app.log', level=logging.DEBUG)

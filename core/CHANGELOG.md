@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Refactored TextNormalizer** to follow IoC pattern
   - Added resources and configs parameters to constructor
   - Maintained existing normalizer functionality with IoC structure
-- **Completed FormatDetector** implementation
+- **Completed FileFormatDetector** implementation
   - Fixed incomplete _init_format_extensions method
   - Now properly initializes format extensions from constants
 
@@ -42,11 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Only processing_pipeline exported from core module
 
 ### Updated
-- **Enhanced BasicValidator** IoC implementation (2025-05-27)
-  - Removed direct format_detector import for complete dependency injection
-  - Added format_detector as injected resource dependency
+- **Enhanced FileValidator** IoC implementation (2025-05-27)
+  - Removed direct file_format_detector import for complete dependency injection
+  - Added file_format_detector as injected resource dependency
   - Updated all format detection method calls to use injected dependency
-  - Enhanced factory.py to properly create and inject format_detector
+  - Enhanced factory.py to properly create and inject file_format_detector
   - Removed obsolete make_validator() function
 
 ### Status
@@ -59,13 +59,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Current Implementation
 - **ProcessingPipeline**: Orchestrates file conversion with sequential processing stages
-- **FormatDetector**: Detects file formats using MIME types and extensions
+- **FileFormatDetector**: Detects file formats using MIME types and extensions
 - **ContentExtractor**: Extracts content using format handlers from registry
 - **TextNormalizer**: Normalizes text with configurable normalizers
 - **OutputFormatter**: Formats content in txt, json, and markdown formats
 - **ProcessingResult**: Tracks processing results as dataclass
 - **ValidationResult**: Pydantic model for validation results
-- **BasicValidator**: Validates files for processing with configurable rules
+- **FileValidator**: Validates files for processing with configurable rules
 
 ### Issues Identified
 - **Inconsistent IoC pattern** - some components follow IoC, others don't
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Broken __init__.py** - references undefined variables and creates broken global instances
 
 ### Technical Debt
-- format_detector.py has incomplete _init_format_extensions method
+- file_format_detector.py has incomplete _init_format_extensions method
 - processing_pipeline.py had typo in to_dict() method (fixed)
 - content_extractor.py uses direct registry instantiation
 - output_formatter.py and text_normalizer.py don't follow IoC pattern

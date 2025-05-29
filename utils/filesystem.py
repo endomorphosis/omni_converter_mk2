@@ -4,13 +4,16 @@ Filesystem utility functions for the Omni-Converter.
 This module provides filesystem utility functions for the Omni-Converter,
 including file reading, writing, and information retrieval.
 """
+from dataclasses import dataclass
 import glob
 import magic
 import mimetypes
 import os
 from datetime import datetime
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional
 
+
+from pydantic import BaseModel, Field, BeforeValidator, FilePath, PositiveInt
 
 
 def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
@@ -38,7 +41,7 @@ def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
             return None
 
 
-class FileInfo:
+class FileInfo(BaseModel):
     """
     Information about a file.
     
@@ -51,13 +54,25 @@ class FileInfo:
         is_readable (bool): Whether the file is readable.
         is_writable (bool): Whether the file is writable.
     """
-    
-    def __init__(self, path: str):
+    path: FilePath = Field(description="The absolute path to the file")
+    size: PositiveInt = Field(description="The size of the file in bytes")
+    modified_time: datetime = Field(description="The time the file was last modified")
+    mime_type: Optional[str] = Field(None, description="The MIME type of the file")
+    extension: str = Field(description="The file extension")
+    is_readable: bool = Field(description="Whether the file is readable")
+    is_writable: bool = Field(description="Whether the file is writable")
+
+
+    @classmethod
+    def from_path(cls, path: str) -> 'FileInfo':
         """
-        Initialize file information.
+        Create FileInfo from a file path.
         
         Args:
             path: The path to the file.
+            
+        Returns:
+            FileInfo instance with populated data.
             
         Raises:
             FileNotFoundError: If the file does not exist.
@@ -65,18 +80,25 @@ class FileInfo:
         if not os.path.exists(path):
             raise FileNotFoundError(f"File not found: {path}")
 
-        self.path = os.path.abspath(path)
-        self.size = os.path.getsize(path)
-        self.modified_time = datetime.fromtimestamp(os.path.getmtime(path))
+        abs_path = os.path.abspath(path)
+        size = os.path.getsize(path)
+        modified_time = datetime.fromtimestamp(os.path.getmtime(path))
+        mime_type = _determine_mime_type(path)
+        extension = os.path.splitext(path)[1].lstrip('.')
+        is_readable = os.access(path, os.R_OK)
+        is_writable = os.access(path, os.W_OK)
+        
+        return cls(
+            path=abs_path,
+            size=size,
+            modified_time=modified_time,
+            mime_type=mime_type,
+            extension=extension,
+            is_readable=is_readable,
+            is_writable=is_writable
+        )
 
-        # Determine MIME type using python-magic
-        self.mime_type = _determine_mime_type(path)
-
-        self.extension = os.path.splitext(path)[1].lstrip('.')
-        self.is_readable = os.access(path, os.R_OK)
-        self.is_writable = os.access(path, os.W_OK)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert to a dictionary.
         
@@ -92,6 +114,7 @@ class FileInfo:
             'is_readable': self.is_readable,
             'is_writable': self.is_writable
         }
+
 
 
 class FileContent:
@@ -220,7 +243,7 @@ class FileSystem:
         return FileContent(content, 'utf-8', mime_type)
     
     @staticmethod
-    def write_file(file_path: str, content: Union[str, bytes], mode: str = 'wb') -> bool:
+    def write_file(file_path: str, content: str | bytes, mode: str = 'wb') -> bool:
         """
         Write to a file.
         
@@ -257,9 +280,9 @@ class FileSystem:
             return False
     
     @staticmethod
-    def list_files(directory: str, pattern: str = '*.*') -> List[str]:
+    def list_files(directory: str, pattern: str = '*.*') -> list[str]:
         """
-        List files in a directory.
+        list files in a directory.
         
         Args:
             directory: The directory to list files in.
@@ -283,7 +306,7 @@ class FileSystem:
         if not os.access(directory, os.R_OK):
             raise PermissionError(f"Cannot read directory: {directory}")
         
-        # List files matching the pattern
+        # list files matching the pattern
         return sorted(glob.glob(os.path.join(directory, pattern)))
     
     @staticmethod

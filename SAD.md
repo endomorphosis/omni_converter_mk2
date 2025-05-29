@@ -194,18 +194,18 @@ classDiagram
 ```mermaid
 classDiagram
     class ProcessingPipeline {
-        -FormatDetector detector
-        -BasicValidator validator
+        -FileFormatDetector detector
+        -FileValidator validator
         -ContentExtractor extractor
         -TextNormalizer normalizer
         -OutputFormatter formatter
-        -ErrorHandler error_handler
+        -ErrorMonitor error_monitor
         +process_file(file_path, output_path, options) Result
         +status Status
         +register_listeners(listener) void
     }
 
-    class FormatDetector {
+    class FileFormatDetector {
         -dict format_signatures
         -dict format_extensions
         -FormatRegistry registry
@@ -214,7 +214,7 @@ classDiagram
         +is_format_supported(format) bool
     }
 
-    class BasicValidator {
+    class FileValidator {
         -dict validation_rules
         +validate_file(file_path, format) ValidationResult
         +is_valid_for_processing(file_path, format) bool
@@ -255,8 +255,8 @@ classDiagram
         +datetime timestamp
     }
 
-    ProcessingPipeline --> FormatDetector
-    ProcessingPipeline --> BasicValidator
+    ProcessingPipeline --> FileFormatDetector
+    ProcessingPipeline --> FileValidator
     ProcessingPipeline --> ContentExtractor
     ProcessingPipeline --> TextNormalizer
     ProcessingPipeline --> OutputFormatter
@@ -268,7 +268,7 @@ classDiagram
 classDiagram
     class BatchProcessor {
         -ProcessingPipeline pipeline
-        -ErrorHandler error_handler
+        -ErrorMonitor error_monitor
         -ResourceMonitor resource_monitor
         -Logger logger
         -int max_batch_size
@@ -292,7 +292,7 @@ classDiagram
         +set_resource_limits(cpu, memory) void
     }
 
-    class ErrorHandler {
+    class ErrorMonitor {
         -Logger logger
         -dict error_counters
         -list error_types
@@ -304,7 +304,7 @@ classDiagram
         +set_error_suppression(flag) void
     }
 
-    class SecurityManager {
+    class SecurityMonitor {
         -list file_size_limits
         -list allowed_formats
         -dict security_rules
@@ -328,8 +328,8 @@ classDiagram
     }
 
     BatchProcessor --> ResourceMonitor : uses
-    BatchProcessor --> ErrorHandler : uses
-    BatchProcessor --> SecurityManager : uses
+    BatchProcessor --> ErrorMonitor : uses
+    BatchProcessor --> SecurityMonitor : uses
     BatchProcessor --> BatchResult : produces
 ```
 
@@ -425,7 +425,19 @@ classDiagram
     ServiceFormatHandler --> Content : produces
 ```
 
-## 5. Storage - Class Diagram
+## 5. Handler Example: Text Handler - Class Diagram
+```mermaid
+classDiagram
+    class TextHandler {
+        -list supported_formats
+        -dict format_parsers
+        +extract_content(file_path, options) Content
+        +register_parser(format, parser) void
+        +get_supported_formats() list
+    }
+```
+
+## 6. Storage - Class Diagram
 ```mermaid
 classDiagram
     class FileSystem {

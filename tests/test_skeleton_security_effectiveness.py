@@ -10,12 +10,12 @@ import json
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Optional, Tuple
 
-from managers.security_manager import security_manager
-from core.validator import BasicValidator 
+from monitors.security_monitor._security_monitor import security_monitor
+from file_validator.file_validator import FileValidator 
 from core.processing_pipeline import processing_pipeline
-from managers.batch_processor import batch_processor
+from monitors.batch_processor import batch_processor
 
 
 class SecurityEffectivenessTest(unittest.TestCase):
@@ -33,7 +33,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         self.temp_output_dir = tempfile.mkdtemp()
         
         # Initialize validator
-        self.validator = BasicValidator()
+        self.validator = FileValidator()
         
         # Results will be stored here
         self.results = {
@@ -48,7 +48,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
             }
         }
 
-    def _create_test_files(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _create_test_files(self) -> dict[str, list[dict[str, Any]]]:
         """Create test file data with various security exploit attempts.
         
         Returns:
@@ -141,7 +141,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         
         return test_files
         
-    def _find_real_test_files(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _find_real_test_files(self) -> dict[str, list[dict[str, Any]]]:
         """Find real test files with security exploits.
         
         Returns:
@@ -207,7 +207,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         # simplicity, we'll just return a placeholder path
         return f"/sample/security/{exploit_type}.{extension}"
 
-    def _check_security(self, file_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_security(self, file_data: dict[str, Any]) -> dict[str, Any]:
         """Check security for a file.
         
         Args:
@@ -222,7 +222,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         if os.path.exists(file_path) and not file_data.get('is_sample', True):
             try:
                 # Check if file is safe using the security manager
-                security_result = security_manager.validate_security(file_path)
+                security_result = security_monitor.validate_security(file_path)
                 
                 # Determine if exploits were detected and prevented
                 is_prevented = security_result['is_safe']
@@ -291,7 +291,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         
         return detection_details
 
-    def _get_prevention_mechanism(self, file_data: Dict[str, Any], security_result: Dict[str, Any] = None) -> str:
+    def _get_prevention_mechanism(self, file_data: dict[str, Any], security_result: dict[str, Any] = None) -> str:
         """Return the prevention mechanism for a security issue.
         
         Args:

@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from deprecated.processors.xlsx_processor import XlsxProcessor, OPENPYXL_AVAILABLE
-from format_handlers.processors.document_processor import DocumentProcessor
+from core.content_extractor.processors.document_processor import DocumentProcessor
 
 # Skip these tests if openpyxl is not available
 @unittest.skipIf(not OPENPYXL_AVAILABLE, "openpyxl is not available")

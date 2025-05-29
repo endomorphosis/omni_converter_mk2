@@ -11,7 +11,7 @@ import json
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Dict, List, Any, Union, Tuple, Optional
+from typing import Any, Union, Optional
 from collections import Counter
 import re
 
@@ -21,7 +21,7 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from rouge_score import rouge_scorer
 
 from core.processing_pipeline import processing_pipeline
-from core.validator import BasicValidator, make_validator
+from file_validator.file_validator import FileValidator, make_validator
 from configs import Configs, configs
 
 # Download required NLTK data
@@ -33,7 +33,7 @@ nltk.download('punkt', quiet=True)
 # =============================================================================
 
 def calculate_bleu_score(reference: str, hypothesis: str, 
-                        weights: Tuple[float, ...] = (0.25, 0.25, 0.25, 0.25)) -> float:
+                        weights: tuple[float, ...] = (0.25, 0.25, 0.25, 0.25)) -> float:
     """
     Calculate BLEU score between reference and hypothesis texts.
     
@@ -62,14 +62,14 @@ def calculate_bleu_score(reference: str, hypothesis: str,
         return 0.0
 
 
-def calculate_corpus_bleu_score(references: List[str], hypotheses: List[str],
-                               weights: Tuple[float, ...] = (0.25, 0.25, 0.25, 0.25)) -> float:
+def calculate_corpus_bleu_score(references: list[str], hypotheses: list[str],
+                               weights: tuple[float, ...] = (0.25, 0.25, 0.25, 0.25)) -> float:
     """
     Calculate corpus-level BLEU score.
     
     Args:
-        references: List of reference texts
-        hypotheses: List of hypothesis texts
+        references: list of reference texts
+        hypotheses: list of hypothesis texts
         weights: Weights for n-gram precisions
         
     Returns:
@@ -87,7 +87,7 @@ def calculate_corpus_bleu_score(references: List[str], hypotheses: List[str],
         return 0.0
 
 
-def calculate_rouge_l_score(reference: str, hypothesis: str) -> Dict[str, float]:
+def calculate_rouge_l_score(reference: str, hypothesis: str) -> dict[str, float]:
     """
     Calculate ROUGE-L scores between reference and hypothesis texts.
     
@@ -123,7 +123,7 @@ def calculate_structural_preservation_score(reference: str, hypothesis: str) -> 
     Returns:
         Structural preservation score between 0 and 1
     """
-    def extract_structural_elements(text: str) -> Dict[str, int]:
+    def extract_structural_elements(text: str) -> dict[str, int]:
         """Extract counts of structural elements from text."""
         elements = {
             'paragraphs': 0,
@@ -252,7 +252,7 @@ class TestDataManager:
             'application': ['pdf', 'json', 'zip', 'docx', 'xlsx', 'pptx']
         }
     
-    def find_test_files(self) -> Dict[str, List[Dict[str, Any]]]:
+    def find_test_files(self) -> dict[str, list[dict[str, Any]]]:
         """Find all test files with corresponding ground truth."""
         test_files = {category: [] for category in self.format_categories}
         
@@ -273,8 +273,8 @@ class TestDataManager:
     def _find_files_in_directory(self, 
                                  directory,  #: str
                                  category: str, 
-                                formats: List[str], 
-                                test_files: Dict[str, List[Dict[str, Any]]]
+                                formats: list[str], 
+                                test_files: dict[str, list[dict[str, Any]]]
                                 ):
         """Find test files in a specific directory."""
         directory = self.Path(directory)
@@ -377,7 +377,7 @@ class TextQualityTest(unittest.TestCase):
         self.structural_scorer = calculate_structural_preservation_score
         self.quality_factor_calculator = calculate_text_quality_factor
     
-    def _extract_text(self, file_data: Dict[str, Any]) -> str:
+    def _extract_text(self, file_data: dict[str, Any]) -> str:
         """Extract text from a file using the processing pipeline."""
         file_path = file_data['file_path']
         
@@ -407,7 +407,7 @@ class TextQualityTest(unittest.TestCase):
             print(f"Error extracting text from {file_path}: {e}")
             return ""
     
-    def _calculate_metrics(self, reference: str, extracted: str, category: str) -> Dict[str, float]:
+    def _calculate_metrics(self, reference: str, extracted: str, category: str) -> dict[str, float]:
         """Calculate all quality metrics for a text pair."""
         metrics = {}
         

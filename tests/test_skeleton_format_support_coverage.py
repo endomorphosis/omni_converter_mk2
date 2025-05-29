@@ -10,9 +10,9 @@ import json
 import unittest
 from datetime import datetime
 
-from core.format_detector import format_detector
-from format_handlers.format_registry import format_registry
-from core.content_extractor import ContentExtractor
+from file_format_detector.file_format_detector import file_format_detector
+from core.content_extractor.format_registry import format_registry
+from deprecated.content_extractor import ContentExtractor
 
 
 class FormatSupportCoverageTest(unittest.TestCase):
@@ -133,7 +133,7 @@ class FormatSupportCoverageTest(unittest.TestCase):
         # Check each format is recognized by the format detector
         unrecognized_formats = []
         for format_name in supported_formats:
-            if not format_detector.is_format_supported(format_name):
+            if not file_format_detector.is_format_supported(format_name):
                 unrecognized_formats.append(format_name)
         
         if unrecognized_formats:

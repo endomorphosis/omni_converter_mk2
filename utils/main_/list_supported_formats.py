@@ -1,12 +1,12 @@
 def list_supported_formats() -> None:
     """List all supported formats."""
-    from format_handlers.format_registry import format_registry
+    from file_format_detector.supported_formats import SupportedFormats
 
     # Format the handler capabilities
     print("Omni-Converter Supported Formats\n===============================\n\n")
 
     # Get formats grouped by category from the registry
-    categories = format_registry.get_formats_by_category()
+    categories = SupportedFormats
 
     # Print formats by category
     for category, formats in sorted(categories.items()):

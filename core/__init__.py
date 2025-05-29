@@ -14,16 +14,16 @@ conversion of input files to plaintext output.
 
 Implementation Status:
     - ProcessingPipeline: ✅ Complete (IoC Pattern)
-    - FormatDetector: ✅ Complete (IoC Pattern)
-    - BasicValidator: ✅ Complete (IoC Pattern)
+    - FileFormatDetector: ✅ Complete (IoC Pattern)
+    - FileValidator: ✅ Complete (IoC Pattern)
     - ContentExtractor: ✅ Complete (IoC Pattern)
     - TextNormalizer: ✅ Complete (IoC Pattern)
     - OutputFormatter: ✅ Complete (IoC Pattern)
 """
 
 # Import only the processing pipeline from factory
-from .factory import processing_pipeline
+from ..deprecated.factories import make_processing_pipeline
 
 __all__ = [
-    'processing_pipeline',
+    'make_processing_pipeline',
 ]

@@ -11,10 +11,10 @@ import time
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 
 from core.processing_pipeline import processing_pipeline
-from core.format_detector import format_detector
+from file_format_detector.file_format_detector import file_format_detector
 
 
 class ProcessingSpeedTest(unittest.TestCase):
@@ -50,7 +50,7 @@ class ProcessingSpeedTest(unittest.TestCase):
             }
         }
 
-    def _create_test_files(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _create_test_files(self) -> dict[str, list[dict[str, Any]]]:
         """Get test files for each category.
         
         This method tries to find real test files in the test_files directory.
@@ -160,11 +160,11 @@ class ProcessingSpeedTest(unittest.TestCase):
         
         return test_files
 
-    def _process_files(self, files: List[Dict[str, Any]], category: str) -> Dict[str, Any]:
+    def _process_files(self, files: list[dict[str, Any]], category: str) -> dict[str, Any]:
         """Process files and measure time.
         
         Args:
-            files: List of file dictionaries to process
+            files: list of file dictionaries to process
             category: Category of files being processed
             
         Returns:

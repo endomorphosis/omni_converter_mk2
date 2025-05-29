@@ -11,7 +11,7 @@ import argparse
 import glob
 import os
 import sys
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 # Test classes
 
 class TestClassCLI(unittest.TestCase):

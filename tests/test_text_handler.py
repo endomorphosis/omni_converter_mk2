@@ -11,10 +11,10 @@ on the source format structure.
 import os
 import unittest
 import tempfile
-from typing import Dict, Any
+from typing import Any
 
 from utils.filesystem import FileSystem
-from format_handlers.text_handler import TextHandler
+from core.content_extractor.text_handler import TextHandler
 
 
 class TestTextHandler(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestTextHandler(unittest.TestCase):
         if os.path.exists(self.test_dir):
             os.rmdir(self.test_dir)
     
-    def _create_test_files(self) -> Dict[str, str]:
+    def _create_test_files(self) -> dict[str, str]:
         """
         Create test files for different text formats with predetermined content.
         
@@ -63,7 +63,7 @@ class TestTextHandler(unittest.TestCase):
         test results. Each file is created in the temporary test directory.
         
         Returns:
-            Dict[str, str]: A dictionary mapping format names to absolute file paths.
+            dict[str, str]: A dictionary mapping format names to absolute file paths.
         """
         files = {}
         

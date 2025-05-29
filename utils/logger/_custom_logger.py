@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 from pydantic import BaseModel, Field
@@ -21,7 +21,7 @@ class LogRecord(BaseModel):
     """
     level: str
     message: str
-    context: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    context: Optional[dict[str, Any]] = Field(default_factory=dict)
     timestamp: str = Field(default_factory=datetime.now().isoformat)
     source: Optional[str] = Field(default='unknown')
 
@@ -45,7 +45,7 @@ class LogRecord(BaseModel):
         return f"{self.timestamp} [{self.level}] {self.source}: {self.message}{context_str}"
     
     @property
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert to a dictionary.
         
@@ -96,7 +96,7 @@ class Logger:
         self.console_output = console_output
         
         # Custom formatters for different log levels
-        self.log_formatters: Dict[str, Optional[callable]] = {
+        self.log_formatters: dict[str, Optional[callable]] = {
             'DEBUG': None,
             'INFO': None,
             'WARNING': None,
@@ -193,7 +193,7 @@ class Logger:
     def log(self, 
             level: str, 
             message: str, 
-            context: Optional[Dict[str, Any]] = None, 
+            context: Optional[dict[str, Any]] = None, 
             source: Optional[str] = None
             ) -> None:
         """
@@ -221,7 +221,7 @@ class Logger:
         self._write_to_file(record)
         self._write_to_console(record)
     
-    def debug(self, message: str, context: Optional[Dict[str, Any]] = None, source: Optional[str] = None) -> None:
+    def debug(self, message: str, context: Optional[dict[str, Any]] = None, source: Optional[str] = None) -> None:
         """
         Log a debug message.
         
@@ -232,7 +232,7 @@ class Logger:
         """
         self.log('DEBUG', message, context, source)
     
-    def info(self, message: str, context: Optional[Dict[str, Any]] = None, source: Optional[str] = None) -> None:
+    def info(self, message: str, context: Optional[dict[str, Any]] = None, source: Optional[str] = None) -> None:
         """
         Log an info message.
         
@@ -243,7 +243,7 @@ class Logger:
         """
         self.log('INFO', message, context, source)
     
-    def warning(self, message: str, context: Optional[Dict[str, Any]] = None, source: Optional[str] = None) -> None:
+    def warning(self, message: str, context: Optional[dict[str, Any]] = None, source: Optional[str] = None) -> None:
         """
         Log a warning message.
         
@@ -254,7 +254,7 @@ class Logger:
         """
         self.log('WARNING', message, context, source)
     
-    def error(self, message: str, context: Optional[Dict[str, Any]] = None, source: Optional[str] = None) -> None:
+    def error(self, message: str, context: Optional[dict[str, Any]] = None, source: Optional[str] = None) -> None:
         """
         Log an error message.
         
@@ -265,7 +265,7 @@ class Logger:
         """
         self.log('ERROR', message, context, source)
     
-    def critical(self, message: str, context: Optional[Dict[str, Any]] = None, source: Optional[str] = None) -> None:
+    def critical(self, message: str, context: Optional[dict[str, Any]] = None, source: Optional[str] = None) -> None:
         """
         Log a critical message.
         

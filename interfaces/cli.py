@@ -9,7 +9,7 @@ import argparse
 import glob
 import os
 import sys
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 
 DataClass = TypeVar('DataClass')
@@ -142,7 +142,7 @@ class CLI:
         
         return parser.parse_args()
 
-    def process_file(self, input_path: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> bool:
+    def process_file(self, input_path: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None) -> bool:
         """
         Process a single file.
         
@@ -214,7 +214,7 @@ class CLI:
         self,
         dir_path: str, 
         output_dir: Optional[str] = None, 
-        options: Optional[Dict[str, Any]] = None,
+        options: Optional[dict[str, Any]] = None,
         show_progress: bool = True,
         recursive: bool = False
     ) -> 'BatchResult':

@@ -24,17 +24,17 @@ import unittest
 from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import tempfile
 import shutil
-from typing import Any, Dict, List
+from typing import Any, List
 
 from configs import configs, Configs
 from logger import logger
 
-from core.processing_result import ProcessingResult
-from managers.batch_processor import BatchProcessor, make_resources
-from managers.batch_result import BatchResult
-from managers.resource_monitor import ResourceMonitor
-from managers.error_handler import ErrorHandler
-from managers.security_manager import SecurityManager, SecurityResult
+from core.processing_pipeline.processing_result import ProcessingResult
+from monitors.batch_processor import BatchProcessor, make_resources
+from monitors.batch_result import BatchResult
+from monitors._resource_monitor import ResourceMonitor
+from monitors.error_monitor.error_monitor import ErrorMonitor
+from monitors.security_monitor._security_monitor import SecurityMonitor, SecurityResult
 
 
 # Set up dictionary-style access for resources
@@ -104,9 +104,9 @@ class TestBatchProcessor(unittest.TestCase):
         """Set up test fixtures."""
         # Create mock components
         self.mock_pipeline = MagicMock()
-        self.mock_error_handler = MagicMock(spec=ErrorHandler)
+        self.mock_error_handler = MagicMock(spec=ErrorMonitor)
         self.mock_resource_monitor = MagicMock(spec=ResourceMonitor)
-        self.mock_security_manager = MagicMock(spec=SecurityManager)
+        self.mock_security_manager = MagicMock(spec=SecurityMonitor)
         
         # Configure resource monitor mock
         type(self.mock_resource_monitor).is_resource_available = PropertyMock(return_value=(True, None))
@@ -132,9 +132,9 @@ class TestBatchProcessor(unittest.TestCase):
 
         self.mock_resources = {
             'processing_pipeline': self.mock_pipeline,
-            'error_handler': self.mock_error_handler,
+            'error_monitor': self.mock_error_handler,
             'resource_monitor': self.mock_resource_monitor,
-            'security_manager': self.mock_security_manager
+            'security_monitor': self.mock_security_manager
         }
 
         # Create batch processor with mocks

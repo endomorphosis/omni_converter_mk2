@@ -10,12 +10,12 @@ import logging
 import unittest
 import tempfile
 import zipfile
-from typing import Dict, Any
+from typing import Any
 from io import BytesIO
 
 from utils.filesystem import FileSystem
 from logger import test_logger
-from format_handlers.application_handler import ApplicationHandler
+from core.content_extractor.application_handler import ApplicationHandler
 
 
 
@@ -39,7 +39,7 @@ class TestApplicationHandler(unittest.TestCase):
         if os.path.exists(self.test_dir):
             os.rmdir(self.test_dir)
     
-    def _create_test_files(self) -> Dict[str, str]:
+    def _create_test_files(self) -> dict[str, str]:
         """
         Create test files for different application formats.
         

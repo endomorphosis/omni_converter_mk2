@@ -4,7 +4,7 @@ Provides a unified API for initializing LLM interfaces and resources.
 """
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from logger import logger
 from ..dependency_modules.openai_processor import (
@@ -24,7 +24,7 @@ def create_llm_resources(
     model: str = "gpt-3.5-turbo",
     embedding_model: str = "text-embedding-ada-002",
     embedding_dimensions: int = 1536
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a resources dictionary with LLM components.
     
@@ -66,7 +66,7 @@ def create_llm_resources(
 
 
 def create_llm_interface(
-    configs: Optional[Dict[str, Any]] = None,
+    configs: Optional[dict[str, Any]] = None,
     api_key: Optional[str] = None
 ) -> Optional[AsyncLLMInterface]:
     """
@@ -113,7 +113,7 @@ def create_llm_interface(
 
 
 def create_embeddings_manager_instance(
-    configs: Optional[Dict[str, Any]] = None,
+    configs: Optional[dict[str, Any]] = None,
     api_key: Optional[str] = None
 ) -> Optional[EmbeddingsManager]:
     """
@@ -153,9 +153,9 @@ def create_embeddings_manager_instance(
 
 
 def initialize_llm_components(
-    configs: Optional[Dict[str, Any]] = None,
+    configs: Optional[dict[str, Any]] = None,
     api_key: Optional[str] = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Initialize and return all LLM components.
     

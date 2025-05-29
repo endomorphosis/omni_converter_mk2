@@ -4,7 +4,7 @@ Provides tools for loading and formatting prompts from YAML files.
 """
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 try:
     import yaml

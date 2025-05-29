@@ -11,7 +11,7 @@ import argparse
 from datetime import datetime
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 import tqdm
@@ -19,10 +19,10 @@ import tqdm
 
 from configs import configs
 from logger import logger
-from format_handlers.format_registry import format_registry
+from core.content_extractor.format_registry import format_registry
 from core.processing_pipeline import processing_pipeline
-from managers.batch_processor import batch_processor
-from managers.batch_result import BatchResult
+from monitors.batch_processor import batch_processor
+from monitors.batch_result import BatchResult
 
 
 from utils.main_.list_supported_formats import list_supported_formats
@@ -94,7 +94,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def process_file(input_path: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> bool:
+def process_file(input_path: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None) -> bool:
     """
     Process a single file.
     
@@ -166,7 +166,7 @@ def process_file(input_path: str, output_path: Optional[str] = None, options: Op
 def process_directory(
     dir_path: str, 
     output_dir: Optional[str] = None, 
-    options: Optional[Dict[str, Any]] = None,
+    options: Optional[dict[str, Any]] = None,
     show_progress: bool = True,
     recursive: bool = False
 ) -> BatchResult:
@@ -267,7 +267,7 @@ def main() -> int:
         configs.set_config_value('output.verbose', True)
     
     # Configure resource limits if specified
-    from managers.resource_monitor import resource_monitor
+    from monitors._resource_monitor import resource_monitor
     if args.max_cpu is not None:
         resource_monitor.set_max_cpu_percent(args.max_cpu)
     if args.max_memory is not None:
@@ -352,7 +352,7 @@ def main() -> int:
         
         # Print resource usage if verbose
         if args.verbose:
-            from managers.resource_monitor import resource_monitor
+            from monitors._resource_monitor import resource_monitor
             usage = resource_monitor.current_usage
             print("\nResource Usage:")
             print(f"CPU: {usage.get('cpu_percent', 'N/A')}%")

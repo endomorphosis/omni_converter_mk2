@@ -18,13 +18,32 @@
 ## Software Architecture Guidelines
 - **Inversion of Control**: Use dependency injection for classes to allow for easier testing and flexibility. This should be done by writing framework classes that only take two keyword arguments in their constructor: `resources` and `configs`. The `resources` parameter is a dictionary of callable objects (functions, classes, dependencies, etc). The `configs` parameter is a nested Pydantic dataclass containing any configuration options or values. The framework classes methods should only contain the orchestration logic of the class, and should *not* contain any library-specific logic (e.g., `aiohttp`, `pandas`, etc) or configuration or resources management logic.
 - **Separation of Concerns**: Each framework class should have a single responsibility and should not be responsible for managing its own dependencies. This includes method implementation, configuration management, and resource management.
-- **Factory Pattern**: Use the function factory pattern to create instances of classes that require dependencies. All class-specific defaults must be defined in the function, and the function must return an instance of the class.
+- **Factory Pattern**: Use the function factory pattern to create instances of classes that require dependencies.
+### Example Factory Pattern
+```
+def make_my_class() -> MyClass:
+    """Factory function to create an instance of MyClass."""
+    from some_library import SomeLibrary
+    from configs import configs  # Assuming configs is a nested Pydantic dataclass
+    from constants import Constants
+
+    resources = {
+        "outside_resource": SomeLibrary.some_math_function,
+        "some_constant": Constants.SOME_CONSTANT,  # Property from Constants class.
+    }
+    return MyClass(resources=resources, configs=configs)
+```
+
+All class-specific dependencies, configurations, and resources should be imported inside function, and  that returns an instance of the class. The factory function should take no arguments, but it  The factory function should take no arguments, and all dependencies, configurations, and resources should be defined within the function. If defaults are required, these should be defined in the function itself. The factory function must return an instance of the class.
+
+
+ defaults must be defined in the function, and the function must return an instance of the class.
 - **Fail Fast with Missing Dependencies and Configs**: All classes must check for the presence of required dependencies in their `__init__` constructor. This is implemented via the `resources` parameter, where the dictionary must contain all the dependencies required by the class. Consequentially, `resources` should never be called outside the constructor, the `get` dictionary method must never be used when assigning resources, and defaults should be moved outside the class, either into the resources dictionary itself or into the factory function. This way, if a dependency is missing, a `KeyError` will be raised immediately that will prevent class instantiation. Similarly, the `configs` parameter must be a nested Pydantic dataclass, and all required configuration options must be defined before initialization. If a required configuration option is missing from `configs`, an `AttributeError` will be raised immediately.
 - **Composition over Inheritance**: Use composition over inheritance to create classes that are flexible and easy to test. This means that classes should be composed of smaller classes that are responsible for specific tasks, rather than inheriting from a base class. Combine this with the factory pattern to create classes that are easy to test and maintain.
 
 ## Example Architecture
 ```python
-from typing import Dict, Callable
+from typing import Callable
 from configs import Config # Assuming configs a nested Pydantic dataclass
 
 class MyClass:
@@ -48,7 +67,7 @@ class MyClass:
             return self._outside_resource(x, y)
 
 ## factory.py
-from typing import Dict, Callable
+from typing import Callable
 from my_class import MyClass # Assuming my_class is the module where MyClass is defined
 
 from some_library import SomeLibrary
@@ -145,6 +164,22 @@ source venv/bin/activate && python -m tools.tool_name
 - Do NOT try to "improve" or "optimize" established patterns unless you are given explicit permission to do so.
 - Do NOT make assumptions about what functions exist - READ the actual code
 - If the user says "follow this pattern," copy it precisely for all similar cases.
+
+### Handler Refactoring Pattern (CRITICAL)
+**Current State**: We are in the middle of converting handlers to IoC framework classes
+
+**Template to Follow**: `extractors/text_handler.py` is the EXACT pattern for all handlers
+- Framework classes with `__init__(self, resources: dict[str, Callable], configs: Configs)`
+- Fail-fast extraction of processors in constructor
+- Only orchestration logic in methods - NO library-specific code
+- All processing delegated to injected processors via `processor(file_path, options)`
+- Factory functions named `create_[type]_handler()` 
+
+**Critical Rules**:
+- NO fallback logic in handlers (handled in processors)
+- NO direct library imports (everything via dependency injection)  
+- NO hardcoded values (use constants or configs)
+- Follow text_handler.py template EXACTLY - do not deviate
 
 ### Read Before Assuming
 - **ALWAYS** read existing code before making changes

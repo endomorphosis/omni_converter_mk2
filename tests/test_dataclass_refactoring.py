@@ -10,14 +10,14 @@ from datetime import datetime, timedelta
 import json
 import os
 import tempfile
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 
 # Original class imports
-from core.processing_result import ProcessingResult
-from managers.batch_result import BatchResult
-from core.output_formatter import FormattedOutput
-from format_handlers.base_handler import Content
-from core.text_normalizer import NormalizedContent
+from core.processing_pipeline.processing_result import ProcessingResult
+from monitors.batch_result import BatchResult
+from core.output_formatter._output_formatter import FormattedOutput
+from core.content_extractor.base_handler import Content
+from core.text_normalizer._text_normalizer import NormalizedContent
 
 
 class TestProcessingResultCompatibility(unittest.TestCase):

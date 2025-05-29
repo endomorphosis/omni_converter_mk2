@@ -9,14 +9,14 @@ import os
 import json
 import shutil
 import tempfile
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 import unittest
 from unittest.mock import MagicMock, patch
 
 
 from core.processing_pipeline import processing_pipeline
-from core.format_detector import format_detector
-from core.validator import BasicValidator
+from file_format_detector.file_format_detector import file_format_detector
+from file_validator.file_validator import FileValidator
 
 
 class ProcessingSuccessRateTest(unittest.TestCase):
@@ -74,7 +74,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
             except Exception as e:
                 print(f"Warning: Failed to remove temporary directory: {e}")
 
-    def _create_test_files(self, category: str, count: int) -> List[Dict[str, Any]]:
+    def _create_test_files(self, category: str, count: int) -> list[dict[str, Any]]:
         """Create test file data for a category.
         
         This method looks for real test files in test_files directory if available,
@@ -155,7 +155,7 @@ class ProcessingSuccessRateTest(unittest.TestCase):
         
         return None
 
-    def _create_invalid_files(self, count: int) -> List[Dict[str, Any]]:
+    def _create_invalid_files(self, count: int) -> list[dict[str, Any]]:
         """Create invalid file data for testing error handling.
         
         Args:

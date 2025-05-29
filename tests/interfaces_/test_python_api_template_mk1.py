@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import os
 from pathlib import Path
-from typing import Any, Dict, Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 from configs import configs, Configs
 from logger import logger
 # Test classes
@@ -67,7 +67,7 @@ class TestClassPythonAPI(unittest.TestCase):
         # Docstring:
         # Convert multiple files to text.
         # Args:
-        #     file_paths: List of file paths to convert, or a directory to recursively process.
+        #     file_paths: list of file paths to convert, or a directory to recursively process.
         #     output_dir: Directory to write output files to. 
         #         If None, text is still extracted but not written to files.
         #     options: Conversion options. If None, default options are used.

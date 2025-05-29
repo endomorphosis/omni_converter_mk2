@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from deprecated.formathandlers.mocks_ import Mocks, make_mocks
-from format_handlers.constants import Constants
+from core.content_extractor.constants import Constants
 from configs import Configs
 
 

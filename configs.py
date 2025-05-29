@@ -7,10 +7,20 @@ configuration settings for the Omni-Converter.
 from pathlib import Path
 from typing import Any, Union
 
-
-from pydantic import BaseModel, DirectoryPath, FilePath, Field, PositiveInt, PositiveFloat, ValidationError
-import psutil
-import yaml
+try:
+    from pydantic import (
+        BaseModel, 
+        DirectoryPath, 
+        FilePath, 
+        Field, 
+        PositiveInt, 
+        PositiveFloat, 
+        ValidationError
+    )
+    import psutil
+    import yaml
+except ImportError as e:
+    raise ImportError("Required libraries are not installed. Please install pydantic, psutil, and pyyaml.")
 
 
 from __version__ import __version__
@@ -123,6 +133,7 @@ class Configs(BaseModel):
     security: _Security = Field(default_factory=_Security)
     processing: _Processing = Field(default_factory=_Processing)
     output: _Output = Field(default_factory=_Output)
+    paths: Paths = Field(default_factory=Paths)
 
     @property
     def paths(self) -> Paths:

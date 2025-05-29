@@ -5,7 +5,58 @@ All notable changes to the Omni-Converter project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.0-dev] - 2025-05-27 - Complete IoC Architecture Implementation (TESTING REQUIRED)
+## [3.2.0-dev] - 2025-05-28 - Handler Refactoring to IoC Framework Classes (IN PROGRESS)
+
+### Added
+- **Handler refactoring to IoC framework classes** following text_handler.py template
+  - All handlers being converted from create_handler() pattern to proper IoC classes
+  - Standardized constructor: `__init__(self, resources: dict[str, Callable], configs: Configs)`
+  - Fail-fast dependency extraction in constructors with explicit KeyError on missing resources
+  - Factory functions following `create_[type]_handler()` naming convention
+- **Format extension constants consolidation** in extractors/constants.py
+  - Moved all hardcoded format_extensions from handlers to centralized constants
+  - Added *_HANDLER_FORMAT_EXTENSIONS for each handler type
+  - Centralized processing configuration constants (replaced magic numbers)
+
+### Changed
+- **Refactored image_handler.py to IoC framework class** ✅ COMPLETED
+  - Converted from create_handler() pattern to ImageHandler class
+  - Added proper dependency injection with fail-fast behavior
+  - Delegates to image_processor, svg_processor, ocr_processor via injected resources
+  - Removed all hardcoded format extensions and direct imports
+- **Refactored audio_handler.py to IoC framework class** ✅ COMPLETED  
+  - Converted from create_handler() pattern to AudioHandler class
+  - Added proper dependency injection with fail-fast behavior
+  - Delegates to audio_processor and transcription_processor
+  - Support for conditional transcription via options
+- **text_handler.py established as canonical template**
+  - Framework class with orchestration logic only
+  - No library-specific code in handler classes
+  - All processing delegated to injected processors via `processor(file_path, options)`
+
+### Completed
+- [x] **Refactored video_handler.py to IoC framework class** ✅ COMPLETED
+  - Converted from make_handler() pattern to VideoHandler class
+  - Updated factory function to create_video_handler() naming convention
+  - Added proper dependency injection with fail-fast behavior
+  - Delegates to video_processor and transcription_processor
+- [x] **Refactored application_handler.py to IoC framework class** ✅ COMPLETED
+  - Converted from create_handler() pattern to ApplicationHandler class
+  - Added proper dependency injection with fail-fast behavior
+  - Delegates to pdf_processor, json_processor, docx_processor, xlsx_processor, zip_processor
+  - Removed all hardcoded dependencies and fallback logic
+
+### Status  
+- ✅ **COMPLETED**: ALL handlers refactored to IoC framework classes
+  - ✅ text_handler.py (template)
+  - ✅ image_handler.py 
+  - ✅ audio_handler.py
+  - ✅ video_handler.py
+  - ✅ application_handler.py
+- ⚠️ **TESTING REQUIRED**: New framework classes need comprehensive testing
+- ⚠️ Integration with main application pending
+
+## [3.1.0-dev] - 2025-05-27 - Complete IoC Architecture Implementation (PROCESSOR LEVEL)
 
 ### Added
 - **Complete core module IoC architecture** with standardized dependency injection
@@ -13,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created centralized processing_pipeline factory with dependency injection
   - Added fail-fast approach for missing core dependencies
   - Followed exact IoC pattern from CLAUDE.md specification
-- **Complete format handlers IoC architecture** with standardized dependency injection
+- **Complete format handlers processor architecture** with standardized dependency injection
   - Implemented "types determine processors" principle across ALL processors
   - Created two-tier processor hierarchy: ability processors + MIME-type specific
   - Built centralized factory system with consistent processor creation pattern
@@ -33,8 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ContentExtractor: Added resources/configs parameters, moved registry to resources
   - OutputFormatter: Added resources/configs parameters, moved NormalizedContent to resources
   - TextNormalizer: Added resources/configs parameters, maintained normalizer functionality
-  - FormatDetector: Completed _init_format_extensions method implementation
-  - BasicValidator: Enhanced with full dependency injection, removed direct format_detector import
+  - FileFormatDetector: Completed _init_format_extensions method implementation
+  - FileValidator: Enhanced with full dependency injection, removed direct file_format_detector import
 - **Simplified core module exports**
   - core/__init__.py now only exports processing_pipeline from factory
   - Removed all direct imports and broken global instances
@@ -50,12 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Consolidated video processing**
   - Video frames now handled by image_processor (frames are images)
   - Metadata extraction handled by MIME-type specific processors
-
-### Status
-- ⚠️ **CRITICAL: REQUIRES COMPREHENSIVE TESTING** 
-- ⚠️ **BOTH** core and format handler architectures implemented but untested
-- ⚠️ Integration with main application pending (needs core factory integration)
-- ⚠️ Backward compatibility needs verification for entire system
 
 ## [2.0.0] - 2025-05-22 - Previous IoC Implementation
 
@@ -369,7 +414,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added comprehensive unit tests for manager components
   - Complete test coverage for BatchProcessor component
   - Complete test coverage for ResourceMonitor component
-  - Complete test coverage for SecurityManager component
+  - Complete test coverage for SecurityMonitor component
   - Integration tests for all manager components
 
 ### Changed
@@ -418,7 +463,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Complete test coverage for all Manager components
   - Unit tests for BatchProcessor implementation
   - Unit tests for ResourceMonitor implementation
-  - Unit tests for SecurityManager implementation
+  - Unit tests for SecurityMonitor implementation
   - Integration tests for all Manager components
 - Milestone: Achieved 100% format coverage across all MIME-type categories
   - Complete implementation of all planned format handlers
@@ -475,14 +520,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Complete Manager Components
   - BatchProcessor: Orchestrates batch processing with parallel and sequential processing modes
   - ResourceMonitor: Monitors system resource usage with configurable CPU and memory limits
-  - ErrorHandler: Centralizes error handling with detailed error tracking and reporting
-  - SecurityManager: Validates file security and sanitizes content with configurable rules
+  - ErrorMonitor: Centralizes error handling with detailed error tracking and reporting
+  - SecurityMonitor: Validates file security and sanitizes content with configurable rules
   - BatchResult: Tracks batch processing results with detailed statistics
 - Test coverage for Manager components
   - Unit tests for BatchResult implementation
-  - Unit tests for ErrorHandler implementation
+  - Unit tests for ErrorMonitor implementation
   - Unit tests for ResourceMonitor implementation
-  - Unit tests for SecurityManager implementation
+  - Unit tests for SecurityMonitor implementation
   - Unit tests for BatchProcessor implementation
 
 ### Changed

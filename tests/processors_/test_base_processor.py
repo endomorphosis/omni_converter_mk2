@@ -15,7 +15,7 @@ import unittest
 from abc import ABC
 
 from deprecated.processors.base_processor import BaseProcessor
-from format_handlers.processors.document_processor import DocumentProcessor
+from core.content_extractor.processors.document_processor import DocumentProcessor
 
 
 class TestBaseProcessor(unittest.TestCase):

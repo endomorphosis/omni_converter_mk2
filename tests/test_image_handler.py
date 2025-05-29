@@ -11,11 +11,11 @@ import os
 import io
 import unittest
 import tempfile
-from typing import Dict, Any
+from typing import Any
 from PIL import Image
 
 from utils.filesystem import FileSystem
-from format_handlers.image_handler import ImageHandler
+from core.content_extractor.image_handler import ImageHandler
 
 
 class TestImageHandler(unittest.TestCase):
@@ -57,7 +57,7 @@ class TestImageHandler(unittest.TestCase):
         if os.path.exists(self.test_dir):
             os.rmdir(self.test_dir)
     
-    def _create_test_files(self) -> Dict[str, str]:
+    def _create_test_files(self) -> dict[str, str]:
         """
         Create test files for different image formats with predetermined properties.
         
@@ -66,7 +66,7 @@ class TestImageHandler(unittest.TestCase):
         test results. Each file is created in the temporary test directory.
         
         Returns:
-            Dict[str, str]: A dictionary mapping format names to absolute file paths.
+            dict[str, str]: A dictionary mapping format names to absolute file paths.
         """
         files = {}
         

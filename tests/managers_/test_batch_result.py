@@ -5,8 +5,8 @@ Test the batch result module.
 import unittest
 from datetime import datetime, timedelta
 
-from core.processing_result import ProcessingResult
-from managers.batch_result import BatchResult
+from core.processing_pipeline.processing_result import ProcessingResult
+from monitors.batch_result import BatchResult
 
 
 class TestBatchResult(unittest.TestCase):

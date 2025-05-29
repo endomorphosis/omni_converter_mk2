@@ -1,10 +1,17 @@
 # Omni Converter MK2 - TODO List
 
-## Current Focus: IoC Architecture Testing & Integration
+## Current Focus: Handler Refactoring to IoC Framework Classes
 
-The project has implemented a complete Inversion of Control (IoC) architecture with dependency injection across **both format handlers AND core modules**. **CRITICAL**: This implementation requires comprehensive testing before integration.
+The project is in the middle of refactoring format handlers to IoC framework classes following the text_handler.py template. **IN PROGRESS**: Converting remaining handlers to proper IoC pattern.
 
 ### High Priority Tasks
+
+- [x] **CRITICAL: Complete handler refactoring to IoC framework classes** ✅ COMPLETED
+  - [x] Refactor image_handler.py to follow text_handler.py template
+  - [x] Refactor audio_handler.py to follow text_handler.py template  
+  - [x] Refactor video_handler.py to follow text_handler.py template
+  - [x] Refactor application_handler.py to follow text_handler.py template
+  - [x] Update factory functions to use create_[type]_handler() naming convention
 
 - [ ] **CRITICAL: Test core module IoC architecture implementation**
   - [ ] Create unit tests for core/factory.py component creation
@@ -12,14 +19,14 @@ The project has implemented a complete Inversion of Control (IoC) architecture w
   - [ ] Verify all core components follow IoC pattern correctly
   - [ ] Test fail-fast behavior for missing core dependencies
   - [ ] Validate ProcessingPipeline works with factory-created components
-  - [ ] Test BasicValidator with injected format_detector dependency
+  - [ ] Test FileValidator with injected file_format_detector dependency
 
-- [ ] **CRITICAL: Test format handlers IoC architecture implementation** 
-  - [ ] Create unit tests for format_handlers/factory.py processor creation
-  - [ ] Test make_processor function with various dependency scenarios
-  - [ ] Verify multi-dependency fallback system works correctly
-  - [ ] Test automatic mocking when dependencies unavailable
-  - [ ] Validate all processor types follow standardized pattern
+- [ ] **CRITICAL: Test refactored format handlers IoC implementation** 
+  - [ ] Create unit tests for new framework handler classes
+  - [ ] Test handler dependency injection with fail-fast behavior
+  - [ ] Verify handlers delegate properly to injected processors
+  - [ ] Test factory functions create handlers with correct resources
+  - [ ] Validate all handlers follow text_handler.py template pattern
 
 - [ ] **Test processor hierarchy and delegation**
   - [ ] Test ability processors (image, text, video, ocr)

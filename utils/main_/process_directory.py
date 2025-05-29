@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional
 
 
 from logger import logger
-from managers.batch_processor import batch_processor, BatchResult
+from monitors.batch_processor import batch_processor, BatchResult
 from utils.common.dependencies.tqdm import Tqdm
 from utils.main_.progress_callback import progress_callback
 

@@ -1,7 +1,10 @@
 from typing import Any
 
 
-from pydantic import BaseModel, PositiveInt, FilePath
+try:
+    from pydantic import BaseModel, PositiveInt, FilePath
+except ImportError:
+    raise ImportError("Pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
 
 class PipelineStatus(BaseModel):

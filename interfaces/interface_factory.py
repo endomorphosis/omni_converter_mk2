@@ -4,11 +4,10 @@ Interface Factory for the Omni-Converter.
 This module provides a factory for creating interface instances, such as the CLI and Python API.
 This allows for centralized configuration and management of interfaces.
 """
-from typing import Callable, TypeVar
+from typing import Callable
 
-DataClass = TypeVar('DataClass')
-PythonAPI = TypeVar('PythonAPI') # Avoid having an extra import just for type hinting
-Cli = TypeVar('CLI') # Avoid having an extra import just for type hinting
+
+
 
 class InterfaceFactory:
     """
@@ -23,6 +22,7 @@ class InterfaceFactory:
         python_api: Reference to the Python API implementation
         cli: Reference to the CLI implementation
     """
+    from types_ import DataClass, PythonAPI, Cli # Prevent circular import issues
 
     def __init__(self, 
                  resources: dict[str, Callable] = None, 
@@ -87,3 +87,76 @@ def interface_factory(
 
 
 
+def _make_resources():
+    """
+    Create a dictionary of resources for the interfaces.
+    """
+    return {
+        'python_api': PythonAPI,
+        'cli': CLI,  # TODO CLI is in the process of being implemented
+    }
+
+def _make_api_resources():
+    """
+    Create a dictionary of API resources for the interfaces.
+    """
+    from batch_processor import make_batch_processor
+    from monitors._resource_monitor import resource_monitor
+
+
+
+
+    import monitors
+    from core.content_extractor.format_registry import format_registry
+    from core.processing_pipeline import processing_pipeline
+    return {
+        'format_registry': format_registry,
+        'processing_pipeline': processing_pipeline,
+        'batch_processor': monitors.batch_processor.batch_processor,
+        'resource_monitor': monitors.resource_monitor.resource_monitor,
+    }
+
+def _make_cli_resources():
+    import tqdm
+    import monitors
+    from core.content_extractor.text_handler import text_handler
+    from core.content_extractor.image_handler import image_handler
+    from core.content_extractor.application_handler import application_handler
+    from core import make_processing_pipeline
+    import utils
+    import utils.main_
+    import extractors
+    from logger import logger
+    dummy_dict = {
+        "pymediainfo_processor": None,
+        "ffmpeg_processor": None,
+        "ffprobe_processor": None,
+        "cv2_processor": None,
+        "pytesseract_processor": None,
+        "whisper_processor": None,
+        "pydub_processor": None,
+    }
+    return {
+        'text_handler': text_handler,
+        'image_handler': image_handler,
+        'application_handler': application_handler,
+        'audio_handler': core.content_extractor.audio_handler.create_audio_handler(dummy_dict),
+        'video_handler': core.content_extractor.video_handler.create_video_handler(dummy_dict),
+        'format_registry': core.content_extractor.format_registry.format_registry,
+        'processing_pipeline': make_processing_pipeline(),
+        'batch_processor': monitors.batch_processor.batch_processor,
+        'resource_monitor': monitors.resource_monitor.resource_monitor,
+        'list_supported_formats': utils.main_.list_supported_formats.list_supported_formats,
+        'show_version': utils.main_.show_version.show_version,
+        'progress_callback': utils.main_.progress_callback.progress_callback,
+        'list_output_formats': utils.main_.list_output_formats.list_output_formats,
+        'list_normalizers': utils.main_.list_normalizers.list_normalizers,
+        'tqdm': tqdm,
+        'logger': logger,
+    }
+
+
+
+_factory = interface_factory(resources=_make_resources(), configs=_configs)
+cli = _factory.create_cli(_make_cli_resources())
+python_api = _factory.create_api(_make_api_resources())

@@ -14,15 +14,15 @@ Modules:
         - FileInfo: Information about files including size, type, and permissions.
         - FileContent: Container for file content with encoding support.
         
-    format_detector: MIME type and extension-based format detection.
-        - FormatDetector: Detects file formats based on content and extension.
+    file_format_detector: MIME type and extension-based format detection.
+        - FileFormatDetector: Detects file formats based on content and extension.
         
     logger: Structured logging with multiple output targets.
         - Logger: Logging functionality with configurable levels and outputs.
         - LogRecord: Detailed log entries with context and metadata.
         
     validator: File validation with configurable rules.
-        - BasicValidator: Validates files for processing with security checks.
+        - FileValidator: Validates files for processing with security checks.
         - ValidationResult: Contains validation status, errors, and metadata.
 
 Implementation Status:
@@ -30,7 +30,7 @@ Implementation Status:
     System Architecture Document:
     - Storage Class Group (FileSystem, Logger): 🔄 In Progress
     - Interface Class Group (Configs): 🔄 In Progress
-    - Core Processing Class Group (FormatDetector, BasicValidator): 🔄 In Progress
+    - Core Processing Class Group (FileFormatDetector, FileValidator): 🔄 In Progress
     - Managers Class Group: ❌ Not Started
     - Format Handlers Class Group: ❌ Not Started
 """

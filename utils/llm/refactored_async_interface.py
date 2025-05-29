@@ -4,7 +4,7 @@ Provides a unified API for interacting with language models through dependency i
 """
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 try:
     from pydantic import BaseModel, Field
@@ -23,8 +23,8 @@ class AsyncLLMInterface:
 
     def __init__(
         self,
-        resources: Dict[str, Any],
-        configs: Optional[Dict[str, Any]] = None
+        resources: dict[str, Any],
+        configs: Optional[dict[str, Any]] = None
     ):
         """
         Initialize the async LLM interface with dependency injection.
@@ -91,7 +91,7 @@ class AsyncLLMInterface:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         model: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response using the configured language model.
         
@@ -158,7 +158,7 @@ class AsyncLLMInterface:
         self,
         text: str,
         model: Optional[str] = None
-    ) -> Optional[List[float]]:
+    ) -> Optional[list[float]]:
         """
         Generate an embedding vector for a text.
         
@@ -242,8 +242,8 @@ class AsyncLLMInterface:
     async def extract_metadata(
         self,
         text: str,
-        metadata_fields: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        metadata_fields: Optional[list[str]] = None
+    ) -> dict[str, Any]:
         """
         Extract metadata from text using the configured language model.
         
@@ -295,8 +295,8 @@ class AsyncLLMInterface:
 
 
 def create_async_llm_interface(
-    resources: Dict[str, Any],
-    configs: Optional[Dict[str, Any]] = None
+    resources: dict[str, Any],
+    configs: Optional[dict[str, Any]] = None
 ) -> AsyncLLMInterface:
     """
     Factory function to create an AsyncLLMInterface instance.

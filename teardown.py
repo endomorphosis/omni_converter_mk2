@@ -11,7 +11,7 @@ def teardown():
     # Add any other cleanup tasks here
 
 def purge_whisper_model():
-    from format_handlers.processors.by_ability.audio_processor import whisper_processor
+    from core.content_extractor.processors.by_ability import whisper_processor
     if whisper_processor and whisper_processor.model:
         whisper_processor.model = None
 

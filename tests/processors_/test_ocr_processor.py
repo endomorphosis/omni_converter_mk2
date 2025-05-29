@@ -12,7 +12,7 @@ import tempfile
 from io import BytesIO
 
 # Import the processor to test
-from format_handlers.processors.by_ability.ocr_processor import PyTesseractProcessor, TESSERACT_AVAILABLE
+from core.content_extractor.processors.by_ability.ocr_processor import PyTesseractProcessor, TESSERACT_AVAILABLE
 
 # Create a sample image for testing
 SAMPLE_IMAGE_DATA = None  # This will be populated in setUpModule

@@ -7,13 +7,7 @@ of files to plaintext.
 import hashlib
 from typing import Any, Callable, Optional
 
-
-from logger import logger
-from configs import Configs
-
-
-# Type for status listener functions
-StatusListenerFunc = Callable[[str, dict[str, Any]], None]
+from types_ import Configs, StatusListenerFunc
 
 
 class ProcessingPipeline:
@@ -23,7 +17,7 @@ class ProcessingPipeline:
     This class orchestrates the conversion of files to plaintext, using various
     components like the format detector, validator, content extractor, text normalizer,
     and output formatter.
-    
+
     Attributes:
         detector: The format detector to use.
         validator: The validator to use for validating input files.
@@ -32,7 +26,6 @@ class ProcessingPipeline:
         formatter: The output formatter to use.
         status: The current status of the pipeline.
     """
-    
     def __init__(
         self,
         resources: dict[str, Callable] = None,
@@ -48,15 +41,36 @@ class ProcessingPipeline:
         self.configs = configs
         self.resources = resources
 
-        self.detector = self.resources['detector']
-        self.validator = self.resources['validator']
-        self.extractor = self.resources['extractor']
-        self.normalizer = self.resources['normalizer']
-        self.formatter = self.resources['formatter']
-        self.processing_result = self.resources['processing_result']
+        self._format_detector = self.resources['file_format_detector']
+        self._file_validator = self.resources['file_validator']
+        self._content_extractor = self.resources['content_extractor']
+        self._text_normalizer = self.resources['text_normalizer']
+        self._output_formatter = self.resources['output_formatter']
+        self._processing_result = self.resources['processing_result']
+        self._logger = self.resources['logger']
 
         self._status = self.resources['pipeline_status']
         self._listeners: list[StatusListenerFunc] = []
+
+    def _create_failure_result(self, 
+                               file_path: str,
+                               output_path: str = None,
+                               format_name: str = None,
+                               errors: list[str] = None
+                               ) -> Any:
+        if isinstance(errors, str):
+            errors = [errors]
+        # Create failure result
+        result = self._processing_result(
+            success=False,
+            file_path=file_path,
+            output_path=output_path,
+            format=format_name,
+            errors=errors
+        )
+        self._status.failed_files += 1
+        return result
+
 
     def process_file(
         self,
@@ -94,30 +108,28 @@ class ProcessingPipeline:
         
         try:
             # Detect format
-            logger.debug(f"Detecting format for {file_path}")
-            format_name, category = self.detector.detect_format(file_path)
+            self._logger.debug(f"Detecting format for {file_path}")
+            format_name, category = self._format_detector.detect_format(file_path)
             if not format_name:
-                raise ValueError(f"Unable to detect format for {file_path}")
-            
-            logger.info(f"Detected format: {format_name} ({category})", {'file_path': file_path})
-            
+                errors =  ValueError(f"Unable to detect format for {file_path}")
+
+            self._logger.info(f"Detected format: {format_name} ({category})", {'file_path': file_path})
+
             # Validate file
-            logger.debug(f"Validating file {file_path}")
-            validation_result = self.validator.validate_file(file_path, format_name)
+            self._logger.debug(f"Validating file {file_path}")
+            validation_result = self._file_validator.validate_file(file_path, format_name)
             if not validation_result.is_valid:
                 error_message = f"Validation failed: {', '.join(validation_result.errors)}"
-                logger.error(error_message, {'file_path': file_path})
+                self._logger.error(error_message, {'file_path': file_path})
                 
                 # Create failure result
-                result = self.processing_result(
-                    success=False,
+                self._create_failure_result(
                     file_path=file_path,
                     output_path=output_path,
-                    format=format_name,
+                    format_name=format_name,
                     errors=validation_result.errors
                 )
-                
-                self._status.failed_files += 1
+
                 self._notify_listeners("processing_failed", {
                     'file_path': file_path,
                     'errors': validation_result.errors
@@ -126,26 +138,26 @@ class ProcessingPipeline:
                 return result
             
             # Extract content
-            logger.debug(f"Extracting content from {file_path}")
-            content = self.extractor.extract_content(file_path, format_name, options)
+            self._logger.debug(f"Extracting content from {file_path}")
+            content = self._content_extractor.extract_content(file_path, format_name, options)
             
             # Normalize text
-            logger.debug(f"Normalizing text from {file_path}")
-            normalized_content = self.normalizer.normalize_text(content, normalizers)
+            self._logger.debug(f"Normalizing text from {file_path}")
+            normalized_content = self._text_normalizer.normalize_text(content, normalizers)
             
             # Format output
-            logger.debug(f"Formatting output for {file_path}")
+            self._logger.debug(f"Formatting output for {file_path}")
             try:
-                formatted_output = self.formatter.format_output(
+                formatted_output = self._output_formatter.format_output(
                     normalized_content,
                     output_format,
                     options,
                     output_path
                 )
             except ValueError as e:
-                logger.warning(f"Format error: {e}, falling back to txt format")
+                self._logger.warning(f"Format error: {e}, falling back to txt format")
                 # Fall back to txt format if the specified format fails
-                formatted_output = self.formatter.format_output(
+                formatted_output = self._output_formatter.format_output(
                     normalized_content,
                     'txt',
                     options,
@@ -154,14 +166,14 @@ class ProcessingPipeline:
             
             # Write output to file if output_path is provided
             if output_path:
-                logger.debug(f"Writing output to {output_path}")
+                self._logger.debug(f"Writing output to {output_path}")
                 formatted_output.write_to_file(output_path)
             
-            # Calculate content hash for verification
+            # Calculate content hash for verification # TODO Change to Ipfs CID
             content_hash = hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
             
             # Create success result
-            result = self.processing_result(
+            result = self._processing_result(
                 success=True,
                 file_path=file_path,
                 output_path=output_path,
@@ -185,10 +197,10 @@ class ProcessingPipeline:
             return result
             
         except Exception as e:
-            logger.exception(f"Error processing {file_path}: {e}")
+            self._logger.exception(f"Error processing {file_path}: {e}")
             
             # Create failure result
-            result = self.processing_result(
+            result = self._processing_result(
                 success=False,
                 file_path=file_path,
                 output_path=output_path,
@@ -229,7 +241,7 @@ class ProcessingPipeline:
         """
         if listener not in self._listeners:
             self._listeners.append(listener)
-    
+
     def _notify_listeners(self, event: str, data: dict[str, Any]) -> None:
         """
         Notify all registered listeners of an event.
@@ -242,5 +254,4 @@ class ProcessingPipeline:
             try:
                 listener(event, data)
             except Exception as e:
-                logger.exception(f"Error in listener: {e}")
-
+                self._logger.exception(f"Error in listener: {e}")

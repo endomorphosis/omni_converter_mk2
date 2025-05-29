@@ -10,8 +10,8 @@ The Omni-Converter project has successfully implemented all core functionality w
 | Component Group | Status | Notes |
 |-----------------|--------|-------|
 | **Interfaces** | ✅ Complete | CLI, PythonAPI, Configs, InterfaceFactory |
-| **Core Processing** | ✅ Complete | Pipeline, FormatDetector, ContentExtractor, TextNormalizer, OutputFormatter |
-| **Managers** | ✅ Complete | BatchProcessor, ResourceMonitor, ErrorHandler, SecurityManager, BatchResult |
+| **Core Processing** | ✅ Complete | Pipeline, FileFormatDetector, ContentExtractor, TextNormalizer, OutputFormatter |
+| **Managers** | ✅ Complete | BatchProcessor, ResourceMonitor, ErrorMonitor, SecurityMonitor, BatchResult |
 | **Format Handlers** | ✅ Complete | All handlers implemented with processor architecture |
 | **Storage** | ✅ Complete | FileSystem, Logger, FileInfo, FileContent, LogRecord |
 

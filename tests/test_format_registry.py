@@ -8,9 +8,9 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from format_handlers.format_registry import FormatRegistry, format_registry
-from format_handlers.base_handler import FormatHandler, Content
-from core.format_detector import format_detector
+from core.content_extractor.format_registry import FormatRegistry, format_registry
+from core.content_extractor.base_handler import FormatHandler, Content
+from file_format_detector.file_format_detector import file_format_detector
 
 
 class MockHandler(FormatHandler):
@@ -101,7 +101,7 @@ class TestFormatRegistry(unittest.TestCase):
         # Check that unknown formats return None
         self.assertIsNone(self.registry.get_handler("unknown"))
     
-    @patch('format_handlers.format_registry.format_detector')
+    @patch('format_handlers.format_registry.file_format_detector')
     def test_get_handler_for_file(self, mock_detector):
         """Test getting a handler for a file."""
         # Register handlers
@@ -128,7 +128,7 @@ class TestFormatRegistry(unittest.TestCase):
         self.registry.register_handler(self.image_handler)
         
         # Mock format detector to return 'txt' for text files
-        with patch('format_handlers.format_registry.format_detector') as mock_detector:
+        with patch('format_handlers.format_registry.file_format_detector') as mock_detector:
             mock_detector.detect_format.return_value = ('txt', 'text')
             
             # Check that we can extract content

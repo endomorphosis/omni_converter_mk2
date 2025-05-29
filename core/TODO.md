@@ -44,18 +44,50 @@ The core module needs to be refactored to follow the Inversion of Control (IoC) 
 ### Additional Completed Tasks
 
 - [x] **Complete validator.py IoC refactoring**
-  - ✅ Removed direct format_detector import
-  - ✅ Added format_detector as injected resource dependency
+  - ✅ Removed direct file_format_detector import
+  - ✅ Added file_format_detector as injected resource dependency
   - ✅ Updated all format detection calls to use injected dependency
-  - ✅ Enhanced factory.py to create and inject format_detector dependency
+  - ✅ Enhanced factory.py to create and inject file_format_detector dependency
   - ✅ Removed obsolete make_validator() function from validator.py
 
 ### Medium Priority Tasks
 
-- [x] **Complete format_detector.py _init_format_extensions method**
+- [x] **Complete file_format_detector.py _init_format_extensions method**
   - ✅ Implemented the missing method body
   - ✅ Map file extensions to format names using FORMAT_EXTENSIONS
   - Note: Implementation may evolve as refactoring progresses
+
+### New IoC Refactoring Issues (Identified 2025-01-XX)
+
+- [ ] **Fix processing_pipeline.py - has IoC violations**
+  - Remove direct logger import 
+  - Fix resource key mismatches (content_extractor vs extractor)
+  - Ensure all dependencies come through resources parameter
+
+- [ ] **Fix output_formatter.py - has IoC violations**
+  - Remove direct logger import
+  - Remove direct content_extractor import  
+  - Ensure all dependencies come through resources parameter
+
+- [ ] **Create missing output_formatter factory and __init__.py**
+  - Add proper factory function
+  - Update __init__.py to export factory
+
+- [ ] **Create missing processing_pipeline factory and __init__.py**
+  - Add proper factory function  
+  - Update __init__.py to export factory
+
+- [ ] **Fix factories.py import issues and resource key mismatches**
+  - Fix import paths
+  - Align resource keys across all components
+
+- [ ] **Check text_normalizer and file_validator for IoC compliance**
+  - Verify they follow IoC pattern correctly
+  - Fix any violations found
+
+- [ ] **Check file_format_detector for IoC compliance**
+  - Verify it follows IoC pattern correctly
+  - Fix any violations found
 
 ### Guidelines
 

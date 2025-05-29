@@ -12,8 +12,8 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from format_handlers.audio_handler import AudioHandler, PYDUB_AVAILABLE
-from format_handlers.base_handler import Content
+from core.content_extractor.audio_handler import AudioHandler, PYDUB_AVAILABLE
+from core.content_extractor.base_handler import Content
 
 
 class TestAudioHandler(unittest.TestCase):
@@ -82,7 +82,7 @@ class TestAudioHandler(unittest.TestCase):
         self.assertFalse(self.handler.can_handle("dummy_path.txt", "txt"))
     
     @patch('format_handlers.audio_handler.PYDUB_AVAILABLE', False)
-    @patch('format_handlers.audio_handler.format_detector')
+    @patch('format_handlers.audio_handler.file_format_detector')
     @patch('os.path.getsize')
     def test_extract_basic(self, mock_getsize, mock_detector):
         """
@@ -157,7 +157,7 @@ class TestAudioHandler(unittest.TestCase):
         }
         
         # Test pydub extraction
-        with patch('format_handlers.audio_handler.format_detector') as mock_detector:
+        with patch('format_handlers.audio_handler.file_format_detector') as mock_detector:
             mock_detector.detect_format.return_value = ("mp3", "audio/mpeg")
             
             # Mock validate_input to return True

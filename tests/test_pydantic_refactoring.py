@@ -10,7 +10,7 @@ import json
 from datetime import datetime, timedelta
 import os
 import tempfile
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 
 # Install pydantic to perform validation-specific tests
 try:
@@ -21,8 +21,8 @@ except ImportError:
     HAS_PYDANTIC = False
 
 # Original class imports
-from format_handlers.base_handler import Content
-from core.text_normalizer import NormalizedContent
+from core.content_extractor.base_handler import Content
+from core.text_normalizer._text_normalizer import NormalizedContent
 
 
 # Sample Pydantic Content model for testing validation behavior
@@ -30,8 +30,8 @@ from core.text_normalizer import NormalizedContent
 if HAS_PYDANTIC:
     class ContentModel(BaseModel):
         text: str
-        metadata: Dict[str, Any] = Field(default_factory=dict)
-        sections: List[Dict[str, Any]] = Field(default_factory=list)
+        metadata: dict[str, Any] = Field(default_factory=dict)
+        sections: list[dict[str, Any]] = Field(default_factory=list)
         source_format: str = ""
         source_path: str = ""
         extraction_time: datetime = Field(default_factory=datetime.now)
@@ -42,13 +42,13 @@ if HAS_PYDANTIC:
             }
     
     class NormalizedContentModel(ContentModel):
-        normalized_by: List[str] = Field(default_factory=list)
+        normalized_by: list[str] = Field(default_factory=list)
     
     class ValidationResultModel(BaseModel):
         is_valid: bool
-        errors: List[str] = Field(default_factory=list)
-        warnings: List[str] = Field(default_factory=list)
-        validation_context: Dict[str, Any] = Field(default_factory=dict)
+        errors: list[str] = Field(default_factory=list)
+        warnings: list[str] = Field(default_factory=list)
+        validation_context: dict[str, Any] = Field(default_factory=dict)
         
         def add_error(self, error: str) -> None:
             self.errors.append(error)

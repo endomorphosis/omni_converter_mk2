@@ -11,7 +11,7 @@ import random
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Dict, List, Any, Union, Tuple, Optional
+from typing import Any, Union, Optional
 
 
 from nltk.translate.bleu_score import sentence_bleu
@@ -19,7 +19,7 @@ import string
 
 
 from core.processing_pipeline import processing_pipeline
-from core.validator import BasicValidator
+from file_validator.file_validator import FileValidator
 
 
 class TextQualityTest(unittest.TestCase):
@@ -50,7 +50,7 @@ class TextQualityTest(unittest.TestCase):
         self.temp_output_dir = tempfile.mkdtemp()
         
         # Initialize validator
-        self.validator = BasicValidator()
+        self.validator = FileValidator()
         
         # Results will be stored here
         self.results = {
@@ -83,7 +83,7 @@ class TextQualityTest(unittest.TestCase):
         except ImportError:
             print("ROUGE metrics not available. Using simplified metrics.")
 
-    def _create_test_files(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _create_test_files(self) -> dict[str, list[dict[str, Any]]]:
         """Create test file data with reference and extracted texts.
         
         Returns:
@@ -107,7 +107,7 @@ class TextQualityTest(unittest.TestCase):
         print("No real test files with ground truth found. Using simulated test files.")
         return self._create_simulated_test_files()
 
-    def _find_real_test_files(self, ground_truth_dirs: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+    def _find_real_test_files(self, ground_truth_dirs: list[str]) -> dict[str, list[dict[str, Any]]]:
         """Find real test files with corresponding ground truth.
         
         Args:
@@ -148,8 +148,8 @@ class TextQualityTest(unittest.TestCase):
         
         return test_files
         
-    def _find_test_files_in_dir(self, directory: str, category: str, formats: List[str], 
-                              ground_truth_dirs: List[str], test_files: Dict[str, List[Dict[str, Any]]]):
+    def _find_test_files_in_dir(self, directory: str, category: str, formats: list[str], 
+                              ground_truth_dirs: list[str], test_files: dict[str, list[dict[str, Any]]]):
         """Find test files in a directory with corresponding ground truth.
         
         Args:
@@ -182,7 +182,7 @@ class TextQualityTest(unittest.TestCase):
                             'is_real': True
                         })
     
-    def _find_ground_truth(self, filename: str, filepath: str, ground_truth_dirs: List[str]) -> Optional[str]:
+    def _find_ground_truth(self, filename: str, filepath: str, ground_truth_dirs: list[str]) -> Optional[str]:
         """Find ground truth for a test file.
         
         Args:
@@ -242,7 +242,7 @@ class TextQualityTest(unittest.TestCase):
                 
         return None
         
-    def _create_simulated_test_files(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _create_simulated_test_files(self) -> dict[str, list[dict[str, Any]]]:
         """Create simulated test file data with reference texts.
         
         Returns:
@@ -497,7 +497,7 @@ class TextQualityTest(unittest.TestCase):
         else:
             return f"Sample text for {format_type} format."
 
-    def _extract_text(self, file_data: Dict[str, Any]) -> str:
+    def _extract_text(self, file_data: dict[str, Any]) -> str:
         """Extract text from a file.
         
         Args:
@@ -651,7 +651,7 @@ class TextQualityTest(unittest.TestCase):
             return self._simulate_text_extraction_issues(text_with_typos, 'formatting')
 
     def _calculate_quality_metrics(self, reference: str, extracted: str, 
-                                  category: str) -> Dict[str, float]:
+                                  category: str) -> dict[str, float]:
         """Calculate quality metrics between reference and extracted text.
         
         In a real implementation, this would use actual NLP metrics like
@@ -829,7 +829,7 @@ class TextQualityTest(unittest.TestCase):
         
         return metrics
 
-    def _calculate_quality_factor(self, metrics: Dict[str, float], category: str) -> float:
+    def _calculate_quality_factor(self, metrics: dict[str, float], category: str) -> float:
         """Calculate overall quality factor based on individual metrics.
         
         Args:

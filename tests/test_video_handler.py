@@ -13,8 +13,8 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from format_handlers.video_handler import VideoHandler, PYMEDIAINFO_AVAILABLE
-from format_handlers.base_handler import Content
+from core.content_extractor.video_handler import VideoHandler, PYMEDIAINFO_AVAILABLE
+from core.content_extractor.base_handler import Content
 
 
 class TestVideoHandler(unittest.TestCase):
@@ -88,7 +88,7 @@ class TestVideoHandler(unittest.TestCase):
         self.assertFalse(self.handler.can_handle("dummy_path.txt", "txt"))
     
     @patch('format_handlers.video_handler.PYMEDIAINFO_AVAILABLE', False)
-    @patch('format_handlers.video_handler.format_detector')
+    @patch('format_handlers.video_handler.file_format_detector')
     @patch('os.path.getsize')
     def test_extract_basic(self, mock_getsize, mock_detector):
         """
@@ -192,7 +192,7 @@ class TestVideoHandler(unittest.TestCase):
         mock_mediainfo_parse.return_value = mock_media_info
         
         # Mock detect_format
-        with patch('format_handlers.video_handler.format_detector') as mock_detector:
+        with patch('format_handlers.video_handler.file_format_detector') as mock_detector:
             mock_detector.detect_format.return_value = ("mp4", "video/mp4")
             
             # Mock validate_input to return True

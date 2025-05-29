@@ -5,9 +5,9 @@ This module contains tests for the ValidationResult class.
 """
 
 import unittest
-from typing import Dict, Any
+from typing import Any
 
-from core.validation_result import ValidationResult
+from file_validator.validation_result import ValidationResult
 
 
 class TestValidationResult(unittest.TestCase):

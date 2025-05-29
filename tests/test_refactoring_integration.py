@@ -9,24 +9,24 @@ import unittest
 from datetime import datetime
 import os
 import tempfile
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 
 # Core components
 from core.processing_pipeline import ProcessingPipeline
-from core.output_formatter import OutputFormatter
-from core.text_normalizer import TextNormalizer
-from core.content_extractor import ContentExtractor
-from format_handlers.format_registry import FormatRegistry
+from core.output_formatter._output_formatter import OutputFormatter
+from core.text_normalizer._text_normalizer import TextNormalizer
+from deprecated.content_extractor import ContentExtractor
+from core.content_extractor.format_registry import FormatRegistry
 from configs import configs, Configs
-from core.format_detector import format_detector
-from core.validator import BasicValidator
+from file_format_detector.file_format_detector import file_format_detector
+from file_validator.file_validator import FileValidator
 
 # Classes being refactored
-from core.processing_result import ProcessingResult
-from managers.batch_result import BatchResult
-from core.output_formatter import FormattedOutput
-from format_handlers.base_handler import Content
-from core.text_normalizer import NormalizedContent
+from core.processing_pipeline.processing_result import ProcessingResult
+from monitors.batch_result import BatchResult
+from core.output_formatter._output_formatter import FormattedOutput
+from core.content_extractor.base_handler import Content
+from core.text_normalizer._text_normalizer import NormalizedContent
 
 # Optional Pydantic support
 try:
@@ -47,8 +47,8 @@ class TestProcessingResultIntegration(unittest.TestCase):
     def setUp(self):
         """Set up the test environment."""
         resources = {
-            "validator": BasicValidator(),
-            "detector": format_detector,
+            "validator": FileValidator(),
+            "detector": file_format_detector,
             "extractor": ContentExtractor(),
             "normalizer": TextNormalizer(),
             "formatter": OutputFormatter()

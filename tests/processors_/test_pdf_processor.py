@@ -12,8 +12,8 @@ import tempfile
 from io import BytesIO
 
 # Import the processor to test
-from format_handlers.constants import Constants
-from format_handlers.processors.by_mime_type.pdf_processor import PyPDF2Processor
+from core.content_extractor.constants import Constants
+from core.content_extractor.processors.by_mime_type.pdf_processor import PyPDF2Processor
 
 # Create a sample PDF for testing
 SAMPLE_PDF_DATA = None  # This will be populated in setUpModule
