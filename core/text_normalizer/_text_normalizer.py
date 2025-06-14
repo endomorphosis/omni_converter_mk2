@@ -4,14 +4,7 @@ Text normalizer module for the Omni-Converter.
 This module provides the TextNormalizer class for normalizing text content.
 """
 import re
-from typing import Any, Callable, Optional
-
-
-from types_ import Configs, Content, NormalizedContent
-
-
-# Type for normalizer functions
-NormalizerFunc = Callable[[str], str]
+from types_ import Any, Callable, Configs, Content, Logger, NormalizedContent, NormalizerFunc, Optional
 
 
 class TextNormalizer:
@@ -26,7 +19,7 @@ class TextNormalizer:
 
     def __init__(self, 
                  resources: dict[str, Any] = None, 
-                 configs: Configs = None
+                 configs: 'Configs' = None
                  ):
         """
         Initialize a text normalizer.
@@ -38,7 +31,9 @@ class TextNormalizer:
         self.resources = resources
         self.configs = configs
 
-        self._logger = self.resources["logger"]
+        self._normalized_content: NormalizedContent = self.resources["normalized_content"]
+
+        self._logger: Logger = self.resources["logger"]
         self.normalizers: dict[str, NormalizerFunc] = {}
         
         # Register default normalizers
@@ -144,7 +139,7 @@ class TextNormalizer:
             text = re.sub(pattern, repl, text)
         return text
     
-    def normalize_text(self, content: Content, normalizers: Optional[list[str]] = None) -> NormalizedContent:
+    def normalize_text(self, content: 'Content', normalizers: Optional[list[str]] = None) -> 'NormalizedContent':
         """
         Normalize text content.
         
@@ -181,7 +176,7 @@ class TextNormalizer:
                 self._logger.debug(f"Applied normalizer: {name}")
         
         # Create normalized content
-        return NormalizedContent(
+        return self._normalized_content(
             text=text,
             metadata=content.metadata,
             sections=content.sections,

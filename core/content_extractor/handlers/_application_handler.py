@@ -4,11 +4,7 @@ Application format handlers for the Omni-Converter using IoC pattern.
 This module provides handlers for application-based formats like PDF, JSON, DOCX, XLSX, and ZIP
 using dependency injection for better modularity and testability, without inheritance.
 """
-import os
-from typing import Any, Callable, Optional
-
-
-from types_ import Configs, Logger
+from types_ import Configs, Logger, Any, Callable, Optional
 
 
 class ApplicationHandler:
@@ -30,20 +26,23 @@ class ApplicationHandler:
             resources: Dictionary of callable resources including processors and utilities.
             configs: Configuration settings.
         """
-        self.resources = resources
         self.configs = configs
+        self.resources = resources
 
         # Extract required resources - fail fast if missing
-        self._pdf_processor: Callable = self.resources["pdf_processor"]
-        self._json_processor: Callable = self.resources["json_processor"]
+        # Processors
         self._docx_processor: Callable = self.resources["docx_processor"]
+        self._json_processor: Callable = self.resources["json_processor"]
+        self._pdf_processor:  Callable = self.resources["pdf_processor"]
         self._xlsx_processor: Callable = self.resources["xlsx_processor"]
-        self._zip_processor: Callable = self.resources["zip_processor"]
-        self._logger: Logger = self.resources["logger"]
+        self._zip_processor:  Callable = self.resources["zip_processor"]
 
+        # Other resources
+        self._capabilities:      dict = self.resources["capabilities"]
         self._format_extensions: dict = self.resources["format_extensions"]
+        self._logger:            Logger = self.resources["logger"]
+        self._splitext:          Callable = self.resources["splitext"]
         self._supported_formats: set = self.resources["supported_formats"]
-        self._capabilities: dict = self.resources["capabilities"]
 
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -60,7 +59,7 @@ class ApplicationHandler:
             return format_name in self._supported_formats
         
         # If no format provided, check file extension
-        _, ext = os.path.splitext(file_path)
+        _, ext = self._splitext(file_path)
         ext = ext.lower()
         
         for format_type, extensions in self._format_extensions.items():
@@ -82,7 +81,7 @@ class ApplicationHandler:
             Tuple of (text content, metadata, sections).
         """
         # Delegate to appropriate processor based on format
-        match format_name:
+        match format_name: # TODO Un-hard code this.
             case 'pdf':
                 processor = self._pdf_processor
             case 'json':

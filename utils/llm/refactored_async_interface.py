@@ -9,8 +9,9 @@ from typing import Any, Callable, Optional, Union
 try:
     from pydantic import BaseModel, Field
 except ImportError:
-    BaseModel = object
-    Field = lambda *args, **kwargs: None  # noqa: E731
+    raise ImportError(
+        "Pydantic is required for this module. Please install it with 'pip install pydantic'."
+    )
 
 from logger import logger
 
@@ -23,7 +24,7 @@ class AsyncLLMInterface:
 
     def __init__(
         self,
-        resources: dict[str, Any],
+        resources: dict[str, Any] = None,
         configs: Optional[dict[str, Any]] = None
     ):
         """
@@ -34,60 +35,29 @@ class AsyncLLMInterface:
             configs: Configuration parameters for the interface
         """
         self.resources = resources
-        self.configs = configs or {}
-        
-        # Extract required resources
-        self._extract_resources()
-        
-        # Initialize configuration
-        self._initialize_configs()
-        
+        self.configs = configs
+
+        self.model = self.configs["model"]
+        self.embedding_model = self.configs["embedding_model"]
+        self.temperature = self.configs["temperature"]
+        self.max_tokens = self.configs["max_tokens"]
+        self.prompts_dir = self.configs["prompts_dir"]
+
+        self._async_client = self.resources["async_client"]
+        self._generate_text = self.resources["generate_text"]
+        self._generate_embeddings = self.resources["generate_embeddings"]
+        self._calculate_cost = self.resources["calculate_cost"]
+
+        # Track API usage
+        self._total_tokens = 0
+        self._total_cost = 0.0
+
         logger.info(f"Initialized AsyncLLMInterface with model: {self.model}")
 
-    def _extract_resources(self) -> None:
-        """
-        Extract required resources from the resources dictionary.
-        Follows fail-fast approach for missing dependencies.
-        """
-        # Client for API calls
-        self.async_client = self.resources.get("async_client")
-        if not self.async_client:
-            raise ValueError("AsyncLLMInterface requires 'async_client' resource")
-        
-        # Text generation function
-        self.generate_text_fn = self.resources.get("generate_text")
-        if not self.generate_text_fn:
-            raise ValueError("AsyncLLMInterface requires 'generate_text' resource")
-        
-        # Embeddings generation function (optional)
-        self.generate_embeddings_fn = self.resources.get("generate_embeddings")
-        
-        # Cost calculation (optional)
-        self.calculate_cost_fn = self.resources.get("calculate_cost")
-    
-    def _initialize_configs(self) -> None:
-        """
-        Initialize configuration parameters with defaults.
-        """
-        # Model settings
-        self.model = self.configs.get("model", "gpt-3.5-turbo")
-        self.embedding_model = self.configs.get("embedding_model", "text-embedding-ada-002")
-        
-        # Generation parameters
-        self.temperature = self.configs.get("temperature", 0.7)
-        self.max_tokens = self.configs.get("max_tokens", 1000)
-        
-        # Directories for prompts and cache (optional)
-        self.prompts_dir = self.configs.get("prompts_dir")
-        
-        # Track API usage
-        self.total_tokens = 0
-        self.total_cost = 0.0
-    
     async def generate_response(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: Optional[str] = "You are a helpful assistant specialized in document conversion.",
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         model: Optional[str] = None
@@ -106,17 +76,17 @@ class AsyncLLMInterface:
             Dictionary with the generated response and metadata
         """
         # Use defaults if parameters not provided
-        sys_prompt = system_prompt or "You are a helpful assistant specialized in document conversion."
+        sys_prompt = system_prompt 
         temp = temperature or self.temperature
         tokens = max_tokens or self.max_tokens
         model_name = model or self.model
-        
+
         logger.info(f"Generating response for prompt: {prompt[:50]}...")
-        
+
         try:
             # Generate text using injected function
-            response_text = await self.generate_text_fn(
-                client=self.async_client,
+            response_text = await self._generate_text(
+                client=self._async_client,
                 prompt=prompt,
                 system_prompt=sys_prompt,
                 model=model_name,
@@ -126,14 +96,13 @@ class AsyncLLMInterface:
             
             # Calculate cost if function available
             cost = None
-            if self.calculate_cost_fn:
-                cost = self.calculate_cost_fn(
-                    prompt=prompt, 
-                    completion=response_text or "", 
-                    model=model_name
-                )
-                if cost:
-                    self.total_cost += cost
+            cost = self._calculate_cost(
+                prompt=prompt, 
+                completion=response_text or "", 
+                model=model_name
+            )
+            if cost is not None:
+                self.total_cost += cost
             
             # Build response dictionary
             result = {
@@ -169,15 +138,15 @@ class AsyncLLMInterface:
         Returns:
             Embedding vector or None if generation failed
         """
-        if not self.generate_embeddings_fn:
+        if not self._generate_embeddings:
             logger.error("Embedding generation not available - missing resource")
             return None
         
         model_name = model or self.embedding_model
         
         try:
-            embeddings = await self.generate_embeddings_fn(
-                client=self.async_client,
+            embeddings = await self._generate_embeddings(
+                client=self._async_client,
                 texts=text,
                 model=model_name
             )
@@ -209,11 +178,14 @@ class AsyncLLMInterface:
         """
         # Prepare prompt based on format type
         format_instruction = ""
-        if format_type == "bullet":
-            format_instruction = "Format the summary as bullet points."
-        elif format_type == "paragraph":
-            format_instruction = "Format the summary as a single paragraph."
-        
+        match format_type:
+            case "bullet":
+                format_instruction = "Format the summary as bullet points."
+            case "paragraph":
+                format_instruction = "Format the summary as a single paragraph."
+            case _:
+                pass
+
         # Prepare max length instruction
         length_instruction = ""
         if max_length:
@@ -294,18 +266,3 @@ class AsyncLLMInterface:
         return metadata
 
 
-def create_async_llm_interface(
-    resources: dict[str, Any],
-    configs: Optional[dict[str, Any]] = None
-) -> AsyncLLMInterface:
-    """
-    Factory function to create an AsyncLLMInterface instance.
-    
-    Args:
-        resources: Dictionary of resources for dependency injection
-        configs: Configuration parameters
-        
-    Returns:
-        Configured AsyncLLMInterface instance
-    """
-    return AsyncLLMInterface(resources=resources, configs=configs)

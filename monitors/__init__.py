@@ -18,7 +18,7 @@ Implementation Status:
     - SecurityMonitor: ✅ Complete
     - BatchResult: ✅ Complete
 """
-from ._monitor_factory import (
+from .monitor_factory import (
     make_resource_monitor, 
     make_error_monitor, 
     make_security_monitor

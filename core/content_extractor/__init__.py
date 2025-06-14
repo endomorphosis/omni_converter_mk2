@@ -21,27 +21,10 @@ Implementation Status:
     - Audio Handlers: ✅ Complete
     - Video Handlers: ✅ Complete
 """
-
-from . import (
-    _application_handler,
-    _audio_handler,
-    _image_handler,
-    _text_handler,
-    _video_handler,
-    content_extractor,
-    format_registry,
-)
-
-from .extractor_factory import make_content_extractor
+from .factory import make_content_extractor
 
 extractor = make_content_extractor()
 
 __all__ = [
-    '_application_handler',
-    '_audio_handler',
-    'format_registry',
-    '_image_handler',
-    '_text_handler',
-    'content_extractor',
-    '_video_handler'
+    'make_content_extractor',
 ]

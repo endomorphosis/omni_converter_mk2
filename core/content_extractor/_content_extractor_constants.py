@@ -40,10 +40,10 @@ class Constants:
     #########################################################################
     ### Dependency, Generic Fallbacks, and External Programs Availability ###
     #########################################################################
-    from dependencies import Dependencies
+    from dependencies import dependencies
     from external_programs import ExternalPrograms
 
-    _dependencies = {name: True for name in Dependencies.keys()}
+    _dependencies = {name: True for name in dependencies.keys()}
 
     # Generic fallbacks that only use built-in python libraries.
     _generic_processors = {name: True for name in _get_generic_processors()}

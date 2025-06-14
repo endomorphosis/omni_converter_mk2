@@ -14,7 +14,7 @@ except ImportError:
 from logger import logger
 
 
-class EmbeddingsManager:
+class EmbeddingsInterface:
     """
     Manager for document embeddings.
     Handles storage, retrieval, and similarity search for document embeddings.
@@ -22,49 +22,36 @@ class EmbeddingsManager:
     
     def __init__(
         self,
-        resources: dict[str, Any],
-        configs: Optional[dict[str, Any]] = None
+        resources: dict[str, Any] = None,
+        configs: dict[str, Any] = None,
     ):
         """
         Initialize the embeddings manager with dependency injection.
         
         Args:
-            resources: Dictionary of resources including embedding functions
-            configs: Configuration parameters
+            resources: Dictionary of resources including embedding functions.
+            configs: A pydantic model of configuration parameters.
         """
         self.resources = resources
-        self.configs = configs or {}
-        
+        self.configs = configs
+
+        self._numpy = self.resources["numpy"]
+        self._duckdb = self.resources["duckdb"]
+
         # Extract required resources
-        self._extract_resources()
+        self.async_client = self.resources["async_client"]
+        self.generate_embeddings_fn = self.resources["generate_embeddings"]
         
         # Initialize configuration
-        self._initialize_configs()
+        self.embedding_dimensions = self.configs["embedding_dimensions"]
+        self.embedding_model = self.configs["embedding_model"]
+        self.cache_size = self.configs["cache_size"]
         
         # Initialize storage
         self._embedding_cache = {}
         
-        logger.info(f"Initialized EmbeddingsManager with dimensions: {self.embedding_dimensions}")
-    
-    def _extract_resources(self) -> None:
-        """
-        Extract required resources from the resources dictionary.
-        Follows fail-fast approach for missing dependencies.
-        """
-        # Client for embedding generation (might be None if only using pre-computed embeddings)
-        self.async_client = self.resources.get("async_client")
-        
-        # Embedding generation function (optional if only using pre-computed embeddings)
-        self.generate_embeddings_fn = self.resources.get("generate_embeddings")
-    
-    def _initialize_configs(self) -> None:
-        """
-        Initialize configuration parameters with defaults.
-        """
-        self.embedding_dimensions = self.configs.get("embedding_dimensions", 1536)
-        self.embedding_model = self.configs.get("embedding_model", "text-embedding-ada-002")
-        self.cache_size = self.configs.get("cache_size", 100)
-    
+        logger.info(f"Initialized EmbeddingsInterface with dimensions: {self.embedding_dimensions}")
+
     def cosine_similarity(
         self, 
         vec1: list[float], 
@@ -80,6 +67,7 @@ class EmbeddingsManager:
         Returns:
             Cosine similarity score (0-1)
         """
+
         # Convert to numpy arrays for efficient calculation
         vec1_array = np.array(vec1)
         vec2_array = np.array(vec2)
@@ -179,18 +167,3 @@ class EmbeddingsManager:
         self._embedding_cache.clear()
 
 
-def create_embeddings_manager(
-    resources: dict[str, Any],
-    configs: Optional[dict[str, Any]] = None
-) -> EmbeddingsManager:
-    """
-    Factory function to create an EmbeddingsManager instance.
-    
-    Args:
-        resources: Dictionary of resources for dependency injection
-        configs: Configuration parameters
-        
-    Returns:
-        Configured EmbeddingsManager instance
-    """
-    return EmbeddingsManager(resources=resources, configs=configs)

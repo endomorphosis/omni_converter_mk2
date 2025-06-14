@@ -4,11 +4,7 @@ Audio format handlers for the Omni-Converter using IoC pattern.
 This module provides handlers for audio formats like MP3, WAV, OGG, FLAC, and AAC
 using dependency injection for better modularity and testability, without inheritance.
 """
-import os
-from typing import Any, Optional, Set, Union, Callable
-
-from configs import Configs
-from logger import logger
+from types_ import Any, Callable, Configs, Logger, Optional
 
 
 class AudioHandler:
@@ -33,6 +29,8 @@ class AudioHandler:
         self.resources = resources
         self.configs = configs
 
+        self._splitext: Callable = self.resources["splitext"]
+
         # Extract required resources - fail fast if missing
         # NOTE Audio processor handles all common audio formats
         self._audio_processor: Callable = self.resources["audio_processor"]
@@ -41,6 +39,8 @@ class AudioHandler:
         self._format_extensions: dict = self.resources["format_extensions"]
         self._supported_formats: set = self.resources["supported_formats"]
         self._capabilities: dict = self.resources["capabilities"]
+        self._logger: Logger = self.resources["logger"]
+
 
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -57,7 +57,7 @@ class AudioHandler:
             return format_name in self._supported_formats
         
         # If no format provided, check file extension
-        _, ext = os.path.splitext(file_path)
+        _, ext = self._splitext(file_path)
         ext = ext.lower()
         
         for format_type, extensions in self._format_extensions.items():
@@ -89,12 +89,11 @@ class AudioHandler:
                 # Use audio processor for metadata extraction
                 return self._audio_processor(file_path, options)
         except Exception as e:
-            logger.error(f"Error processing {format_name} file '{file_path}': {e}", exc_info=True)
+            self._logger.error(f"Error processing {format_name} file '{file_path}': {e}", exc_info=True)
             raise RuntimeError(f"Failed to process {format_name} file: {file_path}") from e
 
     @property
     def capabilities(self) -> dict[str, Any]:
         """Get handler capabilities."""
         return self._capabilities
-
 

@@ -1,7 +1,4 @@
 import subprocess
-from typing import TypeVar
-
-
 from logger import logger
 
 
@@ -15,10 +12,19 @@ class _classproperty:
 
 class ExternalPrograms:
     """
-    Utility class to check the availability of external programs.
+    Check the availability of external programs.
     
-    NOTE Since the programs are entirely external, this class does not provide access to them.
-    It only checks if they are available for use in the application.
+    NOTE: As these programs are entirely external, this class does not provide access to them.
+    It only checks if they exist and can be run.
+
+    Properties:
+        ffmpeg (bool): Whether ffmpeg is available.
+        ffprobe (bool): Whether ffprobe is available.
+        tesseract (bool): Whether tesseract is available.
+        calibre (bool): Whether calibre is available.
+        cuda (bool): Whether nvcc (NVIDIA CUDA Compiler) is available.
+        seven_zip (bool): Whether 7-zip is available.
+        libreoffice (bool): Whether LibreOffice is available.
     """
 
     _EXTERNAL_PROGRAMS = {
@@ -27,18 +33,23 @@ class ExternalPrograms:
         "tesseract": False,  # tesseract for OCR (optional)
         "calibre": False,  # calibre for ebook processing (optional)
         "nvcc": False,  # nvcc for CUDA compilation (optional)
+        "7-zip": False,  # 7-zip for file compression/decompression (optional)
+        "libreoffice": False,  # LibreOffice for document processing (optional)
     }
 
     for program, bool_ in _EXTERNAL_PROGRAMS.items():
-        try: # Every CLI program should have a --help option. 
+        try: # TODO Every CLI program should have a --help option, but this should be confirmed. 
             _ = subprocess.run([program, "--help"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             _EXTERNAL_PROGRAMS[program] = True
-            logger.info(f"{program} is available")
+            logger.info(f"'{program}' is available")
         except subprocess.CalledProcessError:
-            logger.warning(f"{program} is not available, functionality will be limited")
+            logger.warning(f"'{program}' is available but returned an error when run with --help.")
+            _EXTERNAL_PROGRAMS[program] = False
+        except FileNotFoundError:
+            logger.warning(f"'{program}' is not available, functionality will be limited")
             _EXTERNAL_PROGRAMS[program] = False
         except Exception as e:
-            logger.warning(f"{type(e).__name__} checking {program} availability: {e}")
+            logger.warning(f"Unexpected {type(e).__name__} checking '{program}' availability: {e}")
             _EXTERNAL_PROGRAMS[program] = False
 
     @_classproperty
@@ -65,6 +76,16 @@ class ExternalPrograms:
     def cuda(cls) -> bool:
         """Check if nvcc (NVIDIA CUDA Compiler) is available."""
         return cls._EXTERNAL_PROGRAMS["nvcc"]
+
+    @_classproperty
+    def seven_zip(cls) -> bool:
+        """Check if 7-zip is available."""
+        return cls._EXTERNAL_PROGRAMS["7-zip"]
+
+    @_classproperty
+    def libreoffice(cls) -> bool:
+        """Check if LibreOffice is available."""
+        return cls._EXTERNAL_PROGRAMS["libreoffice"]
 
     def __getitem__(self, name: str) -> bool:
         """Get a external program by name."""

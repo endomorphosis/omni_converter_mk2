@@ -11,7 +11,7 @@ import unittest
 from datetime import datetime
 
 from file_format_detector.file_format_detector import file_format_detector
-from core.content_extractor.format_registry import format_registry
+from format_registery.format_registry import format_registry
 from deprecated.content_extractor import ContentExtractor
 
 

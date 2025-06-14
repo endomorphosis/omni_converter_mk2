@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Any, Tuple
 
 from monitors.batch_processor import batch_processor
-from core.processing_pipeline import processing_pipeline
+from core._processing_pipeline import processing_pipeline
 from monitors.error_monitor.error_monitor import error_monitor
 from configs import configs
 

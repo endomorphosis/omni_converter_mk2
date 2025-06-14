@@ -5,10 +5,9 @@ This module provides functionality for detecting the format of files using depen
 and following the IoC pattern established in CLAUDE.md.
 """
 import os
-from typing import Optional, Any, Callable
 
 
-from types_ import Configs
+from types_ import Any, Callable, Configs, Logger, Optional
 
 
 class FileFormatDetector:
@@ -68,14 +67,14 @@ class FileFormatDetector:
         Raises:
             KeyError: If required resources are missing
         """
-        self.configs = configs
-        self.resources = resources
+        self.configs: Configs = configs
+        self.resources: dict[str, Callable] = resources
 
         self._get_file_info: Callable = self.resources['get_file_info']
         self._format_registry: dict[str, set[str]] = self.resources['format_registry']
         self._format_signatures: dict[str, str] = self.resources['format_signatures']
         self._format_extensions: dict[str, str] = self.resources['format_extensions']
-        self._logger: Any = self.resources['logger']
+        self._logger: Logger = self.resources['logger']
 
 
     def detect_format(self, file_path: str) -> tuple[Optional[str], Optional[str]]:

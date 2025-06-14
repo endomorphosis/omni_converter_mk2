@@ -12,11 +12,11 @@ import tempfile
 from typing import Any, Optional
 
 # Core components
-from core.processing_pipeline import ProcessingPipeline
+from core._processing_pipeline import ProcessingPipeline
 from core.output_formatter._output_formatter import OutputFormatter
 from core.text_normalizer._text_normalizer import TextNormalizer
 from deprecated.content_extractor import ContentExtractor
-from core.content_extractor.format_registry import FormatRegistry
+from format_registery.format_registry import FormatRegistry
 from configs import configs, Configs
 from file_format_detector.file_format_detector import file_format_detector
 from file_validator.file_validator import FileValidator

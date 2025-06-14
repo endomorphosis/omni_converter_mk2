@@ -20,14 +20,15 @@ from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
 from nltk.tokenize import word_tokenize, sent_tokenize
 from rouge_score import rouge_scorer
 
-from core.processing_pipeline import processing_pipeline
-from file_validator.file_validator import FileValidator, make_validator
+# TODO Rework these to get
+from core import make_processing_pipeline
+from core.factory import make_file_validator
+from core._processing_pipeline import ProcessingPipeline
+from core.file_validator._file_validator import FileValidator
 from configs import Configs, configs
 
 # Download required NLTK data
 nltk.download('punkt', quiet=True)
-
-
 # =============================================================================
 # METRIC IMPLEMENTATIONS (Composable Functions)
 # =============================================================================

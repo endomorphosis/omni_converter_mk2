@@ -14,9 +14,12 @@ from typing import Any, Optional, Tuple
 
 from monitors.security_monitor._security_monitor import security_monitor
 from file_validator.file_validator import FileValidator 
-from core.processing_pipeline import processing_pipeline
+from core._processing_pipeline import processing_pipeline
 from monitors.batch_processor import batch_processor
 
+
+
+from tests._fixtures import fixtures
 
 class SecurityEffectivenessTest(unittest.TestCase):
     """Test case for security effectiveness."""

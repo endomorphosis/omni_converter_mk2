@@ -1,5 +1,5 @@
 import os
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 try:
     import psutil
@@ -72,3 +72,4 @@ class PsUtil:
     def _get_shared_memory_usage_in_mb() -> float:
         mem_info = psutil.Process(_PID).memory_info()
         return getattr(mem_info, 'shared', 0) / (1024 * 1024)
+

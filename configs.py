@@ -24,7 +24,6 @@ except ImportError as e:
 
 
 from __version__ import __version__
-from logger import logger
 
 
 def _get_cpu_cores(minus: int) -> int:
@@ -54,12 +53,7 @@ class Paths(BaseModel):
 
 
 def name(e: Exception) -> str:
-    """
-    Get the name of the error.
-
-    Returns:
-        The name of the error.
-    """
+    """Get the string name of the error."""
     return type(e).__name__
 
 def getitem(self, key: str) -> Union[str, int, float]:
@@ -120,6 +114,7 @@ class _Processing(BaseModel):
     whisper_model: str = Field(default="base", description="Whisper model to use for audio processing")
     whisper_language: str = Field(default="en", description="Language for Whisper model")
     tesseract_language: str = Field(default="eng", description="Tesseract model for OCR")
+    llm_api_key: str = Field(default="", description="API key for external services, if required")
 
 class _Output(BaseModel):
     format: str = Field(default="txt", description="Default output format")
@@ -128,12 +123,59 @@ class _Output(BaseModel):
     encoding: str = Field(default="utf-8", description="Output file encoding")
 
 class Configs(BaseModel):
+    """
+    Configurations for the Omni-Converter.
+    
+    Attributes:
+        resources: Resource limits and settings.
+            - memory_limit_gb: Memory limit in GB. Defaults to 6 GB.
+            - memory_limit_mb: Memory limit in MB (calculated from memory_limit_gb).
+            - cpu_limit_percent: CPU utilization limit percentage. Defaults to 80%.
+            - timeout_seconds: Timeout in seconds. Defaults to 3600 seconds (1 hour).
+            - max_batch_size: Maximum number of files to process in one batch. Defaults to 100.
+            - max_workers: Maximum number of worker threads.
+            - monitoring_interval_seconds: Monitoring interval in seconds.
+            - force_mocks: Force use of mocks, even if libraries are available.
+        formats: Supported file formats.
+            - text: List of supported text formats.
+            - image: List of supported image formats.
+            - audio: List of supported audio formats.
+            - video: List of supported video formats.
+            - application: List of supported application formats.
+        security: Security settings for file processing.
+            - max_file_size_mb: Maximum file size in MB.
+            - sandbox_enabled: Enable sandbox for file processing.
+            - allowed_formats: List of allowed formats (empty means all formats are allowed).
+            - sanitize_output: Sanitize output to remove potential security risks.
+        processing: Processing options for files.
+            - continue_on_error: Continue processing batch even if some files fail. Defaults to True.
+            - extract_metadata: Extract metadata from files. Defaults to True.
+            - normalize_text: Normalize extracted text. Defaults to True.
+            - quality_threshold: Minimum quality score for text extraction. Defaults to 0.9.
+            - whisper_model: Whisper model to use for audio processing. Defaults to "base".
+            - whisper_language: Language for Whisper model. Defaults to "en".
+            - tesseract_language: Tesseract model for OCR. Defaults to "eng".
+        output: Output settings for processed files.
+            - format: Default output format. Defaults to "txt".
+            - include_metadata: Include metadata in output. Defaults to True.
+            - preserve_structure: Attempt to preserve document structure. Defaults to True.
+            - encoding: Output file encoding. Defaults to "utf-8".
+
+    Properties:
+        - version: str: The version of the Omni-Converter.
+        - paths: Paths for important files and directories.
+
+    Methods:
+        get_config_value(key: str, default: Any) -> Any:
+            Get a configuration value by key, using dot notation for nested keys.
+        set_config_value(key: str, value: Any) -> None:
+            Set a configuration value by key, using dot notation for nested keys.
+    """
     resources: _Resources = Field(default_factory=_Resources)
     formats: _Formats = Field(default_factory=_Formats)
     security: _Security = Field(default_factory=_Security)
     processing: _Processing = Field(default_factory=_Processing)
     output: _Output = Field(default_factory=_Output)
-    paths: Paths = Field(default_factory=Paths)
 
     @property
     def paths(self) -> Paths:
@@ -173,7 +215,7 @@ class Configs(BaseModel):
                 value = getattr(value, k)
             return value.model_dump() if isinstance(value, BaseModel) else value
         except AttributeError as e:
-            logger.debug(f"Key '{key}' not found in configuration: {e}")
+            print(f"Key '{key}' not found in configuration: {e}")
             return default
 
     def set_config_value(self, key: str, value: Any) -> None:
@@ -200,13 +242,13 @@ class Configs(BaseModel):
         except ValidationError as e:
             raise ValueError(f"Invalid value for key '{key}': {value}") from e
 
-PATHS = Paths()
+_PATH = Paths()
 
 try:
-    with open(PATHS.CONFIG_PATH.resolve(), 'r') as file:
+    with open(_PATH.CONFIG_PATH.resolve(), 'r') as file:
         config_dict = yaml.safe_load(file)
     configs = Configs().model_validate(config_dict)
-    print(f"Configuration loaded from {PATHS.CONFIG_PATH}")
+    print(f"Configuration loaded from {_PATH.CONFIG_PATH}")
 except (FileNotFoundError, yaml.YAMLError, ValidationError) as e:
     print(f"{name(e)}: {e}\nUsing default configuration.")
     configs = Configs().model_validate()

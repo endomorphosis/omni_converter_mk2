@@ -130,7 +130,6 @@ class XLSXProcessor:
             "supported_formats": self._supported_formats,
             "available": self._processor_available
         }
-        
         if self._processor_available:
             info["version"] = self._get_version()
         

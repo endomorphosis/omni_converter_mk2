@@ -11,11 +11,11 @@ import time
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from core.processing_pipeline import processing_pipeline
-from file_format_detector.file_format_detector import file_format_detector
+from core._processing_pipeline import processing_pipeline
 
+from tests._fixtures import fixtures
 
 class ProcessingSpeedTest(unittest.TestCase):
     """Test case for processing speed across different file types."""
@@ -175,9 +175,12 @@ class ProcessingSpeedTest(unittest.TestCase):
         start_time = time.time()
         total_processing_time = 0
         processed_count = 0
-        
+
         # Process real files
         real_files = [f for f in files if not f.get('is_sample', False) and os.path.exists(f['file_path'])]
+
+        processing_pipeline = fixtures['processing_pipeline']
+    
         for file_data in real_files:
             processed_count += 1
             file_start_time = time.time()

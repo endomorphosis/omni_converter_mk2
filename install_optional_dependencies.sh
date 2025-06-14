@@ -3,7 +3,7 @@
 
 # Echo a message indicating the start of the installation
 echo "Installing optional dependencies..."
-echo "WARNING: This script will use sudo to install packages, which may prompt for your password."
+echo "WARNING: This script will use sudo to install packages."
 echo ""
 
 read -p "Do you want to install Tesseract OCR and its dependencies? (y/n): " install_choice
@@ -20,6 +20,17 @@ sudo apt-get update
 echo "Installing Tesseract OCR and English language data..."
 sudo apt-get install -y tesseract-ocr
 sudo apt-get install -y tesseract-ocr-eng
+
+echo "Installing 7-Zip..."
+sudo apt-get install -y p7zip-full
+
+echo "Installing LibreOffice..."
+sudo apt-get install -y libreoffice
+
+echo "Installing poppler-utils..." # TODO For pdf???
+sudo apt-get install -y poppler-utils
+
+
 
 # Optional: Install additional language packs if needed
 # Uncomment and modify as necessary

@@ -22,4 +22,4 @@ class CSVProcessor:
         self.configs = configs
         self.resources = resources
 
-        self._logger = self.resources["logger"]
+        self._logger: Logger = self.resources["logger"]

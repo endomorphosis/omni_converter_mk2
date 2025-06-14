@@ -4,16 +4,12 @@ Text format handlers for the Omni-Converter using IoC pattern.
 This module provides handlers for text-based formats like HTML, XML, plain text, etc.
 using dependency injection for better modularity and testability, without inheritance.
 """
-import os
-from typing import Any, Optional, Set, Union, Callable
-
-from configs import Configs
-from logger import logger
+from types_ import Configs, Logger, Any, Callable, Optional
 
 
 class TextHandler:
     """
-    Framework class for handling text-based formats using IoC pattern.
+    Framework class for handling text-based formats.
     
     This class only contains orchestration logic and delegates all format-specific
     processing to injected processors via the resources dictionary.
@@ -33,6 +29,8 @@ class TextHandler:
         self.resources = resources
         self.configs = configs
 
+        self._splitext = resources["splitext"]
+
         # Extract required resources - fail fast if missing
         # NOTE Some of these use processors may support related formats,
         # Example: xlsx processors also handles xls, xlsm, etc.
@@ -45,6 +43,7 @@ class TextHandler:
         self._format_extensions: dict = self.resources["format_extensions"]
         self._supported_formats: set = self.resources["supported_formats"]
         self._capabilities: dict = self.resources["capabilities"]
+        self._logger: Logger = self.resources["logger"]
 
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -61,13 +60,13 @@ class TextHandler:
             return format_name in self._supported_formats
         
         # If no format provided, check file extension
-        _, ext = os.path.splitext(file_path)
+        _, ext = self._splitext(file_path)
         ext = ext.lower()
         
         for format_type, extensions in self._format_extensions.items():
             if ext in extensions and format_type in self._supported_formats:
                 return True
-        
+
         return False
     
     def extract_content(self, file_path: str, format_name: str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
@@ -83,7 +82,7 @@ class TextHandler:
             Tuple of (text content, metadata, sections).
         """
         # Delegate to appropriate processor based on format
-        match format_name:
+        match format_name: # TODO un-hard code this case-match
             case 'html':
                 processor = self._html_processor
             case 'xml':
@@ -100,13 +99,10 @@ class TextHandler:
             # Call the processor function
             return processor(file_path, options)
         except Exception as e:
-            logger.error(f"Error processing {format_name} file '{file_path}': {e}", exc_info=True)
+            self._logger.error(f"Error processing {format_name} file '{file_path}': {e}", exc_info=True)
             raise RuntimeError(f"Failed to process {format_name} file: {file_path}") from e
 
     @property
     def capabilities(self) -> dict[str, Any]:
         """Get handler capabilities."""
         return self._capabilities
-
-
-

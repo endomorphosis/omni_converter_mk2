@@ -1,5 +1,77 @@
+from typing import Any
 
-from typing import Any, Tuple
+
+def extract_text(data: str | bytes) -> str:
+    """
+    Extract text from the provided data.
+    
+    Args:
+        data: The data to extract text from, can be a string or bytes.
+        
+    Returns:
+        Extracted text as a string.
+    """
+    if isinstance(data, bytes):
+        return data.decode('utf-8', errors='ignore')
+    elif isinstance(data, str):
+        return data
+    else:
+        raise ValueError("Unsupported data type for text extraction")
+
+
+def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
+    """
+    Extract metadata from plain text content.
+
+    This function analyzes plain text and returns basic metadata including
+    format type, line count, character count, and word count statistics.
+
+    Args:
+        text (str): The plain text content to analyze.
+        options (dict[str, Any]): Additional options for metadata extraction.
+                                 Currently unused for plain text processing.
+
+    Returns:
+        dict[str, Any]: A dictionary containing metadata with the following keys:
+            - 'format' (str): Always 'plain' for plain text content
+            - 'line_count' (int): Number of lines in the text (newlines + 1)
+            - 'character_count' (int): Total number of characters in the text
+            - 'word_count' (int): Number of words (split by whitespace)
+
+    Example:
+        >>> text = "Hello world\nThis is a test"
+        >>> extract_metadata(text, {})
+        {
+            'format': 'plain',
+            'line_count': 2,
+            'character_count': 23,
+            'word_count': 5
+        }
+    """
+    # Plain text is already in the desired format
+    return {
+        'format': 'plain',
+        'line_count': text.count('\n') + 1,
+        'character_count': len(text),
+        'word_count': len(text.split())
+    }
+
+
+def extract_sections(text: str) -> list[dict[str, Any]]:
+    """
+    Extract sections from the text.
+    
+    Args:
+        text: The text to extract sections from.
+        
+    Returns:
+        A list of sections, each represented as a dictionary.
+    """
+    # For plain text, we can treat the entire text as a single section
+    return [{
+        'type': 'text',
+        'content': text
+    }]
 
 def process_plaintext(
         file_content: Any, 
@@ -22,22 +94,14 @@ def process_plaintext(
     """
     # Get text content
     if hasattr(file_content, 'get_as_text'):
-        text = file_content.get_as_text()
+        text: str = file_content.get_as_text()
     else:
-        text = file_content
-    
+        text: str = extract_text(file_content)
+
     # Plain text is already in the desired format
-    metadata = {
-        'format': 'plain',
-        'line_count': text.count('\n') + 1,
-        'character_count': len(text),
-        'word_count': len(text.split())
-    }
+    metadata = extract_metadata(text, options)
     
     # Create a single section
-    sections = [{
-        'type': 'text',
-        'content': text
-    }]
+    sections = extract_sections(text)
     
     return text, metadata, sections

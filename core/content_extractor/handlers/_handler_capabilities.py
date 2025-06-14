@@ -1,6 +1,7 @@
-from typing import Any
+from types_ import Any
 
-class HandlerCapabilities:
+
+class HandlerCapabilities: # TODO Determine if this even needs to exist.
     """
     Utility class to define and manage handler capabilities for different file types.
     """

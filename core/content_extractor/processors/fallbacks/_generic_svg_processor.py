@@ -14,9 +14,9 @@ from logger import logger
 from utils.filesystem import FileSystem
 
 
-def extract_svg_metadata(
+def extract_metadata(
     svg_text: str,
-    file_path: str # TODO Unused argument.
+    file_path: str
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Extract metadata from SVG text.
@@ -78,7 +78,7 @@ def extract_svg_metadata(
     return metadata, sections
 
 
-def generate_svg_description(
+def extract_text(
     file_path: str,
     metadata: dict[str, Any],
     text_elements: list[str]
@@ -118,8 +118,11 @@ def generate_svg_description(
     
     return text_content
 
+def extract_sections(): # TODO: This function should be implemented, even if it is just a dummy.
+    pass
 
-def process_svg_file(
+
+def process_svg(
     file_content: Any,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
@@ -151,10 +154,10 @@ def process_svg_file(
         text_elements = re.findall(r'<text[^>]*>(.*?)</text>', svg_text, re.DOTALL) # TODO Regex should be moved to constants.py.
         
         # Extract metadata and sections
-        metadata, sections = extract_svg_metadata(svg_text, file_path)
+        metadata, sections = extract_metadata(svg_text, file_path)
         
         # Generate text description
-        text_content = generate_svg_description(file_path, metadata, text_elements)
+        text_content = extract_text(file_path, metadata, text_elements)
         
         return "\n".join(text_content), metadata, sections
         

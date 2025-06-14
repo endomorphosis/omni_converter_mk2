@@ -3,7 +3,6 @@ Resource monitor module for the Omni-Converter.
 
 This module provides the ResourceMonitor class for monitoring and managing system resources.
 """
-import logging
 import time
 import threading
 from typing import Any, Callable, Optional
@@ -60,7 +59,7 @@ class ResourceMonitor:
         self._get_shared_memory_usage_in_mb: Callable = self.resources['get_shared_memory_usage_in_mb']
         self._get_memory_percent: Callable = self.resources['get_virtual_memory_in_percent']
 
-        self._logger: logging.Logger = self.resources['logger']
+        self._logger: Logger = self.resources['logger']
 
         self.active_monitoring = False
         self.monitoring_thread = None
@@ -162,7 +161,7 @@ class ResourceMonitor:
                 f"({100 * usage.get('memory', 0)/self.memory_limit:.1f}%)"
             )
 
-    @property
+    @property # NOTE We purposefully don't cache this property to always get the latest usage
     def is_resource_available(self) -> tuple[bool, Optional[str]]:
         """
         Check if resources are available for processing.

@@ -4,11 +4,7 @@ Video format handlers for the Omni-Converter using IoC pattern.
 This module provides handlers for video formats like MP4, WebM, AVI, MKV, and MOV
 using dependency injection for better modularity and testability, without inheritance.
 """
-import os
-from typing import Any, Callable, Optional
-
-
-from types_ import Configs
+from types_ import Configs, Logger, Any, Callable, Optional
 
 
 class VideoHandler:
@@ -18,7 +14,7 @@ class VideoHandler:
     This class only contains orchestration logic and delegates all format-specific
     processing to injected processors via the resources dictionary.
     """
-    
+
     def __init__(self, 
                  resources: dict[str, Callable], 
                  configs: Configs
@@ -33,6 +29,8 @@ class VideoHandler:
         self.resources = resources
         self.configs = configs
 
+        self._splitext = resources["splitext"]
+
         # Extract required resources - fail fast if missing
         # NOTE Video processor handles metadata extraction and frame processing
         self._video_processor: Callable = self.resources["video_processor"]
@@ -41,7 +39,7 @@ class VideoHandler:
         self._format_extensions: dict = self.resources["format_extensions"]
         self._supported_formats: set = self.resources["supported_formats"]
         self._capabilities: dict = self.resources["capabilities"]
-        self._logger: Callable = self.resources["logger"]
+        self._logger: Logger = self.resources["logger"]
 
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -58,7 +56,7 @@ class VideoHandler:
             return format_name in self._supported_formats
         
         # If no format provided, check file extension
-        _, ext = os.path.splitext(file_path)
+        _, ext = self._splitext(file_path)
         ext = ext.lower()
         
         for format_type, extensions in self._format_extensions.items():
@@ -82,13 +80,16 @@ class VideoHandler:
         # Check if transcription is requested and available
         enable_transcription = options.get('enable_transcription', False)
         
+        transcription = None
+        metadata = None
         try:
             if enable_transcription:
                 # Use transcription processor for speech-to-text from video audio
-                return self._transcription_processor(file_path, options)
-            else:
-                # Use video processor for metadata and frame extraction
-                return self._video_processor(file_path, options)
+                transcription = self._transcription_processor(file_path, options)
+                
+            # Use video processor for metadata and frame extraction
+            metadata = self._video_processor(file_path, options)
+            return metadata, transcription
         except Exception as e:
             self._logger.error(f"Error processing {format_name} file '{file_path}': {e}", exc_info=True)
             raise RuntimeError(f"Failed to process {format_name} file: {file_path}") from e

@@ -8,7 +8,7 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from core.content_extractor.format_registry import FormatRegistry, format_registry
+from format_registery.format_registry import FormatRegistry, format_registry
 from core.content_extractor.base_handler import FormatHandler, Content
 from file_format_detector.file_format_detector import file_format_detector
 

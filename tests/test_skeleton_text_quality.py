@@ -18,8 +18,8 @@ from nltk.translate.bleu_score import sentence_bleu
 import string
 
 
-from core.processing_pipeline import processing_pipeline
-from file_validator.file_validator import FileValidator
+from core.factory import make_processing_pipeline
+from core.file_validator._file_validator import FileValidator
 
 
 class TextQualityTest(unittest.TestCase):
@@ -27,6 +27,8 @@ class TextQualityTest(unittest.TestCase):
 
     def setUp(self):
         """Set up test case with necessary data structures."""
+        self._processing_pipeline = make_processing_pipeline()
+
         # Quality threshold from requirements (90%)
         self.quality_threshold = 0.9
         
@@ -518,7 +520,7 @@ class TextQualityTest(unittest.TestCase):
                 )
                 
                 # Process using the processing pipeline
-                result = processing_pipeline.process_file(
+                result = self._processing_pipeline.process_file(
                     file_path, 
                     output_path,
                     {'format': 'txt'}

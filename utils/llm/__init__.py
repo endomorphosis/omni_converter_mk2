@@ -3,11 +3,16 @@
 # Provides RAG components and embeddings functionality.
 # """
 # from .async_interface import AsyncLLMInterface
-# from .embeddings import EmbeddingsManager
+# from .embeddings import EmbeddingsInterface
 # from .dependencies.async_openai_client import AsyncOpenAIClient
 
 # __all__ = [
 #     "AsyncLLMInterface",
-#     "EmbeddingsManager",
+#     "EmbeddingsInterface",
 #     "AsyncOpenAIClient"
 # ]
+from .factory import make_llm_components
+
+__all__ = [
+    "make_llm_components",
+]

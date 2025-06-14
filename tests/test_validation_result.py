@@ -7,7 +7,7 @@ This module contains tests for the ValidationResult class.
 import unittest
 from typing import Any
 
-from file_validator.validation_result import ValidationResult
+from core.file_validator._validation_result import ValidationResult
 
 
 class TestValidationResult(unittest.TestCase):

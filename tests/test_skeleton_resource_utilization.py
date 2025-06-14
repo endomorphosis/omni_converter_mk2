@@ -4,25 +4,26 @@ Resource Utilization Tests for the Omni-Converter.
 
 This module tests the memory and CPU usage of the application during processing.
 """
-
-import os
+from datetime import datetime
 import json
-import time
-import unittest
+import multiprocessing
+import os
 import platform
 import tempfile
-import multiprocessing
-from datetime import datetime
-from typing import Any, Optional
+import time
+from typing import Any
+import unittest
+
 
 # Import psutil for actual resource monitoring
-import psutil
+try:
+    import psutil
+except ImportError:
+    raise ImportError("psutil is required for this module. Please install it with 'pip install psutil'.")
 
-from core.processing_pipeline import processing_pipeline
-from monitors.batch_processor import batch_processor
-from monitors._resource_monitor import resource_monitor
-from file_format_detector.file_format_detector import file_format_detector
+
 from configs import configs
+from tests._fixtures import fixtures
 
 
 class ResourceUtilizationTest(unittest.TestCase):
@@ -44,7 +45,7 @@ class ResourceUtilizationTest(unittest.TestCase):
         self.temp_output_dir = tempfile.mkdtemp()
         
         # Set up resource monitor
-        self.resource_monitor = resource_monitor
+        self.resource_monitor = fixtures['resource_monitor']
         
         # Results will be stored here
         self.results = {
@@ -195,6 +196,8 @@ class ResourceUtilizationTest(unittest.TestCase):
     def test_resource_utilization(self):
         """Test resource utilization during file processing."""
         try:
+            batch_processor = fixtures['batch_processor']
+
             # Start resource monitoring
             self.resource_monitor.start_monitoring()
             

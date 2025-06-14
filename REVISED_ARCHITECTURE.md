@@ -1,25 +1,163 @@
 # Revised Architecture: Hierarchical Structure with Single Exports
 
 ## Overview
-
 This document outlines a proposed refactoring of the Omni-Converter codebase to implement a clean hierarchical structure where:
-- Each directory has a single export (factory function)
-- Dependencies flow upward only (no circular dependencies)
-- Everything is easily mockable and findable
+- Each directory exports a single function. The function has no arguments, runs exactly once, and constructs a single object.
+- Each object possesses a series of pre-specified characteristics that meet the functional requirements of the object it is injected into. This includes, but is not limited to:
+  - A well-defined public interface with documented methods and return types
+  - Error handling capabilities with consistent exception patterns
+  - Resource management (proper cleanup of file handles, memory, etc.)
+  - Configuration validation and sensible defaults
+  - Logging integration for debugging and monitoring
+  - Performance characteristics suitable for the expected workload
+- The object must be able to be evaluated against a series of pre-specified evaluation metrics.
+- Objects with sub-directories flow upward only (no cross-directory access)
+- Directories are organized by 
 - Tightly-coupled files are grouped together in their own directories
 
-## Architecture Diagram
+## Architecture Diagram Mk3
+
+```mermaid
+graph TB
+    %% Root level
+    subgraph root["Root Directory"]
+      main.py
+      interfaces
+      interfaces --> main.py
+      subgraph singletons ["Singletons"]
+        configs.py
+        logger.py
+        dependencies.py
+        external_programs.py
+        types_.py
+      end
+    end
+
+    %% Top-level directories
+    subgraph top_level_dir ["Top Level Directories"]
+      core[core/]
+      monitors[monitors/]
+      batch_processor[extractors/]
+      core --> interfaces
+      monitors --> interfaces
+      batch_processor --> interfaces
+      file_format_detector --> interfaces
+    end
+    singletons --> top_level_dir
+
+```
+
+
+
+
+
+
+## Architecture Diagram Mk2
+```mermaid
+graph TB
+    %% Root level
+    root["Root Directory"]
+    subgraph root["Root Directory"]
+      main.py
+      subgraph singletons ["Singletons"]
+        configs.py
+        logger.py
+        dependencies.py
+        external_programs.py
+        types_.py
+      end
+    end
+
+    %% Core domain modules
+    singletons --> core[core]
+    root --> core[core]
+    core --> text_normalizer[text_normalizer]
+    core --> output_formatter[output_formatter]
+    core --> file_validator[file_validator]
+    core --> content_extractor[content_extractor]
+    
+    %% Content extractor sub-modules
+    content_extractor --> processors[processors]
+    content_extractor --> handlers[handlers]
+    
+    %% Processor plugins
+    processors --> by_ability[by_ability]
+    processors --> by_mime_type[by_mime_type]
+    processors --> dependency_modules[dependency_modules]
+    processors --> fallbacks[fallbacks]
+
+    %% Interfaces directory
+    singletons --> interfaces[interfaces]
+
+    %% Infrastructure layer
+    root --> interfaces[interfaces]
+    root --> utils[utils]
+    root --> monitors[monitors]
+    interfaces --> main.py[main.py]
+
+    %% Utils sub-modules
+    utils --> common[common]
+    utils --> main_[main_]
+    utils --> llm[llm]
+    utils --> resource_monitor[resource_monitor]
+    
+    common --> dependencies_common[dependencies]
+    llm --> prompts[prompts]
+    for_tests --> processors_test[processors]
+    resource_monitor --> dependencies_monitor[dependencies]
+    
+    %% Monitors
+    monitors --> security_monitor[security_monitor]
+
+    %% Application layer
+    root --> batch_processor[batch_processor]
+    root --> frontend[frontend]
+
+    %% Frontend structure
+    frontend
+
+    %% Styling
+    classDef core fill:#ff9999,stroke:#333,stroke-width:2px
+    classDef infrastructure fill:#99ccff,stroke:#333,stroke-width:2px
+    classDef application fill:#99ff99,stroke:#333,stroke-width:2px
+    classDef support fill:#ffcc99,stroke:#333,stroke-width:2px
+    classDef plugin fill:#ff99ff,stroke:#333,stroke-width:2px
+    
+    class core,text_normalizer,output_formatter,file_validator,content_extractor core
+    class interfaces,utils,monitors,common,main_,llm,for_tests,resource_monitor,security_monitor infrastructure
+    class batch_processor,frontend,templates,static application
+    class tests,tools,test_files,bash_installers,logs,docs support
+    class by_ability,by_mime_type,dependency_modules,fallbacks plugin
+```
+
+
 
 ```mermaid
 graph TD
-    %% Root level - shared utilities
-    Root[Root Level]
-    Root --> configs.py
-    Root --> logger.py
-    Root --> dependencies.py
-    Root --> external_programs.py
-    Root --> types_.py
-    
+    %% Root level - shared utilities and singletons
+    subgraph "Root Directory"
+      main.py
+      subgraph singletons ["Singletons"]
+        configs.py
+        logger.py
+        dependencies.py
+        external_programs.py
+        types_.py
+      end
+      singletons --> top_level_dir
+    end
+
+    %% Top-level directories
+    subgraph top_level_dir ["Top Level Directories"]
+      interfaces[interfaces/]
+      interfaces --> main.py
+      core[core/]
+      monitors[monitors/]
+      batch_processor[extractors/]
+      core --> interfaces
+      monitors --> interfaces
+    end
+
     %% Layer 1: Foundation modules
     FileFormatDetector[file_format_detector/]
     FileValidator[file_validator/]

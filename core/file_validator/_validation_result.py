@@ -6,9 +6,9 @@ This module provides the ValidationResult class for tracking the result of valid
 from typing import Any, Callable
 
 
-from dependencies import Dependencies
-BaseModel: Callable = Dependencies.pydantic.BaseModel
-Field: Callable = Dependencies.pydantic.Field
+from dependencies import dependencies
+BaseModel: Callable = dependencies.pydantic.BaseModel
+Field: Callable = dependencies.pydantic.Field
 
 
 class ValidationResult(BaseModel):

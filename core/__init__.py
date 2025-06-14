@@ -22,7 +22,7 @@ Implementation Status:
 """
 
 # Import only the processing pipeline from factory
-from ..deprecated.factories import make_processing_pipeline
+from .factory import make_processing_pipeline
 
 __all__ = [
     'make_processing_pipeline',

@@ -7,16 +7,13 @@ This module tests the rate of successful processing across different file types.
 from datetime import datetime
 import os
 import json
-import shutil
 import tempfile
 from typing import Any, Optional
 import unittest
 from unittest.mock import MagicMock, patch
 
 
-from core.processing_pipeline import processing_pipeline
-from file_format_detector.file_format_detector import file_format_detector
-from file_validator.file_validator import FileValidator
+from tests._fixtures import fixtures
 
 
 class ProcessingSuccessRateTest(unittest.TestCase):
@@ -216,6 +213,8 @@ class ProcessingSuccessRateTest(unittest.TestCase):
     def test_processing_success_rate(self):
         """Test the success rate of processing valid files."""
         try:
+            processing_pipeline = fixtures["processing_pipeline"]
+
             # Track overall statistics
             total_valid_files = 0
             successfully_processed = 0

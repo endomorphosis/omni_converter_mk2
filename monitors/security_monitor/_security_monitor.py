@@ -3,12 +3,13 @@ Security manager module for the Omni-Converter.
 
 This module provides the SecurityMonitor class for security validation and content sanitization.
 """
+from __future__ import annotations
 import os
 import re
 from typing import Any, Callable, Optional
 
 
-from types_ import Configs, SecurityResult, SanitizedContent, Content
+from types_ import Configs, Logger, SecurityResult, SanitizedContent, Content
 
 
 class SecurityMonitor:
@@ -25,7 +26,7 @@ class SecurityMonitor:
     
     def __init__(self, 
                 resources: dict[str, Callable] = None, 
-                configs: Configs = None
+                configs: 'Configs' = None
                 ) -> None:
         """Initialize a security manager."""
         self.configs = configs
@@ -44,12 +45,12 @@ class SecurityMonitor:
         # Define pydantic classes
         self._security_result = self.resources['security_result']
         self._sanitized_content = self.resources['sanitized_content']
-        self._logger = self.resources['logger']
+        self._logger: Logger = self.resources['logger']
 
         # All formats are allowed by default
         self.allowed_formats = []  # Empty means all formats are allowed
 
-    def validate_security(self, file_path: str, format_name: Optional[str] = None) -> SecurityResult:
+    def validate_security(self, file_path: str, format_name: Optional[str] = None) -> 'SecurityResult':
         """
         Validate the security of a file.
         
@@ -162,7 +163,7 @@ class SecurityMonitor:
         result = self.validate_security(file_path, format_name)
         return result.is_safe
     
-    def sanitize_content(self, content: Content) -> SanitizedContent:
+    def sanitize_content(self, content: 'Content') -> SanitizedContent:
         """
         Sanitize content for security.
         
@@ -264,7 +265,7 @@ class SecurityMonitor:
             True if the file is executable, False otherwise.
         """
         # Check file extension
-        _, ext = os.path.splitext(file_path)
+        _, ext = self._splitext(file_path)
 
         if ext.lower() in self._executable_extensions:
             return True

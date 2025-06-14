@@ -20,8 +20,8 @@ from core.content_extractor.image_handler import image_handler
 # Import processors
 from core.content_extractor.constants import Constants
 from core.content_extractor.processors.by_mime_type.pdf_processor import PyPDF2Processor
-from core.content_extractor.processors.by_ability.audio_processor import WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
-from core.content_extractor.processors.by_ability.ocr_processor import TESSERACT_AVAILABLE
+from core.content_extractor.processors.by_ability._audio_processor import WhisperAudioProcessor, WHISPER_AVAILABLE, PYDUB_AVAILABLE
+from core.content_extractor.processors.by_ability._ocr_processor import TESSERACT_AVAILABLE
 from core.content_extractor.processors.python_docx_processor import PYTHON_DOCX_AVAILABLE
 
 

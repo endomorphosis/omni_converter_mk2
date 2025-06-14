@@ -5,9 +5,9 @@ class SupportedFormats:
     Attributes:
 
     """
-    def _make_set_from_set_dict(set_dict: dict[str, set]) -> set[str]:
+    def _make_set_from_set_dict(set_dict: dict[str, frozenset]) -> set[str]:
         """Convert a dictionary of sets into a single set containing all unique elements."""
-        return set(set for set in set_dict.values())
+        return frozenset(set_ for set_ in set_dict.values())
 
     # Decorator to create class properties
     class _classproperty:
@@ -49,104 +49,114 @@ class SupportedFormats:
         return cls._make_set_from_set_dict(cls.TEXT_FORMAT_EXTENSIONS)
 
     @_classproperty
-    def TEXT_FORMAT_EXTENSIONS(cls) -> dict[str, set]:
-        """
-        Returns a dictionary mapping format names to their supported file extensions.
-        
-        Returns:
-            dict: A dictionary where keys are format names and values are sets of file extensions.
+    def TEXT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """A dictionary mapping format names to their supported file extensions.
+
+        Example:
+            >>> {
+                "html": frozenset(("html", "htm", "xhtml", "xml")),
+                "xml": frozenset(("xml",)),
+                "plain": frozenset(("txt", "text")),
+                "calendar": frozenset(("ics", "ical")),
+                "csv": frozenset(("csv",))
+            }
         """
         return { # NOTE More will be added as more formats are implemented.
-            "html": {"html", "htm", "xhtml", "xml"},
-            "xml": {"xml"},
-            "plain": {"txt", "text"},
-            "calendar": {"ics", "ical"},
-            "csv": {"csv"}
+            "html": frozenset(("html", "htm", "xhtml", "xml")),
+            "xml": frozenset(("xml",)),
+            "plain": frozenset(("txt", "text")),
+            "calendar": frozenset(("ics", "ical")),
+            "csv": frozenset(("csv",))
         }
 
     @_classproperty
-    def AUDIO_FORMAT_EXTENSIONS(cls) -> dict[str, set]:
+    def AUDIO_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping audio format names to their supported file extensions.
 
         Example:
             >>> {
-                "mp3": {"mp3", "mpeg"},
-                "wav": {"wav", "x-wav"},
-                "ogg": {"ogg"},
-                "flac": {"flac"},
-                "aac": {"aac"}
+            "mp3": frozenset(("mp3", "mpeg")),
+            "wav": frozenset(("wav", "x-wav")),
+            "ogg": frozenset(("ogg",)),
+            "flac": frozenset(("flac",)),
+            "aac": frozenset(("aac",))
             }
         """
         return {
-            "mp3": {"mp3", "mpeg"},
-            "wav": {"wav", "x-wav"},
-            "ogg": {"ogg"},
-            "flac": {"flac"},
-            "aac": {"aac"}
+            "mp3": frozenset(("mp3", "mpeg")),
+            "wav": frozenset(("wav", "x-wav")),
+            "ogg": frozenset(("ogg",)),
+            "flac": frozenset(("flac",)),
+            "aac": frozenset(("aac",))
         }
 
-
     @_classproperty
-    def APPLICATION_FORMAT_EXTENSIONS(cls) -> dict[str, set]:
+    def APPLICATION_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping application format names to their supported file extensions.
 
         Example:
             >>> {
-                "pdf": {"pdf"},
-                "json": {"json", "jsonl"},
-                "docx": {"docx"},
-                "xlsx": {"xlsx", "xlsm", "xlsb", "xltx", "xltm"},
-                "zip": {"zip"}
+            "pdf": frozenset(("pdf",)),
+            "json": frozenset(("json", "jsonl")),
+            "docx": frozenset(("docx",)),
+            "xlsx": frozenset(("xlsx", "xlsm", "xlsb", "xltx", "xltm")),
+            "zip": frozenset(("zip",))
             }
         """
         return {
-            "pdf": {"pdf"},
-            "json": {"json", "jsonl"},
-            "docx": {"docx"},
-            "xlsx": {"xlsx", "xlsm", "xlsb", "xltx", "xltm"},
-            "zip": {"zip"}
+            "pdf": frozenset(("pdf",)),
+            "json": frozenset(("json", "jsonl")),
+            "docx": frozenset(("docx",)),
+            "doc": frozenset(("doc",)),
+            "xlsx": frozenset(("xlsx", "xlsm", "xlsb", "xltx", "xltm")),
+            "zip": frozenset(("zip",))
         }
 
     @_classproperty
-    def IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, set]:
+    def IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping image format names to their supported file extensions.
         
         Example:
             >>> {
-                "jpeg": {"jpeg", "jpg"},
-                "png": {"png"},
-                "gif": {"gif"},
-                "webp": {"webp"},
-                "svg": {"svg"}
+            "jpeg": frozenset(("jpeg", "jpg")),
+            "png": frozenset(("png",)),
+            "gif": frozenset(("gif",)),
+            "webp": frozenset(("webp",)),
+            "svg": frozenset(("svg",))
             }
         """
         return {
-            "jpeg": {"jpeg", "jpg"},
-            "png": {"png"},
-            "gif": {"gif"},
-            "webp": {"webp"},
-            "svg": {"svg"}
+            "jpeg": frozenset(("jpeg", "jpg")),
+            "png": frozenset(("png",)),
+            "gif": frozenset(("gif",)),
+            "webp": frozenset(("webp",)),
+            "svg": frozenset(("svg",))
         }
 
     # Video formats
     @_classproperty
-    def VIDEO_FORMAT_EXTENSIONS(cls) -> dict[str, set]:
-        """
-        Returns a dictionary mapping video format names to their supported file extensions.
-        
-        Returns:
-            dict: A dictionary where keys are format names and values are sets of file extensions.
+    def VIDEO_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """A dictionary mapping video format names to their supported file extensions.
+
+        Example:
+            >>> {
+            "mp4": frozenset(("mp4",)),
+            "webm": frozenset(("webm",)),
+            "avi": frozenset(("avi",)),
+            "mkv": frozenset(("mkv",)),
+            "mov": frozenset(("mov",))
+            }
         """
         return {
-            "mp4": {"mp4"},
-            "webm": {"webm"},
-            "avi": {"avi"},
-            "mkv": {"mkv"},
-            "mov": {"mov"}
+            "mp4": frozenset(("mp4",)),
+            "webm": frozenset(("webm",)),
+            "avi": frozenset(("avi",)),
+            "mkv": frozenset(("mkv",)),
+            "mov": frozenset(("mov",))
         }
 
     @_classproperty
-    def FORMAT_REGISTRY(cls) -> dict[str, dict[str, set]]:
+    def FORMAT_REGISTRY(cls) -> dict[str, frozenset[tuple[str]]]:
         """ A dictionary mapping format names to sets of supported file extensions.
 
         Example:
@@ -164,6 +174,36 @@ class SupportedFormats:
             "image": cls.SUPPORTED_IMAGE_FORMATS,
             "text": cls.SUPPORTED_TEXT_FORMATS,
             "application": cls.SUPPORTED_APPLICATION_FORMATS
+        }
+
+    @_classproperty
+    def EBOOK_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """A dictionary mapping ebook format names to their supported file extensions.
+
+        Example:
+            >>> {
+                "epub": frozenset(("epub",)),
+                "mobi": frozenset(("mobi",))
+            }
+        """
+        return {
+            "epub": frozenset(("epub",)),
+            "mobi": frozenset(("mobi",))
+        }
+    
+    @_classproperty
+    def DOCUMENT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """A dictionary mapping document format names to their supported file extensions.
+
+        Example:
+            >>> {
+                "docx": frozenset(("docx",)),
+                "doc": frozenset(("doc",))
+            }
+        """
+        return {
+            "docx": frozenset(("docx",)),
+            "doc": frozenset(("doc",))
         }
 
     @_classproperty
@@ -196,9 +236,17 @@ class SupportedFormats:
         return {
             # Text formats
             'text/html': 'html',
-            'application/xhtml+xml': 'html',
+            'application/xhtml+xml': 'html', # TODO figure out which processor to use: html or xml
             'text/xml': 'xml',
             'application/xml': 'xml',
+            'application/atom+xml': 'xml',
+            'application/rss+xml': 'xml',
+            'application/ld+json': 'json',
+            'application/rdf+xml': 'xml',
+            'application/vnd.wap.xhtml+xml': 'xml',
+            'application/vnd.mozilla.xul+xml': 'xml',
+
+
             'text/plain': 'plain',
             'text/calendar': 'calendar',
             'application/ics': 'calendar',  # Added from PROCESSOR_MIME_TYPE_MAP
@@ -208,11 +256,11 @@ class SupportedFormats:
             
             # Image formats
             'image/jpeg': 'jpeg',
-            'image/jpg': 'jpg',  # Added from MIME_TYPE_TO_FORMAT_MAP
+            'image/jpg': 'jpeg',
             'image/png': 'png',
             'image/gif': 'gif',
             'image/webp': 'webp',
-            'image/svg+xml': 'svg',
+            'image/svg+xml': 'svg', #TODO figure out which processor to use: xml or svg 
             
             # Audio formats
             'audio/mpeg': 'mp3',
@@ -236,7 +284,15 @@ class SupportedFormats:
             # Application formats
             'application/pdf': 'pdf',
             'application/json': 'json',
-            'application/zip': 'zip',
+            'application/zip': 'zip', # NOTE zip is for Archive/Compression formats
+            'application/gzip': 'zip',
+            'application/x-gzip': 'zip',
+            'application/x-zip-compressed': 'zip',
+            'application/x-7z-compressed': 'zip',  # # Via 7-zip
+            'application/vnd.rar': 'zip',  # Via 7-zip
+            'application/x-rar-compressed': 'zip', # Via 7-zip
+            'application/x-bzip2': 'zip',  # Via 7-zip
+            'application/x-tar': 'zip',  # Via 7-zip
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx'
         }
@@ -305,11 +361,12 @@ class SupportedFormats:
         Returns a set of application formats that are not currently supported by the converter.
         """
         return {
-            # Archive/Compression formats
-            "zip", "gzip", "x-gzip", "x-7z-compressed", "vnd.rar", "x-rar-compressed", 
-            "x-bzip", "x-bzip2", "x-tar", "x-zip-compressed", "x-freearc",
+            "x-bzip", # TODO Figure out how bzip can be implemented 
+            "x-freearc", # TODO freearc has been discontinued, figure out how to implement it
             # Document formats - Microsoft Office
-            "msword", "vnd.ms-excel", "vnd.ms-powerpoint", "vnd.ms-word",
+            "msword", # TODO This is a legacy format, need a specific handler for it
+            
+            "vnd.ms-excel", "vnd.ms-powerpoint", "vnd.ms-word",
             "vnd.openxmlformats-officedocument.presentationml.presentation",
             # Document formats - OpenDocument
             "vnd.oasis.opendocument.presentation", "vnd.oasis.opendocument.spreadsheet",
@@ -318,9 +375,7 @@ class SupportedFormats:
             "rtf", "postscript", "x-abiword", "x-tex", "x-troff-man",
             # eBook formats
             "epub+zip", "vnd.amazon.ebook", "x-mobipocket-ebook",
-            # Web/Markup formats
-            "xml", "xhtml+xml", "atom+xml", "rss+xml", "rdf+xml", "ld+json",
-            "vnd.wap.xhtml+xml", "vnd.mozilla.xul+xml",
+
             # JavaScript/Programming formats
             "javascript", "x-javascript", "x-json", "x-httpd-php",
             # Geographic/Mapping formats
