@@ -1,2 +1,0 @@
-jinja2 # for templating
-pydantic # for data validation and settings management

@@ -182,3 +182,6 @@ logs/*
 
 # experimental features
 frontend/
+_deprecated/
+_tools/
+.claude
