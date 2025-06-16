@@ -5,10 +5,21 @@ This module provides the ProcessingPipeline class for orchestrating the conversi
 of files to plaintext.
 """
 import hashlib
-from typing import Any, Callable, Optional
 
-from types_ import Configs, Logger, StatusListenerFunc
-
+from ._pipeline_status import PipelineStatus
+from ._processing_result import ProcessingResult
+from types_ import (
+    Any,
+    BuiltinModule,
+    Callable,
+    Configs, 
+    Logger, 
+    Optional,
+    StatusListenerFunc,
+    #PipelineStatus,
+    #ProcessingResult
+    ContentExtractor,
+)
 
 class ProcessingPipeline:
     """
@@ -46,65 +57,66 @@ class ProcessingPipeline:
         self._content_extractor = self.resources['content_extractor']
         self._text_normalizer = self.resources['text_normalizer']
         self._output_formatter = self.resources['output_formatter']
-        self._processing_result = self.resources['processing_result']
-        self._logger: Logger = self.resources['logger']
 
-        self._status = self.resources['pipeline_status']
-        self._listeners: list[StatusListenerFunc] = []
-
-    def _create_failure_result(self, 
-                               file_path: str,
-                               output_path: str = None,
-                               format_name: str = None,
-                               errors: list[str] = None
-                               ) -> Any:
-        if isinstance(errors, str):
-            errors = [errors]
-        # Create failure result
-        result = self._processing_result(
-            success=False,
-            file_path=file_path,
-            output_path=output_path,
-            format=format_name,
-            errors=errors
-        )
-        self._status.failed_files += 1
-        return result
-
+        self._processing_result: ProcessingResult = self.resources['processing_result']
+        self._logger:            Logger = self.resources['logger']
+        self._status:            PipelineStatus = self.resources['pipeline_status']
+        self._listeners:         list[StatusListenerFunc] = []
+        self._hashlib:           BuiltinModule = self.resources['hashlib']
 
     def process_file(
         self,
         file_path: str,
+        *,
+        output_format: str = 'txt',
         output_path: Optional[str] = None,
-        options: Optional[dict[str, Any]] = None
-    ) -> Any:
+        normalizers: Optional[list[str]] = None,
+    ) -> ProcessingResult:
         """
         Process a single file.
-        
+
         Args:
             file_path: The path to the file to process.
-            output_path: The path to write the output to. If None, the output
-                will not be written to a file.
-            options: Optional processing options.
-            
+            output_format: The format to convert the file to. Supported formats are: 'txt', 'md'. Defaults to 'txt'.
+            output_path: The path to write the output to.
+            - If it's a file path, the output will be written to that file.
+            - If it's a directory, the output will be written to a file in that directory. 
+                The name will be the same as the input file's. 
+                Any extension will be removed and replaced with the one specified in output_format.
+            - If None, the text is still extracted but not written to a file.
+            normalizers: A list of normalizers to apply to the text post-extraction.
+            - If None, extracted text will return as-is.
+
         Returns:
-            ProcessingResult: The result of processing the file.
-            
+            ProcessingResult: A dataclass detailing the result of processing the file.
+            The dataclass contains the following fields:
+                - success (bool): Whether the processing was successful.
+                - file_path (str): The path to the input file.
+                - output_path (str): The path to the output file.
+                - format (str): The detected format of the input file.
+                - errors (list[str]): list of errors encountered during processing.
+                - metadata (dict[str, Any]): Metadata about the processing.
+                - content_hash (str): Hash of the content for verification.
+                - timestamp (datetime): Time when the processing was completed.
+
         Raises:
             FileNotFoundError: If the file does not exist.
             PermissionError: If the file cannot be read.
             ValueError: If the file format is not supported.
         """
         # Initialize options
-        options = options or {}
-        output_format = options.get('format', 'txt')
-        normalizers = options.get('normalizers')
-        
+        options = {
+            'output_format': output_format,
+            'output_path': output_path,
+            'normalizers': normalizers,
+        }
+
         # Update status
         self._status.is_processing = True
         self._status.current_file = file_path
         self._status.total_files += 1
         self._notify_listeners("processing_started", {'file_path': file_path})
+        errors = None
         
         try:
             # Detect format
@@ -123,12 +135,17 @@ class ProcessingPipeline:
                 self._logger.error(error_message, {'file_path': file_path})
                 
                 # Create failure result
-                self._create_failure_result(
+                if isinstance(errors, str):
+                    errors = [errors]
+
+                result = self._processing_result(
+                    success=False,
                     file_path=file_path,
                     output_path=output_path,
-                    format_name=format_name,
-                    errors=validation_result.errors
+                    format=format_name,
+                    errors=errors
                 )
+                self._status.failed_files += 1
 
                 self._notify_listeners("processing_failed", {
                     'file_path': file_path,
@@ -138,7 +155,7 @@ class ProcessingPipeline:
                 return result
             
             # Extract content
-            self._logger.debug(f"Extracting content from {file_path}")
+            self._logger.debug(f"File is valid. Extracting content from {file_path}")
             content = self._content_extractor.extract_content(file_path, format_name, options)
             
             # Normalize text
@@ -170,7 +187,7 @@ class ProcessingPipeline:
                 formatted_output.write_to_file(output_path)
             
             # Calculate content hash for verification # TODO Change to Ipfs CID
-            content_hash = hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
+            content_hash = hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest() # TODO Make this injected.
             
             # Create success result
             result = self._processing_result(

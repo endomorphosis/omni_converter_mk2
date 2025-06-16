@@ -147,4 +147,4 @@ class ImageProcessor:
         Returns:
             A list of binary streams containing extracted images.
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        pass

@@ -1,12 +1,5 @@
-from typing import Any, Callable, TypeVar
-from unittest.mock import MagicMock
-
-
-Workbook = TypeVar('Workbook') # For type-hinting
-
-
-from logger import logger
-
+from __future__ import annotations
+from types_ import Any, Callable, Configs, Logger, TypeVar, Union, MagicMock, AbilityProcessor, DependencySpecificObject
 
 class XLSXProcessor:
     """
@@ -25,7 +18,7 @@ class XLSXProcessor:
             _extract_structure: Callable function to extract structure from XLSX files. This includes:
             _extract_text: Callable function to extract text from XLSX files.
             _extract_metadata: Callable function to extract metadata from XLSX files.
-            _open_xlsx_file: Callable function to open XLSX files.
+            _format_data: Callable function to format XLSX binary data into a dependency-specific format.
             _extract_images: Callable function to extract images from XLSX files.
 
     Example Output:
@@ -50,6 +43,9 @@ class XLSXProcessor:
         | Q3      | $145,000 | 12.3%  |
         | Q4      | $158,000 | 15.8%  |
         |---------|----------|--------|
+
+        #### Dimensions
+        - A1:E100
 
         #### Computed Fields
         |----------------|----------------------------------------|-------------------------------|
@@ -77,7 +73,10 @@ class XLSXProcessor:
         ```
     """
     
-    def __init__(self, resources: dict[str, Callable] = None, configs=None) -> None:
+    def __init__(self, 
+                 resources: dict[str, Callable] = None, 
+                 configs: Configs = None
+                ) -> None:
         """Initialize the XLSX processor."""
         self.configs = configs
         self.resources = resources
@@ -90,14 +89,20 @@ class XLSXProcessor:
         self._extract_structure: Callable = self.resources["extract_structure"]
         self._extract_text: Callable = self.resources["extract_text"]
         self._extract_metadata: Callable = self.resources["extract_metadata"]
-        self._open_xlsx_file: Callable = self.resources["open_xlsx_file"]
+        self._get_image_data: Callable = self.resources["get_image_data"]
+        self._extract_images: Callable = self.resources["extract_images"]
+
+        self._format_data: Callable = self.resources["format_data"]
+        self._get_dependency_info: Callable = self.resources["get_dependency_info"]
+
+        self._logger: Logger = self.resources["logger"]
 
         # Optional image extraction function
+        self._get_images_from_sheets: Callable | AbilityProcessor = self.resources["get_images_from_sheets"]
         self._extract_images: Callable | MagicMock = self.resources["extract_images"]
 
     def can_process(self, format_name: str) -> bool:
-        """
-        Check if this processor can handle the given format.
+        """Check if this processor can handle the given format.
         
         Args:
             format_name: The name of the format to check.
@@ -107,20 +112,19 @@ class XLSXProcessor:
             False otherwise.
         """
         return self._processor_available and format_name.lower() in self._supported_formats
-    
+
     @property
     def supported_formats(self) -> list[str]:
-        """
-        Get the list of formats supported by this processor.
+        """Get the list of formats supported by this processor.
         
         Returns:
             A list of format names supported by this processor.
         """
         return self._supported_formats if self._processor_available else []
     
-    def get_processor_info(self) -> dict[str, Any]:
-        """
-        Get information about this processor.
+    @property
+    def processor_info(self) -> dict[str, Any]:
+        """Get information about this processor.
         
         Returns:
             A dictionary containing information about this processor.
@@ -132,31 +136,45 @@ class XLSXProcessor:
         }
         if self._processor_available:
             info["version"] = self._get_version()
-        
+
         return info
 
-    def open_xlsx_file(self, data: bytes) -> 'Workbook':
-        """
-        Open an XLSX file and return the Workbook object.
+    @property
+    def dependency_info(self) -> dict[str, Union[str, None]]:
+        """Get information about the dependencies of this processor.
         
+        Returns:
+            A dictionary containing information about the dependencies of this processor.
+
+        Example:
+            dependencies = processor.dependency_info
+            print(dependencies)
+            # Output: {'_extract_text': 'path/to/_third_part_dependency.py', ...}
+        """
+        self._get_dependency_info(self.resources)
+
+    def format_data(self, data: bytes) -> 'DependencySpecificObject' | bytes:
+        """Open an XLSX file and return a dependency-specific object.
+        Examples include: openpyxl Workbook object, pandas DataFrame, etc.
+        If none is necessary, return the original bytes.
+
         Args:
             data: The binary data of the XLSX document.
             
         Returns:
-            An openpyxl Workbook object.
+            An dependency-specific object, or the original bytes.
             
         Raises:
-            ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
+            ValueError: If there's an error formatting the data.
         """
         try:
-            return self._open_xlsx_file(data)
+            return self._format_data(data)
         except Exception as e:
-            logger.error(f"Error opening XLSX file: {e}")
-            raise ValueError(f"Error opening XLSX file: {e}")
+            self._logger.error(f"Error formatting XLSX file: {e}")
+            raise ValueError(f"Error formatting XLSX file: {e}") from e
 
-    def extract_text(self, data: bytes, options: dict[str, Any]) -> str:
-        """
-        Extract plain text from an XLSX document.
+    def extract_text(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> str:
+        """Extract plain text from an XLSX document.
         
         Args:
             data: The binary data of the XLSX document.
@@ -173,12 +191,11 @@ class XLSXProcessor:
         try:
             return self._extract_text(data, options)
         except Exception as e:
-            logger.error(f"Error extracting text from XLSX: {e}")
-            raise ValueError(f"Error extracting text from XLSX: {e}")
+            self._logger.error(f"Error extracting text from XLSX: {e}")
+            raise ValueError(f"Error extracting text from XLSX: {e}") from e
     
-    def extract_metadata(self, data: bytes, options: dict[str, Any]) -> dict[str, Any]:
-        """
-        Extract metadata from an XLSX document.
+    def extract_metadata(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> dict[str, Any]:
+        """Extract metadata from an XLSX document.
         
         Args:
             data: The binary data of the XLSX document.
@@ -193,13 +210,17 @@ class XLSXProcessor:
         try:
             return self._extract_metadata(data, options)
         except Exception as e:
-            logger.error(f"Error extracting metadata from XLSX: {e}")
+            self._logger.error(f"Error extracting metadata from XLSX: {e}")
             raise ValueError(f"Error extracting metadata from XLSX: {e}")
     
-    def extract_structure(self, data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Extract structural elements from an XLSX document.
-        
+    def extract_structure(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+        """Extract structural elements from an XLSX document. This includes:
+            - Computed fields
+            - Named ranges
+
+        NOTE: This does not include images. That has a separate dependency.
+        TODO: Other things can probably be added her as well.
+
         Args:
             data: The binary data of the XLSX document.
             options: Processing options.
@@ -213,32 +234,31 @@ class XLSXProcessor:
         try:
             return self._extract_structure(data, options)
         except Exception as e:
-            logger.error(f"Error extracting structure from XLSX: {e}")
+            self._logger.error(f"Error extracting structure from XLSX: {e}")
             raise ValueError(f"Error extracting structure from XLSX: {e}")
         
-    def extract_computed_fields(self, data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Extract computed fields from an XLSX document.
+    # def extract_computed_fields(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+    #     """Extract computed fields from an XLSX document.
         
-        Args:
-            data: The binary data of the XLSX document.
-            options: Processing options.
+    #     Args:
+    #         data: The binary data of the XLSX document.
+    #         options: Processing options.
             
-        Returns:
-            A list of dictionaries containing computed fields extracted from the XLSX document.
+    #     Returns:
+    #         A list of dictionaries containing computed fields extracted from the XLSX document.
             
-        Raises:
-            ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
-        """
-        try:
-            return self._extract_structure(data, options, include_computed_fields=True)
-        except Exception as e:
-            logger.error(f"Error extracting computed fields from XLSX: {e}")
-            raise ValueError(f"Error extracting computed fields from XLSX: {e}")
+    #     Raises:
+    #         ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
+    #     """
+    #     try:
+    #         return self._extract_structure(data, options, include_computed_fields=True)
+    #     except Exception as e:
+    #         self._logger.error(f"Error extracting computed fields from XLSX: {e}")
+    #         raise ValueError(f"Error extracting computed fields from XLSX: {e}")
 
-    def extract_images(self, data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Extract images from an XLSX document.
+    def extract_images(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+        """Extract images from an XLSX document.
+
         Args:
             data: The binary data of the XLSX document.
             options: Processing options.
@@ -251,10 +271,12 @@ class XLSXProcessor:
                 - summary: A brief summary of the image content.
                 - text: A list of text extracted from the image, if applicable.
         """
+        image_data: list[dict[str, Any]] = self._get_image_data(data)
+
         try:
-            return self._extract_images(data, options)
+            return self._extract_images(image_data, options)
         except Exception as e:
-            logger.error(f"Error extracting images from XLSX: {e}")
+            self._logger.error(f"Error extracting images from XLSX: {e}")
             raise ValueError(f"Error extracting images from XLSX: {e}")
 
     def process(self, data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
@@ -272,17 +294,27 @@ class XLSXProcessor:
             ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
         """
         try:
-            # Open the XLSX file
-            wb = self.open_xlsx_file(data)
+            # Format the XLSX file bytes into a format the dependency can directly use.
+            # Ex: openpyxl Workbook object if using the openpyxl library.
+            # NOTE This may return the original bytes if such a conversion is not necessary for the given dependency.
+            xlsx_object: DependencySpecificObject | bytes = self.format_data(data)
 
             # Extract text, metadata, and structure
-            metadata: dict[str, Any] = self.extract_metadata(wb, options)
-            text = self.extract_text(wb, options)
-            sections: list[dict[str, Any]] = self.extract_structure(wb, options)
+            metadata: dict[str, Any] = self.extract_metadata(xlsx_object, options)
+            text: str = self.extract_text(xlsx_object, options)
+            sections: list[dict[str, Any]] = self.extract_structure(xlsx_object, options)
 
             images = None
             if not isinstance(self._extract_images, MagicMock):
-                images = self.extract_images(wb, options)
+                try:
+                    images = self.extract_images(xlsx_object, options)
+                except Exception as e:
+                    # Try again if the dependency-specific object cannot be processed.
+                    try:
+                        images = self.extract_images(data, options)
+                    except Exception as e:
+                        self._logger.error(f"Error extracting images from XLSX: {e}")
+                        raise ValueError(f"Error extracting images from XLSX: {e}")
 
             # Create a human-readable text version
             text_content = [f"XLSX Document: {metadata.get('title', 'Untitled')}"]
@@ -315,6 +347,6 @@ class XLSXProcessor:
             return "\n".join(text_content), metadata, sections
 
         except Exception as e:
-            logger.error(f"Error processing XLSX document: {e}")
+            self._logger.error(f"Error processing XLSX document: {e}")
             raise ValueError(f"Error processing XLSX document: {e}")
 

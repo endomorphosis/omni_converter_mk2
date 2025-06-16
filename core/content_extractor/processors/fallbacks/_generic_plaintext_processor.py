@@ -73,12 +73,11 @@ def extract_sections(text: str) -> list[dict[str, Any]]:
         'content': text
     }]
 
-def process_plaintext(
-        file_content: Any, 
+def process(
+        data: bytes | str, 
         options: dict[str, Any]
         ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
-    """
-    Process a plain text file and extract content.
+    """Process a plaintext file and extract content.
     
     Args:
         file_content: The file content to process (text).
@@ -93,10 +92,10 @@ def process_plaintext(
         Exception: If an error occurs during processing.
     """
     # Get text content
-    if hasattr(file_content, 'get_as_text'):
-        text: str = file_content.get_as_text()
+    if hasattr(data, 'get_as_text'):
+        text: str = data.get_as_text()
     else:
-        text: str = extract_text(file_content)
+        text: str = extract_text(data)
 
     # Plain text is already in the desired format
     metadata = extract_metadata(text, options)

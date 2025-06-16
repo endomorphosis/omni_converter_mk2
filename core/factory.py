@@ -4,11 +4,13 @@ Factory module for creating ProcessingPipeline instances.
 This module provides the factory function for creating ProcessingPipeline instances
 following the IoC pattern.
 """
+import hashlib
+
 from configs import configs
 from logger import logger
 from file_format_detector import make_file_format_detector
 
-from types_ import Callable, Logger, TypedDict
+from types_ import Callable, Logger, TypedDict, ModuleType
 
 from ._processing_pipeline import ProcessingPipeline
 from ._pipeline_status import PipelineStatus
@@ -35,6 +37,7 @@ def make_processing_pipeline() -> ProcessingPipeline:
         processing_result: ProcessingResult
         pipeline_status: PipelineStatus
         logger: Logger
+        hashlib: ModuleType
 
     resources: _ProcessingPipelineResources = {
         "file_format_detector": make_file_format_detector(),
@@ -45,5 +48,6 @@ def make_processing_pipeline() -> ProcessingPipeline:
         "processing_result": ProcessingResult,
         "pipeline_status": PipelineStatus(),
         "logger": logger,
+        "hashlib": hashlib
     }
     return ProcessingPipeline(resources=resources, configs=configs)

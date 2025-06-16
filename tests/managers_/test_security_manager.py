@@ -26,7 +26,7 @@ from unittest.mock import MagicMock, patch
 import tempfile
 import shutil
 
-from core.content_extractor.content import Content
+from core.content_extractor._content import Content
 from monitors.security_monitor._security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
 from configs import configs
 

@@ -10,16 +10,11 @@ import json
 import tempfile
 import unittest
 from datetime import datetime
-from typing import Any, Optional, Tuple
-
-from monitors.security_monitor._security_monitor import security_monitor
-from file_validator.file_validator import FileValidator 
-from core._processing_pipeline import processing_pipeline
-from monitors.batch_processor import batch_processor
-
+from typing import Any
 
 
 from tests._fixtures import fixtures
+
 
 class SecurityEffectivenessTest(unittest.TestCase):
     """Test case for security effectiveness."""
@@ -36,7 +31,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         self.temp_output_dir = tempfile.mkdtemp()
         
         # Initialize validator
-        self.validator = FileValidator()
+        self.validator = fixtures['file_validator']()
         
         # Results will be stored here
         self.results = {
@@ -225,6 +220,7 @@ class SecurityEffectivenessTest(unittest.TestCase):
         if os.path.exists(file_path) and not file_data.get('is_sample', True):
             try:
                 # Check if file is safe using the security manager
+                security_monitor = fixtures['security_manager']
                 security_result = security_monitor.validate_security(file_path)
                 
                 # Determine if exploits were detected and prevented
@@ -241,6 +237,8 @@ class SecurityEffectivenessTest(unittest.TestCase):
                 
                 # Try to process the file and see if it fails securely
                 try:
+                    processing_pipeline = fixtures['processing_pipeline']
+
                     # Create output path
                     output_path = os.path.join(
                         self.temp_output_dir, 

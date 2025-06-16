@@ -5,9 +5,13 @@ class SupportedFormats:
     Attributes:
 
     """
-    def _make_set_from_set_dict(set_dict: dict[str, frozenset]) -> set[str]:
+
+    def _make_frozen_set_from_frozen_set_dict(set_dict: dict[str, frozenset]) -> frozenset[str]:
         """Convert a dictionary of sets into a single set containing all unique elements."""
-        return frozenset(set_ for set_ in set_dict.values())
+        frozenset_ = frozenset()
+        for set_ in set_dict.values():
+            frozenset_ = frozenset_.union(set_)
+        return frozenset_
 
     # Decorator to create class properties
     class _classproperty:
@@ -18,35 +22,40 @@ class SupportedFormats:
         def __get__(self, instance, owner):
             return self.func(owner)
 
+    @classmethod
+    def __contains__(cls, key):
+        """Check if a key is in the supported formats."""
+        return key in cls.SUPPORTED_FORMATS
+
     # Audio formats
     @_classproperty
-    def SUPPORTED_AUDIO_FORMATS(cls) -> set[str]:
+    def SUPPORTED_AUDIO_FORMATS(cls) -> frozenset[str]:
         """Set of supported audio formats."""
-        return cls._make_set_from_set_dict(cls.AUDIO_FORMAT_EXTENSIONS)
+        return cls._make_frozen_set_from_frozen_set_dict(cls.AUDIO_FORMAT_EXTENSIONS)
 
     # Application formats
     @_classproperty
-    def SUPPORTED_APPLICATION_FORMATS(cls) -> set[str]:
+    def SUPPORTED_APPLICATION_FORMATS(cls) -> frozenset[str]:
         """Set of supported application formats."""
-        return cls._make_set_from_set_dict(cls.APPLICATION_FORMAT_EXTENSIONS)
+        return cls._make_frozen_set_from_frozen_set_dict(cls.APPLICATION_FORMAT_EXTENSIONS)
 
     # Video formats
     @_classproperty
-    def SUPPORTED_VIDEO_FORMATS(cls) -> set[str]:
+    def SUPPORTED_VIDEO_FORMATS(cls) -> frozenset[str]:
         """Set of supported video formats."""
-        return cls._make_set_from_set_dict(cls.IMAGE_FORMAT_EXTENSIONS)
+        return cls._make_frozen_set_from_frozen_set_dict(cls.IMAGE_FORMAT_EXTENSIONS)
 
     # Image formats
     @_classproperty
-    def SUPPORTED_IMAGE_FORMATS(cls) -> set[str]:
+    def SUPPORTED_IMAGE_FORMATS(cls) -> frozenset[str]:
         """Set of supported image formats."""
-        return cls._make_set_from_set_dict(cls.IMAGE_FORMAT_EXTENSIONS)
+        return cls._make_frozen_set_from_frozen_set_dict(cls.IMAGE_FORMAT_EXTENSIONS)
  
     # Text formats
     @_classproperty
-    def SUPPORTED_TEXT_FORMATS(cls) -> set[str]:
+    def SUPPORTED_TEXT_FORMATS(cls) -> frozenset[str]:
         """Set of supported text formats."""
-        return cls._make_set_from_set_dict(cls.TEXT_FORMAT_EXTENSIONS)
+        return cls._make_frozen_set_from_frozen_set_dict(cls.TEXT_FORMAT_EXTENSIONS)
 
     @_classproperty
     def TEXT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
@@ -64,7 +73,7 @@ class SupportedFormats:
         return { # NOTE More will be added as more formats are implemented.
             "html": frozenset(("html", "htm", "xhtml", "xml")),
             "xml": frozenset(("xml",)),
-            "plain": frozenset(("txt", "text")),
+            "plain": frozenset(("txt", "text", "plain")),
             "calendar": frozenset(("ics", "ical")),
             "csv": frozenset(("csv",))
         }
@@ -133,6 +142,41 @@ class SupportedFormats:
             "svg": frozenset(("svg",))
         }
 
+    @_classproperty
+    def VECTOR_IMAGE_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """A dictionary mapping vector image format names to their supported file extensions.
+
+        Example:
+            >>> {
+            "svg": frozenset(("svg",)),
+            "eps": frozenset(("eps",)),
+            "ai": frozenset(("ai",))
+            }
+        """
+        return {
+            "svg": frozenset(("svg",)),
+            "eps": frozenset(("eps",)),
+            "ai": frozenset(("ai",))
+        }
+    @_classproperty
+    def RASTER_IMAGE_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """A dictionary mapping raster image format names to their supported file extensions.
+
+        Example:
+            >>> {
+            "jpeg": frozenset(("jpeg", "jpg")),
+            "png": frozenset(("png",)),
+            "gif": frozenset(("gif",)),
+            "webp": frozenset(("webp",))
+            }
+        """
+        return {
+            "jpeg": frozenset(("jpeg", "jpg")),
+            "png": frozenset(("png",)),
+            "gif": frozenset(("gif",)),
+            "webp": frozenset(("webp",))
+        }
+
     # Video formats
     @_classproperty
     def VIDEO_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
@@ -190,7 +234,17 @@ class SupportedFormats:
             "epub": frozenset(("epub",)),
             "mobi": frozenset(("mobi",))
         }
-    
+
+    @_classproperty
+    def SUPPORTED_HTML_FORMATS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """Set of supported HTML formats."""
+        return cls.TEXT_FORMAT_EXTENSIONS['html']
+
+    @_classproperty
+    def SUPPORTED_PLAINTEXT_FORMATS(cls) -> dict[str, frozenset[tuple[str]]]:
+        """Set of supported plaintext formats."""
+        return cls.TEXT_FORMAT_EXTENSIONS['plain']
+
     @_classproperty
     def DOCUMENT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping document format names to their supported file extensions.
@@ -219,7 +273,12 @@ class SupportedFormats:
                 "pdf", "json", "docx", "xlsx", "zip"
             }
         """
-        return cls._make_set_from_set_dict(cls.FORMAT_REGISTRY)
+        _supported_formats = set()
+        for _, frozenset_ in cls.FORMAT_REGISTRY.items():
+            mutable_set = set(frozenset_)  # Convert to a mutable set for updating
+            _supported_formats.update(mutable_set)
+
+        return cls._make_frozen_set_from_frozen_set_dict(cls.FORMAT_REGISTRY)
 
     @_classproperty
     def FORMAT_SIGNATURES(cls) -> dict[str, set[str]]:
@@ -348,8 +407,6 @@ class SupportedFormats:
             ".zip": "zip"
         }
 
-
-
     ###########################################################################
     #### Unimplemented formats from ROADMAP (MIME types not yet supported) ####
     ###########################################################################
@@ -452,7 +509,7 @@ class SupportedFormats:
             # Contact/Calendar formats
             "vcard", "x-vcalendar", "x-vcard",
             # Document/File formats
-            "pdf", "directory", "enriched", "prs.lines.tag",
+            "directory", "enriched", "prs.lines.tag",
             # Development/Patch formats
             "x-diff", "x-patch"
         }

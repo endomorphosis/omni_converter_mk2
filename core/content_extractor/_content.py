@@ -4,7 +4,6 @@ from typing import Any
 
 try:
     from pydantic import BaseModel, Field, FilePath
-    from pydantic.types import PastDatetime
 except ImportError:
     raise ImportError("Pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
@@ -26,7 +25,7 @@ class Content(BaseModel):
     sections: list[dict[str, Any]] = Field(default_factory=list)
     source_format: str = ""
     source_path: FilePath = ""
-    extraction_time: PastDatetime = Field(default_factory=datetime.now)
+    extraction_time: datetime = Field(default_factory=datetime.now)
 
     def to_dict(self) -> dict[str, Any]:
         """

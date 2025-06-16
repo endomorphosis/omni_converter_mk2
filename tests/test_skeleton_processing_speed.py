@@ -13,9 +13,9 @@ import unittest
 from datetime import datetime
 from typing import Any
 
-from core._processing_pipeline import processing_pipeline
 
 from tests._fixtures import fixtures
+
 
 class ProcessingSpeedTest(unittest.TestCase):
     """Test case for processing speed across different file types."""

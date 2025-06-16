@@ -44,6 +44,7 @@ class TextHandler:
         self._supported_formats: set = self.resources["supported_formats"]
         self._capabilities: dict = self.resources["capabilities"]
         self._logger: Logger = self.resources["logger"]
+        self._can_handle: Callable = self.resources["can_handle"]
 
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -56,19 +57,8 @@ class TextHandler:
         Returns:
             True if this handler can process the format, False otherwise.
         """
-        if format_name:
-            return format_name in self._supported_formats
-        
-        # If no format provided, check file extension
-        _, ext = self._splitext(file_path)
-        ext = ext.lower()
-        
-        for format_type, extensions in self._format_extensions.items():
-            if ext in extensions and format_type in self._supported_formats:
-                return True
+        return self._can_handle(self._supported_formats, self._format_extensions, file_path, format_name)
 
-        return False
-    
     def extract_content(self, file_path: str, format_name: str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """
         Extract content from a text file using the appropriate processor.

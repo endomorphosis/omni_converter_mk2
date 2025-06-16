@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field
 
 from configs import Configs
 from logger import logger
-from utils.llm.refactored_async_interface import AsyncLLMInterface
+from utils.llm._async_interface import AsyncLLMInterface
 from utils.llm.refactored_prompt_loader import load_prompt_by_name, PromptTemplate
-from utils.llm.factory import create_llm_interface
+from utils.llm.factory import make_llm_interface
 
 
 class LLMOptions(BaseModel):
@@ -33,7 +33,6 @@ class LLMOptions(BaseModel):
     model: Optional[str] = None
     summarize: bool = False
     extract_metadata: bool = False
-    analyze_sentiment: bool = False
     summary_max_length: Optional[int] = None
     summary_format: Optional[str] = None
     prompt_name: Optional[str] = None
@@ -61,7 +60,6 @@ class LLMProcessor:
     """
     Processor for enhancing document processing with language models.
     """
-    
     def __init__(
         self,
         resources: dict[str, Any] = None,
@@ -78,40 +76,14 @@ class LLMProcessor:
         self.configs = configs
         
         # Extract required resources
-        self._extract_resources()
+        self.llm_interface = self.resources["llm_interface"]
+        self.async_llm_interface = self.resources["async_llm_interface"]
         
         # Initialize configuration
-        self._initialize_configs()
-        
+        self.default_model = self.configs["model"]
+        self.prompts_dir = self.configs["prompts_dir"]
+
         logger.info("Initialized LLMProcessor")
-    
-    def _extract_resources(self) -> None:
-        """
-        Extract required resources from the resources dictionary.
-        Follows fail-fast approach for missing dependencies.
-        """
-        # LLM interface for text generation
-        self.llm_interface = self.resources.get("llm_interface")
-        if not self.llm_interface:
-            # Try to create the interface if not provided
-            api_key = self.configs.get("api_key") or os.environ.get("OPENAI_API_KEY")
-            self.llm_interface = create_llm_interface(configs=self.configs, api_key=api_key)
-            
-            if not self.llm_interface:
-                logger.warning("LLM interface not available. LLM processing will be disabled.")
-    
-    def _initialize_configs(self) -> None:
-        """
-        Initialize configuration parameters with defaults.
-        """
-        # Default model to use
-        self.default_model = self.configs.get("model", "gpt-3.5-turbo")
-        
-        # Prompts directory
-        self.prompts_dir = self.configs.get("prompts_dir")
-        
-        # Whether LLM processing is enabled
-        self.is_enabled = self.llm_interface is not None
     
     def process_content(
         self,
@@ -128,10 +100,6 @@ class LLMProcessor:
         Returns:
             LLMResult containing processing results
         """
-        if not self.is_enabled:
-            logger.warning("LLM processing is disabled. Returning empty result.")
-            return LLMResult()
-        
         # Convert options to LLMOptions if needed
         if isinstance(options, dict):
             options = LLMOptions(**options)
@@ -171,11 +139,7 @@ class LLMProcessor:
         # Extract metadata if requested
         if options.extract_metadata:
             tasks.append(self._extract_metadata(content, options, model, result))
-        
-        # Analyze sentiment if requested
-        if options.analyze_sentiment:
-            tasks.append(self._analyze_sentiment(content, options, model, result))
-        
+
         # Wait for all tasks to complete
         if tasks:
             await asyncio.gather(*tasks)
@@ -252,6 +216,46 @@ class LLMProcessor:
             logger.error(f"Error generating summary: {e}")
             result.raw_responses["summary_error"] = str(e)
     
+    async def _generate_image_description(
+        self,
+        content: bytes,
+        options: LLMOptions,
+        model: str,
+        result: LLMResult
+    ):
+        """
+        Generate a summary of an image using VLLM.
+        
+        Args:
+            content (bytes): Image data in bytes.
+            options: Processing options
+            model: Model to use for generation
+            result: Result object to update
+        """
+        logger.debug("Generating image summary with LLM")
+        
+        # TODO Implement image summary generation logic here
+        pass
+
+    async def _ocr_with_vllm(
+        self,
+        content: bytes,
+        options: LLMOptions,
+        model: str,
+        result: LLMResult
+    ):
+        """Extract text from an image using a VLLM.
+
+        Args:
+            content: Image content to summarize
+            options: Processing options
+            model: Model to use for generation
+            result: Result object to update
+        """
+        logger.debug("Generating image summary with LLM")
+        # TODO Implement image summary generation logic here
+        pass
+
     async def _extract_metadata(
         self,
         content: str,
@@ -390,18 +394,3 @@ class LLMProcessor:
             result.raw_responses["sentiment_error"] = str(e)
 
 
-def create_llm_processor(
-    resources: dict[str, Any],
-    configs: Optional[dict[str, Any]] = None
-) -> LLMProcessor:
-    """
-    Factory function to create an LLMProcessor instance.
-    
-    Args:
-        resources: Dictionary of resources for dependency injection
-        configs: Configuration parameters
-        
-    Returns:
-        Configured LLMProcessor instance
-    """
-    return LLMProcessor(resources=resources, configs=configs)

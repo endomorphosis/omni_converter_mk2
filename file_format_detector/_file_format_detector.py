@@ -4,9 +4,6 @@ Format detection module for the Omni-Converter.
 This module provides functionality for detecting the format of files using dependency injection
 and following the IoC pattern established in CLAUDE.md.
 """
-import os
-
-
 from types_ import Any, Callable, Configs, Logger, Optional
 
 
@@ -75,6 +72,7 @@ class FileFormatDetector:
         self._format_signatures: dict[str, str] = self.resources['format_signatures']
         self._format_extensions: dict[str, str] = self.resources['format_extensions']
         self._logger: Logger = self.resources['logger']
+        self._abspath: Callable = self.resources['abspath']
 
 
     def detect_format(self, file_path: str) -> tuple[Optional[str], Optional[str]]:
@@ -94,7 +92,7 @@ class FileFormatDetector:
             PermissionError: If the file cannot be read.
         """
         # Get file information using absolute path
-        file_path = os.path.abspath(file_path)
+        file_path = self._abspath(file_path)
         file_info = self._get_file_info(file_path)
 
         format_name = None
@@ -105,10 +103,8 @@ class FileFormatDetector:
 
         # Find the category for this format
         category = None
-        for registry_category, formats in self._format_registry.items():
-            if format_name in formats:
-                category = registry_category
-        
+        category = self._get_category_for_format(format_name)
+
         # If the category is not found, this is an unsupported format
         if category is None:
             self._logger.warning(f"Format '{format_name}' is not in any supported category for file: {file_path}")
@@ -117,6 +113,22 @@ class FileFormatDetector:
         self._logger.debug(f"Detected format '{format_name}' in category '{category}' for file: {file_path}")
         return format_name, category
 
+    @staticmethod
+    def _concatenate_frozensets_into_list(formats: list[frozenset[str]]) -> set[str]:
+        """
+        Convert a list of frozensets into a single set.
+        
+        Args:
+            list_of_frozen_sets: List of frozensets to convert.
+            
+        Returns:
+            A single set containing all elements from the frozensets.
+        """
+        format_set = []
+        list_of_lists = [list(x) for x in formats]
+        for format_list in list_of_lists:
+            format_set.extend(format_list)
+        return set(format_set)
 
     @property
     def supported_formats(self) -> dict[str, set[str]]:
@@ -148,8 +160,7 @@ class FileFormatDetector:
 
 
     def _get_category_for_format(self, format_name: str) -> Optional[str]:
-        """
-        Get the category for a format using injected format registry.
+        """Get the category for a format using injected format registry.
         
         Args:
             format_name: The format name.
@@ -158,6 +169,7 @@ class FileFormatDetector:
             The category if found, None otherwise.
         """
         for category, formats in self._format_registry.items():
+            self._logger.debug(f"Format set: {formats}")
             if format_name in formats:
                 return category
         return None
@@ -187,5 +199,4 @@ class FileFormatDetector:
             The category if the format is supported, None otherwise.
         """
         return self._get_category_for_format(format_name)
-
 

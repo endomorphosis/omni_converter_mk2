@@ -24,7 +24,7 @@ class ErrorMonitor:
         suppress_errors (bool): Whether to suppress errors.
     """
     
-    def __init__(self, custom_logger=None, suppress_errors: bool = False):
+    def __init__(self, resources=None, configs=None) -> None:
         """
         Initialize an error handler.
         
@@ -32,10 +32,10 @@ class ErrorMonitor:
             custom_logger: Custom logger to use. If None, the global logger will be used.
             suppress_errors: Whether to suppress errors.
         """
-        self.logger = custom_logger or logger
+        self.logger = resources["logger"] 
         self.error_counters: dict[str, int] = {}
         self.error_types: set[str] = set()
-        self.suppress_errors = suppress_errors
+        self.suppress_errors = True # TODO Add this to configs.py
     
     def handle_error(self, error: Union[Exception, str], context: Optional[dict[str, Any]] = None) -> None:
         """

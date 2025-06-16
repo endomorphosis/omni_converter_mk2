@@ -1,40 +1,21 @@
+
+from __future__ import annotations
 from contextlib import contextmanager
 import importlib
+from io import BytesIO
 import os
 from typing import Any, TypeVar, TypedDict
 from unittest.mock import MagicMock
-
-
 
 from core.content_extractor._content_extractor_constants import Constants
 from supported_formats import SupportedFormats
 from external_programs import ExternalPrograms
 from logger import logger
 
-from types_ import Callable, Configs, Logger, ModuleType
 
+from types_ import Any, TypeVar, TypedDict, Callable, Configs, Logger, ModuleType, Union, Processor, Optional
 
-Processor = TypeVar('Processor')
-
-class _ProcessorConstructionError(Exception):
-    """Custom exception for processor construction errors."""
-    pass
-
-@contextmanager
-def _try_except_processor_construction_error():
-    """
-    Context manager to handle exceptions.
-    Because screw adding try/except blocks everywhere.
-    
-    Yields:
-        None
-    """
-    try:
-        yield
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise _ProcessorConstructionError(f"Failed to construct processor occurred: {e}") from e
+from .fallbacks.fallback_processor import FallbackProcessor
 
 
 def _snake_to_pascal_case(name: str) -> str:
@@ -73,26 +54,70 @@ def _get_processor_names() -> set[str]:
     )
     return output_set
 
+# class _MakeProcessor:
+
+#     def __init__(
+#         self,
+#         processor: str = None,
+#         resources: dict[str, Callable] = None,
+#         dependencies: dict[str, ModuleType] = None,
+#         supported_formats: set[str] = None,
+#         critical_resources: list[str] = None,
+#         optional_resources: list[str] = None,
+#         logger: Optional[Logger] = None,
+#         configs: Configs = None,
+#     ) -> None:
+#         self.processor = processor
+#         self.resources = resources
+#         self.dependencies = dependencies
+#         self.supported_formats = supported_formats
+#         self.critical_resources = critical_resources
+#         self.optional_resources = optional_resources
+#         self.logger = logger
+#         self.configs = configs
+
+#         self.by_ability_dir = 'core.content_extractor.processors.by_ability'
+#         self.by_mime_type_dir = 'core.content_extractor.processors.by_mime_type'
+#         self.dependency_folder = 'core.content_extractor.processors.by_dependency'
+#         self.fallbacks_dir = 'core.content_extractor.processors.fallbacks'
+
+#     def make(self):
+#         processor_module: ModuleType | str = None
+#         methods: dict[str, Callable] = {}
+
+
+
 def _make_processor(
     processor: str = None,
-    resources: dict[str, Any] = None,
+    resources: dict[str, Callable] = None,
     dependencies: dict[str, ModuleType] = None,
     supported_formats: set[str] = None,
     critical_resources: list[str] = None,
-    logger: Logger = None,
-    configs: 'Configs' = None,
+    optional_resources: list[str] = None,
+    logger: Optional[Logger] = None,
+    configs: Configs = None,
 ) -> Processor | MagicMock:
     """
     Factory function to create processors en-masse.
-    
+
+    Args:
+        processor: The name of the processor to create.
+        resources: Dictionary of callables.
+        dependencies: Class of cached dependencies.
+        supported_formats: Set of formats supported by this processor.
+        critical_resources: List of critical resources required by the processor.
+        optional_resources: List of optional resources for the processor.
+        logger: Logger instance.
+        configs: Pydantic BaseModel of external configurations.
+
     Returns:
-        An instance of XlsxProcessor, or a MagicMock if the processor is not available.
+        An instance of processor, or a MagicMock if the processor is not available.
     """
-    by_ability_folder = 'core.content_extractor.processors.by_ability'
-    by_mime_type_folder = 'core.content_extractor.processors.by_mime_type'
+    by_ability_dir = 'core.content_extractor.processors.by_ability'
+    by_mime_type_dir = 'core.content_extractor.processors.by_mime_type'
     dependency_folder = 'core.content_extractor.processors.by_dependency'
-    fallbacks_folder = 'core.content_extractor.processors.fallbacks'
-    processor_module = None
+    fallbacks_dir = 'core.content_extractor.processors.fallbacks'
+    processor_module: ModuleType | str = None
 
     resources = {
         "supported_formats": supported_formats,
@@ -102,6 +127,7 @@ def _make_processor(
     methods: dict[str, Callable] = {}
     if logger is None:
         from logger import logger
+    resources["logger"] = logger
 
     # Add critical resource names as keys to the resources dictionary.
     for func in critical_resources:
@@ -109,7 +135,7 @@ def _make_processor(
             methods[func] = None
 
     # Import the processor module dynamically based on the processor name.
-    for folder in [by_ability_folder, by_mime_type_folder]:
+    for folder in [by_ability_dir, by_mime_type_dir]:
         try:
             processor_string = f'{folder}.{processor}'
             logger.debug(f"Trying to import processor module: {processor_string}")
@@ -119,13 +145,14 @@ def _make_processor(
         except ImportError:
             continue
     else:
-        raise ImportError(f"Processor '{processor}' not found in any of the processor directories.")
+        processor_module = processor
+        return _mock_processor(processor_module, methods)
 
     # Cycle through available dependencies until we have all the methods we need.
     # First come, first served.
     # We do this for a variety of reasons, such as:
     # - Some dependencies only provide certain methods. For example, PIL does not have text processing methods.
-    # - Some dependencies may not be available or corrupted (e.g., OpenAI API).
+    # - Some dependencies may not be available, corrupted, or out-of-date (e.g., OpenAI API).
     # - Some dependencies may possess more desirable characteristics than others, such as resource use, size, and complexity.
 
     for name, dependency in dependencies.items():
@@ -180,12 +207,13 @@ def _mock_processor(processor: ModuleType, methods: dict[str, Callable]) -> Magi
 
     processor_methods: dict[str, Callable] = {}
 
-    # Get the function signatures of the processor methods
-    processor_methods = inspect.getmembers(processor, predicate=inspect.isfunction)
-    processor_async_methods = inspect.getmembers(processor, predicate=inspect.iscoroutinefunction)
-    processor_methods = {name: func for name, func in processor_methods if name in methods}
-    processor_async_methods = {name: func for name, func in processor_async_methods if name in methods}
-    processor_methods.update(processor_async_methods)
+    if processor is not None:
+        # Get the function signatures of the processor methods
+        processor_methods = inspect.getmembers(processor, predicate=inspect.isfunction)
+        processor_async_methods = inspect.getmembers(processor, predicate=inspect.iscoroutinefunction)
+        processor_methods = {name: func for name, func in processor_methods if name in methods}
+        processor_async_methods = {name: func for name, func in processor_async_methods if name in methods}
+        processor_methods.update(processor_async_methods)
 
     mock_map = { # TODO Make this dynamic based on all unique methods in the processor.
         "extract_text": "Mocked text content",
@@ -200,8 +228,9 @@ def _mock_processor(processor: ModuleType, methods: dict[str, Callable]) -> Magi
         "extract_features": "Mocked features",
         "open_xlsx_file": "Mocked xlsx file content",
     }
+    processor_name = processor if isinstance(processor, str) else processor.__name__
 
-    logger.warning(f"'{processor}' processor not available, returning mock instead.")
+    logger.warning(f"'{processor_name}' processor not available, returning mock instead.")
     try:
         mock_processor = MagicMock(spec=processor)
     except Exception as e:
@@ -210,6 +239,15 @@ def _mock_processor(processor: ModuleType, methods: dict[str, Callable]) -> Magi
 
     # Mock the processor methods.
     for method_name in methods.keys():
+        # Heuristic approach based on method name
+        if method_name not in mock_map:
+            if "process" in method_name:
+                mock_map[method_name] = "Mocked process result"
+            elif "extract" in method_name:
+                mock_map[method_name] = "Mocked extract result"
+            elif "open" in method_name:
+                mock_map[method_name] = "Mocked open result"
+
         if isinstance(method_name, str) and method_name in mock_map:
             mock_method = MagicMock(return_value=mock_map[method_name])
             setattr(mock_processor, method_name, mock_method)
@@ -226,13 +264,53 @@ def _mock_processor(processor: ModuleType, methods: dict[str, Callable]) -> Magi
     return mock_processor
 
 
-def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration logic of this class.
+
+def _mock_callable(mock_obj: MagicMock, name: str):
+    """
+    Create a mock callable object and dynamically set its return value.
+    
+    Returns:
+        A MagicMock object that can be called like a function.
+    """
+    mock_map = { # TODO Make this dynamic based on all unique methods in the processor.
+        "extract_text": "Mocked text content",
+        "extract_metadata": {"mocked": "metadata"},
+        "extract_structure": [{"mocked": "structure"}],
+        "get_version": "1.0.0",
+        "can_process": False,
+        "process": ("Mocked process result", {"mocked": "metadata"}, [{"mocked": "structure"}]),
+        "open_file": BytesIO(b'Mocked binary data'),
+        "extract_images": "Mocked image content",
+        "extract_frames": "Mocked frame content",
+        "process_video_frames": "Mocked video frame content",
+        "extract_features": "Mocked features",
+        "open_xlsx_file": BytesIO(b'Mocked xlsx data'),
+    }
+    if name not in mock_map:
+        if "process" in name:
+            mock_map[name] = "Mocked process result"
+        elif "extract" in name:
+            mock_map[name] = "Mocked extract result"
+        elif "open" in name:
+            mock_map[name] = mock_map["open_file"]
+
+    mock_callable_return = MagicMock(return_value=mock_map[name])
+    setattr(mock_obj, name, mock_callable_return)
+    return mock_obj
+
+
+class ProcessorResources(TypedDict):
+    supported_formats: set[str]
+    processor_name: str
+    dependencies: dict[str, Any]
+    critical_resources: list[str]
+    optional_resources: list[str] | None
+
+
+def make_processors() -> dict[str, Processor]: # TODO Figure out the orchestration logic of this class.
     """
     Initialize processor dependencies for handlers.
 
-    Args:
-        resources: Resources dictionary with dependencies.
-        
     Returns:
         Dictionary of processor instances.
     """
@@ -241,15 +319,11 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
     processors: dict[str, Processor] = {}
 
     # === Ability Processors ===
+    # These processors are composite processors that are not specific to a MIME type or file format.
+    # Instead, they are based on specific abilities or functionalities, such as OCR, Transcription, etc.
     from configs import configs
     from logger import logger
     from dependencies import dependencies
-
-    class ProcessorResources(TypedDict):
-        supported_formats: set[str]
-        processor_name: str
-        dependencies: dict[str, bool]
-        critical_resources: list[str]
 
     text_resources: ProcessorResources = {
         "supported_formats": SupportedFormats.SUPPORTED_TEXT_FORMATS,
@@ -268,6 +342,7 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
         "dependencies": {
             "pil": dependencies.pil,
             "openai": dependencies.openai,
+            "anthropics": dependencies.anthropic,
             "pytesseract": dependencies.pytesseract,
         },
         "critical_resources": [
@@ -275,7 +350,23 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
             "get_version", "open_file"
         ],
     }
-    video_resources = {
+    audio_resources: ProcessorResources = {
+        "supported_formats": SupportedFormats.SUPPORTED_AUDIO_FORMATS,
+        "processor_name": 'audio_processor',
+        "dependencies": {
+            "pydub": dependencies.pydub,
+            "openai": dependencies.openai,
+            "whisper": dependencies.whisper,
+            # "pyaudio": Constants.PYAUDIO_AVAILABLE,
+            # "speech_recognition": Constants.SPEECH_RECOGNITION_AVAILABLE,
+            # "generic_audio": Constants.GENERIC_AUDIO_PROCESSOR_AVAILABLE,
+        },
+        "critical_resources": [
+            "extract_text", "extract_metadata", "extract_structure",
+            "get_version", "open_file"
+        ],
+    }
+    video_resources: ProcessorResources = {
         "supported_formats": SupportedFormats.SUPPORTED_VIDEO_FORMATS,
         "processor_name": 'video_processor',
         "dependencies": {
@@ -289,6 +380,7 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
             "process_video_frames", "get_version", "open_file"
         ],
     }
+    # Ex: Microsoft document formats docx, doc
     document_resources: ProcessorResources = {
         "supported_formats": SupportedFormats.DOCUMENT_FORMAT_EXTENSIONS,
         "processor_name": 'document_processor',
@@ -302,6 +394,8 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
             "get_version", "open_file"
         ],
     }
+    # Ex: ebook formats like epub, mobi, azw3, etc.
+    # NOTE Does not include PDF, DOCX, or other document formats.
     ebook_resources: ProcessorResources = {
         "supported_formats": SupportedFormats.EBOOK_FORMAT_EXTENSIONS,
         "processor_name": 'ebook_processor',
@@ -318,8 +412,68 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
         ],
     }
 
+    html_resources: ProcessorResources = {
+        "supported_formats": SupportedFormats.SUPPORTED_HTML_FORMATS,
+        "processor_name": 'html_processor',
+        "dependencies": {
+            "bs4": dependencies.bs4,
+            "generic_html": Constants.GENERIC_HTML_PROCESSOR_AVAILABLE,
+        },
+        "critical_resources": [
+            "process_html", "get_version"
+        ],
+    }
+    plaintext_resources: ProcessorResources = {
+        "supported_formats": SupportedFormats.SUPPORTED_PLAINTEXT_FORMATS,
+        "processor_name": 'plaintext_processor',
+        "dependencies": {
+            "generic_text": FallbackProcessor,
+        },
+    }
+
+    only_mocks: ProcessorResources = {
+        "supported_formats": SupportedFormats.SUPPORTED_FORMATS,
+        "processor_name": 'only_mocks',
+        "dependencies": {
+            "mock": True,
+        },
+        "critical_resources": [
+            "extract_text", "extract_metadata", "extract_structure",
+            "get_version", "open_file"
+        ],
+    }
+    # TODO Undo these mocks when the processors are implemented.
+    transcription_resources = only_mocks.copy()
+    transcription_resources["processor_name"] = 'transcription_processor'
+    svg_resources = only_mocks.copy()
+    svg_resources["processor_name"] = 'svg_processor'
+    xml_resources = only_mocks.copy()
+    xml_resources["processor_name"] = 'xml_processor'
+    calendar_resources = only_mocks.copy()
+    calendar_resources["processor_name"] = 'calendar_processor'
+    csv_resources = only_mocks.copy()
+    csv_resources["processor_name"] = 'csv_processor'
+    plaintext_resources = only_mocks.copy()
+    plaintext_resources["processor_name"] = 'plaintext_processor'
+    pdf_resources = only_mocks.copy()
+    pdf_resources["processor_name"] = 'pdf_processor'
+    json_processor_resources = only_mocks.copy()
+    json_processor_resources["processor_name"] = 'json_processor'
+    docx_processor_resources = only_mocks.copy()
+    docx_processor_resources["processor_name"] = 'docx_processor'
+    zip_processor_resources = only_mocks.copy()
+    zip_processor_resources["processor_name"] = 'zip_processor'
+    raster_image_resources = only_mocks.copy()
+    raster_image_resources["processor_name"] = 'raster_image_processor'
+    vector_image_resources = only_mocks.copy()
+    vector_image_resources["processor_name"] = 'vector_image_processor'
+
     resource_list = [
-        image_resources, ebook_resources
+        image_resources, audio_resources, text_resources, video_resources,
+        html_resources, xml_resources, calendar_resources, csv_resources, plaintext_resources,
+        ebook_resources, transcription_resources, svg_resources, pdf_resources,
+        json_processor_resources, docx_processor_resources, zip_processor_resources,
+        raster_image_resources, vector_image_resources
     ]
 
     for resources in resource_list:
@@ -330,6 +484,31 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
                     dependencies=resources["dependencies"],
                     supported_formats=resources["supported_formats"],
                     critical_resources=resources["critical_resources"],
+                    optional_resources=resources.get("optional_resources", None),
+                    configs=configs,
+                    logger=logger,
+                )
+            }
+        except Exception as e:
+            continue
+            #raise RuntimeError(f"Error making processor: {e}") from e
+        processors.update(temp_dict)
+
+    # === MIME-Type Specific Processors ===
+    # These processors are specific to MIME types or file formats.
+    # They can use ability processors to augment their functionality.
+    # However, these are optional and not required for basic functionality.
+
+
+    for resources in resource_list:
+        try:
+            temp_dict = {
+                resources["processor_name"]: _make_processor(
+                    processor=resources["processor_name"],
+                    dependencies=resources["dependencies"],
+                    supported_formats=resources["supported_formats"],
+                    critical_resources=resources["critical_resources"],
+                    optional_resources=resources.get("optional_resources", None),
                     configs=configs,
                     logger=logger,
                 )
@@ -337,6 +516,10 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
         except Exception as e:
             continue
         processors.update(temp_dict)
+
+    # === Mocked Processors ===
+    # These processors are used for testing and development purposes.
+    # Since they lack implementations, we intentionally mock them to prevent errors.
 
     # Image processor (ability)
     if Constants.IMAGE_PROCESSOR_AVAILABLE:
@@ -406,7 +589,7 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
         )
 
 
-    # === MIME-Type Specific Processors ===
+
     
     # XLSX processor (MIME-type specific)
     if Constants.XLSX_PROCESSOR_AVAILABLE:
@@ -456,116 +639,97 @@ def make_processors() -> dict[str, Any]: # TODO Figure out the orchestration log
     # === Text Processors ===
     
     # HTML processor
-    if Constants.HTML_PROCESSOR_AVAILABLE:
-        html_resources = {
-            "supported_formats": SupportedFormats.SUPPORTED_HTML_FORMATS,
-            "processor_name": 'html_processor',
-            "dependencies": {
-                "bs4": Constants.BS4_AVAILABLE,
-                "generic_html": Constants.GENERIC_HTML_PROCESSOR_AVAILABLE,
-            },
-            "critical_resources": [
-                "process_html", "get_version"
-            ],
-        }
-        processors["html_processor"] = _make_processor(
-            processor=html_resources["processor_name"],
-            dependencies=html_resources["dependencies"],
-            supported_formats=html_resources["supported_formats"],
-            critical_resources=html_resources["critical_resources"],
-            configs=configs,
-        )
-    
+
     # XML processor
-    if Constants.XML_PROCESSOR_AVAILABLE:
-        xml_resources = {
-            "supported_formats": SupportedFormats.SUPPORTED_XML_FORMATS_SET,
-            "processor_name": 'xml_processor',
-            "dependencies": {
-                "lxml": Constants.LXML_AVAILABLE,
-            },
-            "critical_resources": [
-                "process_xml", "get_version"
-            ],
-        }
-        processors["xml_processor"] = _make_processor(
-            processor=xml_resources["processor_name"],
-            dependencies=xml_resources["dependencies"],
-            supported_formats=xml_resources["supported_formats"],
-            critical_resources=xml_resources["critical_resources"],
-            configs=configs,
-        )
+    # if Constants.XML_PROCESSOR_AVAILABLE:
+    #     xml_resources = {
+    #         "supported_formats": SupportedFormats.SUPPORTED_XML_FORMATS_SET,
+    #         "processor_name": 'xml_processor',
+    #         "dependencies": {
+    #             "lxml": Constants.LXML_AVAILABLE,
+    #         },
+    #         "critical_resources": [
+    #             "process_xml", "get_version"
+    #         ],
+    #     }
+    #     processors["xml_processor"] = _make_processor(
+    #         processor=xml_resources["processor_name"],
+    #         dependencies=xml_resources["dependencies"],
+    #         supported_formats=xml_resources["supported_formats"],
+    #         critical_resources=xml_resources["critical_resources"],
+    #         configs=configs,
+    #     )
     
     # Calendar processor
-    if Constants.CALENDAR_PROCESSOR_AVAILABLE:
-        calendar_resources = {
-            "supported_formats": Constants.SUPPORTED_CALENDAR_FORMATS_SET,
-            "processor_name": 'calendar_processor',
-            "dependencies": {
-                "icalendar": Constants.ICALENDAR_AVAILABLE,
-            },
-            "critical_resources": [
-                "process_calendar", "get_version"
-            ],
-        }
-        processors["calendar_processor"] = _make_processor(
-            processor=calendar_resources["processor_name"],
-            dependencies=calendar_resources["dependencies"],
-            supported_formats=calendar_resources["supported_formats"],
-            critical_resources=calendar_resources["critical_resources"],
-            configs=configs,
-        )
+    # if Constants.CALENDAR_PROCESSOR_AVAILABLE:
+    #     calendar_resources = {
+    #         "supported_formats": Constants.SUPPORTED_CALENDAR_FORMATS_SET,
+    #         "processor_name": 'calendar_processor',
+    #         "dependencies": {
+    #             "icalendar": Constants.ICALENDAR_AVAILABLE,
+    #         },
+    #         "critical_resources": [
+    #             "process_calendar", "get_version"
+    #         ],
+    #     }
+    #     processors["calendar_processor"] = _make_processor(
+    #         processor=calendar_resources["processor_name"],
+    #         dependencies=calendar_resources["dependencies"],
+    #         supported_formats=calendar_resources["supported_formats"],
+    #         critical_resources=calendar_resources["critical_resources"],
+    #         configs=configs,
+    #     )
     
     # CSV processor
-    if Constants.CSV_PROCESSOR_AVAILABLE:
-        csv_resources = {
-            "supported_formats": Constants.SUPPORTED_CSV_FORMATS_SET,
-            "processor_name": 'csv_processor',
-            "dependencies": {
-                "pandas": Constants.PANDAS_AVAILABLE,
-            },
-            "critical_resources": [
-                "process_csv", "get_version"
-            ],
-        }
-        processors["csv_processor"] = _make_processor(
-            processor=csv_resources["processor_name"],
-            dependencies=csv_resources["dependencies"],
-            supported_formats=csv_resources["supported_formats"],
-            critical_resources=csv_resources["critical_resources"],
-            configs=configs,
-        )
+    # if Constants.CSV_PROCESSOR_AVAILABLE:
+    #     csv_resources = {
+    #         "supported_formats": Constants.SUPPORTED_CSV_FORMATS_SET,
+    #         "processor_name": 'csv_processor',
+    #         "dependencies": {
+    #             "pandas": Constants.PANDAS_AVAILABLE,
+    #         },
+    #         "critical_resources": [
+    #             "process_csv", "get_version"
+    #         ],
+    #     }
+    #     processors["csv_processor"] = _make_processor(
+    #         processor=csv_resources["processor_name"],
+    #         dependencies=csv_resources["dependencies"],
+    #         supported_formats=csv_resources["supported_formats"],
+    #         critical_resources=csv_resources["critical_resources"],
+    #         configs=configs,
+    #     )
 
     # === Application Processors ===
 
     # PDF processor
-    processors["pdf_processor"] = _make_processor(
-        processor="pdf_processor",
-        resources={},
-        dependencies={
-            "pypdf2": Constants.PYPDF2_AVAILABLE,
-        },
-        supported_formats={"pdf"},
-        critical_resources=[
-            "extract_text", "extract_metadata", "extract_structure", 
-            "get_version"
-        ],
-        configs=configs,
-    )
+    # processors["pdf_processor"] = _make_processor(
+    #     processor="pdf_processor",
+    #     resources={},
+    #     dependencies={
+    #         "pypdf2": Constants.PYPDF2_AVAILABLE,
+    #     },
+    #     supported_formats={"pdf"},
+    #     critical_resources=[
+    #         "extract_text", "extract_metadata", "extract_structure", 
+    #         "get_version"
+    #     ],
+    #     configs=configs,
+    # )
 
     # DOCX processor
-    processors["docx_processor"] = _make_processor(
-        processor="docx_processor",
-        resources={},
-        dependencies={
-            "python_docx": Constants.PYTHON_DOCX_AVAILABLE,
-        },
-        supported_formats={"docx"},
-        critical_resources=[
-            "extract_text", "extract_metadata", "extract_structure", 
-            "get_version"
-        ],
-        configs=configs,
-    )
+    # processors["docx_processor"] = _make_processor(
+    #     processor="docx_processor",
+    #     resources={},
+    #     dependencies={
+    #         "python_docx": Constants.PYTHON_DOCX_AVAILABLE,
+    #     },
+    #     supported_formats={"docx"},
+    #     critical_resources=[
+    #         "extract_text", "extract_metadata", "extract_structure", 
+    #         "get_version"
+    #     ],
+    #     configs=configs,
+    # )
 
     return processors

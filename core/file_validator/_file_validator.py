@@ -95,6 +95,7 @@ class FileValidator:
                 result.add_context('category', category)
             else:
                 # Check if provided format is supported
+                # TODO This is redundant as we already checked for this in in the detector.
                 category = self._format_detector.get_format_category(format_name)
                 if not category:
                     result.add_error(f"Format '{format_name}' is not supported")

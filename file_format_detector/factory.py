@@ -1,3 +1,5 @@
+import os
+
 from configs import configs
 from logger import logger
 from supported_formats import SupportedFormats
@@ -13,6 +15,7 @@ def make_file_format_detector():
         An instance of FileFormatDetector with all required dependencies injected.
     """
     resources = {
+        'abspath': os.path.abspath,
         'get_file_info': FileSystem.get_file_info,
         'format_registry': SupportedFormats.FORMAT_REGISTRY, # -> dict[str, set[str]]
         'format_signatures': SupportedFormats.FORMAT_SIGNATURES,

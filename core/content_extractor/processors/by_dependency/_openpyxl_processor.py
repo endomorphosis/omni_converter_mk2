@@ -4,12 +4,14 @@ XLSX processor implementation using openpyxl.
 This module provides a concrete implementation of DocumentProcessor for XLSX files
 using the openpyxl library.
 """
-import io
-from typing import Any, Callable, Optional, BinaryIO
+from __future__ import annotations
 from datetime import datetime
+import io
 
-from logger import logger
+
 from dependencies import dependencies
+from types_ import Any, Callable, Configs, Logger, Content, Processor, Optional, DependencySpecificObject
+
 
 # #### Pictures
 # - Image: Chart1.png
@@ -19,7 +21,10 @@ from dependencies import dependencies
 # - Text: "Sales Growth by Quarter", "Q1", "Q2", "Q3", "Q4", "2023", "Sales Growth", "Revenue", "125,000", "132,000", "145,000", "158,000", "Growth", "5.2%", "8.1%", "12.3%", "15.8%"
 # ```
 
-def open_xlsx_file(data: bytes) -> Optional[BinaryIO]:
+def format_data(data: bytes) -> DependencySpecificObject:
+    """Turn bytes data into an openpyxl Workbook object.
+    
+    """
     # Create a file-like object from the bytes
     xlsx_file = io.BytesIO(data)
 
@@ -29,7 +34,7 @@ def open_xlsx_file(data: bytes) -> Optional[BinaryIO]:
     return wb
 
 
-def extract_text(data: bytes, options: dict[str, Any]) -> str:
+def extract_text(data: DependencySpecificObject | bytes, options: dict[str, Any]) -> str:
     """
     Extract text from an XLSX document using openpyxl.
 
@@ -65,7 +70,8 @@ def extract_text(data: bytes, options: dict[str, Any]) -> str:
         |---------|---------|--------|
     ```
     """
-    wb = open_xlsx_file(data)
+    # Convert bytes to openpyxl Workbook object if it's not already
+    wb = format_data(data) if isinstance(data, bytes) else data
 
     # Get options
     # TODO Make these values explicit in higher up in the dependency chain.
@@ -138,7 +144,7 @@ def extract_text(data: bytes, options: dict[str, Any]) -> str:
     return "\n".join(sheet_texts)
 
 
-def extract_metadata(data: bytes) -> dict[str, Any]:
+def extract_metadata(data: DependencySpecificObject | bytes, options: Optional[dict[str, Any]]) -> dict[str, Any]:
     """
     Example of Formatted Output:
     ```markdown
@@ -152,7 +158,8 @@ def extract_metadata(data: bytes) -> dict[str, Any]:
         - Number of Images: 2
     ```
     """
-    wb = open_xlsx_file(data)
+    # Convert bytes to openpyxl Workbook object if it's not already
+    wb = format_data(data) if isinstance(data, bytes) else data
 
     # Extract document info
     metadata = {
@@ -209,9 +216,10 @@ def extract_metadata(data: bytes) -> dict[str, Any]:
     metadata["sheet_statistics"] = sheet_stats
     return metadata
 
-def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+def extract_structure(data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Example of Formatted Output:
+
     ## Structure
     - Sheet: Summary
         - Dimensions: A1:C5
@@ -221,14 +229,16 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
             - Q3    $145,000    12.3%
     - Sheet: Sales Data
         - Dimensions: A1:E100
-        - Sample Data:
+        - Computed Fields:
             - 2023-10-01    Widget A    John Doe    $2,500    North
             - 2023-10-02    Widget B    Jane Smith    $3,200    South
             - 2023-10-03    Widget C    Bob Johnson    $1,800    East
     - Named Ranges:
         - SalesData: Sheet1!$A$1:$E$100
+
     """
-    wb = open_xlsx_file(data)
+    # Convert bytes to openpyxl Workbook object if it's not already
+    wb = format_data(data) if isinstance(data, bytes) else data
     
     # Extract structure
     structure = []
@@ -238,36 +248,14 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
         "type": "workbook",
         "content": "XLSX Workbook"
     })
-    
-    # Extract sheets and sample data
-    max_rows = options.get('structure_max_rows', 20) # TODO 20 is magic number. Make this configurable
-    max_columns = options.get('structure_max_cols', 10) # TODO 10 is magic number. Make this configurable
-    
+
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
-        
-        # Sample data for display
-        sample_data = []
-        
-        row_count = 0
-        for row in ws.iter_rows(max_row=max_rows, max_col=max_columns):
-            row_data = []
-            for cell in row:
-                value = cell.value
-                if isinstance(value, datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
-                row_data.append(str(value) if value is not None else "")
-            
-            sample_data.append(row_data)
-            row_count += 1
-        
+
         # Add sheet structure
         sheet_structure = {
             "type": "sheet",
             "name": sheet_name,
-            "content": {
-                "sample_data": sample_data
-            }
         }
         
         # Add dimensions if available
@@ -276,11 +264,7 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
                 sheet_structure["content"]["dimensions"] = ws.calculate_dimension()
             except:
                 sheet_structure["content"]["dimensions"] = "Empty or Error"
-        
-        # Add sample size information
-        if row_count >= max_rows:
-            sheet_structure["content"]["note"] = f"Showing {max_rows} rows, {max_columns} columns (sample)"
-        
+
         structure.append(sheet_structure)
         
         # Add named ranges if any are defined
@@ -299,9 +283,59 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
                     "type": "named_ranges",
                     "content": defined_names
                 })
-    
+
+        # Get formulae from computed fields.
+        if hasattr(ws, "computed_fields") and ws.computed_fields:
+            computed_fields = []
+            for field in ws.computed_fields:
+                if hasattr(field, "name") and hasattr(field, "formula"):
+                    computed_fields.append({
+                        "name": field.name,
+                        "formula": field.formula
+                    })
+            if computed_fields:
+                structure.append({
+                    "type": "computed_fields",
+                    "content": computed_fields
+                })
+
     return structure
 
+def get_image_data(data: DependencySpecificObject | bytes, options: Optional[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Extract images and image metadata from the workbook.
+    
+    Args:
+        wb: The openpyxl workbook object.
+        
+    Returns:
+        A list of dictionaries containing the following.
+        - image: The image in byte format.
+        - sheet_name: The name of the sheet containing the image.
+        - dimensions: The dimensions of the image in the sheet.
+        - description: Optional description of the image.
+    """
+    images = []
+
+    # Convert bytes to openpyxl Workbook object if it's not already
+    wb = format_data(data) if isinstance(data, bytes) else data
+
+    for sheet in wb.worksheets:
+        for image in sheet._images:
+            # Get the actual image data in byte format
+            image_data = None
+            try:
+                image_data = image.ref
+            except AttributeError:
+                image_data = image._data()
+            images.append({
+                "image": image_data,
+                "sheet_name": sheet.title,
+                "dimensions": image.anchor._from,
+                "description": getattr(image, "description", "")
+            })
+    
+    return images
 
 def get_version() -> str:
     """

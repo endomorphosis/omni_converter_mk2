@@ -14,8 +14,8 @@ import utils.llm.dependencies._anthropic_dependency as anthropic_
 import utils.llm.dependencies._torch_dependency as torch_
 
 
-from .refactored_async_interface import AsyncLLMInterface
-from .refactored_embeddings import EmbeddingsInterface
+from ._async_interface import AsyncLLMInterface
+from ._embeddings import EmbeddingsInterface
 from .refactored_prompt_loader import load_prompt_by_name
 
 from configs import configs
@@ -76,7 +76,7 @@ def create_llm_resources() -> dict[str, Any]:
     return resources
 
 
-def create_llm_interface(
+def make_llm_interface(
     configs: Optional[dict[str, Any]] = None,
     api_key: Optional[str] = None
 ) -> Optional[AsyncLLMInterface]:
@@ -123,7 +123,7 @@ def create_llm_interface(
         return None
 
 
-def create_embeddings_manager(
+def make_embeddings_manager(
     configs: Optional[dict[str, Any]] = None,
     api_key: Optional[str] = None
 ) -> Optional[EmbeddingsInterface]:
@@ -153,7 +153,7 @@ def create_embeddings_manager(
     
     try:
         # Create embeddings manager with resources and configs
-        manager = create_embeddings_manager(
+        manager = make_embeddings_manager(
             resources=resources,
             configs=config_params
         )
@@ -180,7 +180,7 @@ def create_async_llm_interface(
     return AsyncLLMInterface(resources=resources, configs=configs)
 
 
-def create_embeddings_manager(
+def make_embeddings_manager(
     resources: dict[str, Any],
     configs: Optional[dict[str, Any]] = None
 ) -> EmbeddingsInterface:
@@ -198,7 +198,6 @@ def create_embeddings_manager(
 
 
 def _determine_backend_base_on_dependencies(configs: Configs) -> Optional[str]:
-    
     # Try to figure out which libraries are installed.
     for dep in ["openai", "anthropic", "torch"]:
         if dep in dependencies:
@@ -235,7 +234,7 @@ def make_llm_components() -> dict[str, Any]:
         Dictionary with initialized LLM components
     """
     return {
-        "llm_interface": create_llm_interface(),
-        "embeddings_manager": create_embeddings_manager(),
+        "llm_interface": make_llm_interface(),
+        "embeddings_manager": make_embeddings_manager(),
         "resources": create_llm_resources()
     }

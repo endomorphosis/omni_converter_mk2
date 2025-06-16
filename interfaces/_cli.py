@@ -9,24 +9,19 @@ import argparse
 import glob
 import os
 import sys
-from typing import Any, Callable, Optional, TypeVar
 
 
 from types_ import (
+    Any, Callable, Optional,
     Configs,
     BatchProcessor,
     BatchResult,
     Dependency,
     ResourceMonitor,
-    FormatRegistry,
     Logger,
     ProcessingPipeline,
-    Tqdm,
     ProgressCallback,
-    ListSupportedFormats,
-    ShowVersion,
-    ListOutputFormats,
-    ListNormalizers,
+    ProcessingResult,
 )
 
 
@@ -48,17 +43,21 @@ class CLI:
         self.configs = configs
         self.resources = resources
 
-        self.batch_processor: BatchProcessor = self.resources['batch_processor']
-        self.resource_monitor: ResourceMonitor         = self.resources['resource_monitor']
-        self.list_supported_formats: Callable          = self.resources['list_supported_formats']
-        self.show_version: Callable                    = self.resources['show_version']
-        self.progress_callback = self.resources['progress_callback']
-        self.list_output_formats = self.resources['list_output_formats']
-        self.list_normalizers = self.resources['list_normalizers']
-        self.processing_pipeline = self.resources['processing_pipeline']
-        self.tqdm = self.resources['tqdm']
-        self._logger = self.resources['logger']
-
+        # Batch processing components
+        self._batch_processor:         BatchProcessor = self.resources['batch_processor']
+        self._progress_callback:     ProgressCallback = self.resources['progress_callback']
+        self._processing_pipeline: ProcessingPipeline = self.resources['processing_pipeline']
+        
+        # Information and listing functions
+        self._list_normalizers:              Callable = self.resources['list_normalizers']
+        self._list_output_formats:           Callable = self.resources['list_output_formats']
+        self._list_supported_formats:        Callable = self.resources['list_supported_formats']
+        self._show_version:                  Callable = self.resources['show_version']
+        
+        # System and utility components
+        self._logger:                          Logger = self.resources['logger']
+        self._resource_monitor:       ResourceMonitor = self.resources['resource_monitor']
+        self._tqdm:                        Dependency = self.resources['tqdm']
 
     @staticmethod
     def parse_arguments() -> argparse.Namespace:
@@ -155,7 +154,25 @@ class CLI:
         
         return parser.parse_args()
 
-    def process_file(self, input_path: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None) -> bool:
+    def process_file(self, 
+                     input_path: str, 
+                     output_path: Optional[str] = None, 
+                    output_dir: Optional[str] = None,
+                    format: str = "txt",
+                    include_metadata: bool = True,
+                    extract_metadata: bool = True,
+                    normalize_text: bool = True,
+                    quality_threshold: float = 0.9,
+                    continue_on_error: bool = True,
+                    max_batch_size: int = 100,
+                    parallel: bool = False,
+                    max_workers: int = 4,
+                    sanitize: bool = True,
+                    max_cpu: int = 80,
+                    max_memory: int = 6144,  # 6GB in MB
+                    show_progress: bool = False,  # TODO Unused argument. Implement.
+                    options: Optional[dict[str, Any]] = None
+                    ) -> bool:
         """
         Process a single file.
         
@@ -180,14 +197,23 @@ class CLI:
             # Set default options if not provided
             if 'format' not in options:
                 options['format'] = output_format
-            if 'normalizers' not in options:
-                options['normalizers'] = ['whitespace', 'line_endings', 'empty_lines', 'unicode']
             if 'verbose' not in options:
                 options['verbose'] = self.configs.get_config_value('output.verbose', False)
             
             # Process the file using the processing pipeline
-            result = self.processing_pipeline.process_file(input_path, output_path, options)
-            
+            result = None
+            try:
+                result = self._processing_pipeline.process_file(
+                    input_path, 
+                    output_path=output_path,
+                    output_format=output_format, 
+                    normalizers=['whitespace', 'line_endings', 'empty_lines', 'unicode'] # TODO Un-hardcode this.
+                    )
+            except Exception as e:
+                self._logger.exception(f"Error processing {input_path}: {e}")
+                print(f"Error processing {input_path}: {e}", file=sys.stderr)
+                return False
+
             # Handle the processing result
             if result.success:
                 if output_path:
@@ -219,12 +245,12 @@ class CLI:
                 for error in result.errors:
                     print(f"  - {error}", file=sys.stderr)
                 
-                return False
+                return True
 
         except Exception as e:
-            self._logger.error(f"Error processing {input_path}: {e}")
+            self._logger.exception(f"Error processing {input_path}: {e}")
             print(f"Error processing {input_path}: {e}", file=sys.stderr)
-            return False
+            return True
 
     def process_directory(
         self,
@@ -248,9 +274,9 @@ class CLI:
             BatchResult object with processing results.
         """
         # Configure batch processor
-        self.batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
-        self.batch_processor.set_continue_on_error(options.get('continue_on_error', True))
-        self.batch_processor.set_max_workers(options.get('max_workers', 4) if options.get('parallel', False) else 1)
+        self._batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
+        self._batch_processor.set_continue_on_error(options.get('continue_on_error', True))
+        self._batch_processor.set_max_workers(options.get('max_workers', 4) if options.get('parallel', False) else 1)
         
         # Create progress callback
         pbar = None
@@ -258,7 +284,7 @@ class CLI:
         
         if show_progress:
             def _callback(current, total, current_file):
-                self.progress_callback(current, total, current_file, pbar)
+                self._progress_callback(current, total, current_file, pbar)
             callback = _callback
         
         # Process batch
@@ -269,10 +295,10 @@ class CLI:
             # Setup progress bar if requested
             estimated_file_count = sum(1 for _ in os.walk(dir_path) for _ in os.listdir(_[0])) if recursive else len(os.listdir(dir_path))
             if show_progress and estimated_file_count > 0:
-                pbar = self.tqdm.tqdm(total=estimated_file_count, unit="file")
+                pbar = self._tqdm.tqdm(total=estimated_file_count, unit="file")
             
             # Process files
-            result = self.batch_processor.process_batch(
+            result = self._batch_processor.process_batch(
                 file_paths=dir_path, 
                 output_dir=output_dir,
                 options=options,
@@ -302,19 +328,19 @@ class CLI:
         
         # Show information if requested
         if args.version:
-            self.show_version()
+            self._show_version()
             return 0
         
         if args.list_formats:
-            self.list_supported_formats()
+            self._list_supported_formats()
             return 0
         
         if args.list_normalizers:
-            self.list_normalizers()
+            self._list_normalizers()
             return 0
         
         if args.list_output_formats:
-            self.list_output_formats()
+            self._list_output_formats()
             return 0
         
         # Check for input file or directory
@@ -331,9 +357,9 @@ class CLI:
         
         # Configure resource limits if specified
         if args.max_cpu is not None:
-            self.resource_monitor.set_max_cpu_percent(args.max_cpu)
+            self._resource_monitor.set_max_cpu_percent(args.max_cpu)
         if args.max_memory is not None:
-            self.resource_monitor.set_max_memory_mb(args.max_memory)
+            self._resource_monitor.set_max_memory_mb(args.max_memory)
         
         # Prepare processing options
         options = {
@@ -414,7 +440,7 @@ class CLI:
             
             # Print resource usage if verbose
             if args.verbose:
-                usage = self.resource_monitor.current_usage
+                usage = self._resource_monitor.current_usage
                 print("\nResource Usage:")
                 print(f"CPU: {usage.get('cpu_percent', 'N/A')}%")
                 print(f"Memory: {usage.get('memory_mb', 'N/A')} MB")
@@ -434,11 +460,11 @@ class CLI:
                     self._logger.info(f"Processing {len(matches)} files matching pattern: {args.input}")
                     
                     # Process using batch processor
-                    result = self.batch_processor.process_batch(
+                    result = self._batch_processor.process_batch(
                         file_paths=matches,
                         output_dir=args.output,
                         options=options,
-                        progress_callback=None if args.no_progress else lambda c, t, f: self.progress_callback(c, t, f)
+                        progress_callback=None if args.no_progress else lambda c, t, f: self._progress_callback(c, t, f)
                     )
                     
                     # Print summary

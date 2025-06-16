@@ -37,7 +37,7 @@ graph TB
     subgraph top_level_dir ["Top Level Directories"]
       core[core/]
       monitors[monitors/]
-      batch_processor[extractors/]
+      batch_processor[batch_processor/]
       core --> interfaces
       monitors --> interfaces
       batch_processor --> interfaces

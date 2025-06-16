@@ -222,7 +222,7 @@ class FileSystem:
         
         # Check if the file is readable
         if not os.access(file_path, os.R_OK):
-            raise PermissionError(f"Cannot read file: {file_path}")
+            raise PermissionError(f"Permission denied for file: {file_path}")
         
         # Determine the MIME type
         try:
@@ -326,7 +326,7 @@ class FileSystem:
         return os.path.exists(file_path) and os.path.isfile(file_path)
     
     @staticmethod
-    def get_file_info(file_path: str) -> FileInfo:
+    def get_file_info(path: str) -> FileInfo:
         """
         Get information about a file.
         
@@ -340,9 +340,9 @@ class FileSystem:
             FileNotFoundError: If the file does not exist.
         """
         # Ensure the path is absolute
-        file_path = os.path.abspath(file_path)
+        path = os.path.abspath(path)
         
-        return FileInfo(file_path)
+        return FileInfo.from_path(path)
     
     @staticmethod
     def create_directory(directory_path: str) -> bool:

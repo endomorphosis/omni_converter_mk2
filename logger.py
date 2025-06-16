@@ -3,10 +3,10 @@ Logging utility for the Omni-Converter.
 
 This module provides logging functionality for the Omni-Converter.
 """
+import logging
 from functools import cached_property
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-import logging
 
 
 def get_logger(name: str,

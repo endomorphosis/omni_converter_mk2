@@ -8,7 +8,7 @@ from utils.resource_monitor.dependencies.psutil import PsUtil
 
 
 from ._resource_monitor import ResourceMonitor
-from .security_monitor import SecurityMonitor
+from .security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
 from ._error_monitor import ErrorMonitor
 
 from ._monitor_constants import Constants
@@ -54,7 +54,11 @@ def make_security_monitor() -> SecurityMonitor:
         "remove_active_content_regex": Constants.SecurityMonitor.REMOVE_ACTIVE_CONTENT_REGEX,
         "remove_scripts_regex": Constants.SecurityMonitor.REMOVE_SCRIPTS_REGEX,
         "security_rules": Constants.SecurityMonitor.SECURITY_RULES,
-        "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS
+        "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS,
+        "security_result": SecurityResult,
+        "sanitized_content": SanitizedContent,
+        "logger": logger,
+        "SanitizedContent": SanitizedContent,
     }
 
     # Global security manager instance

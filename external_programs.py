@@ -10,7 +10,7 @@ class _classproperty:
     def __get__(self, instance, owner):
         return self.func(owner)
 
-class ExternalPrograms:
+class ExternalPrograms: # TODO Figure out how to run the program checks in parallel.
     """
     Check the availability of external programs.
     
@@ -92,7 +92,7 @@ class ExternalPrograms:
         try:
             return getattr(self, name)
         except AttributeError as e:
-            raise KeyError(f"External program '{name}' not found ExternalPrograms.") from e
+            raise KeyError(f"External program '{name}' not found.") from e
 
     @classmethod
     def get(cls, name: str, default: bool = False) -> bool:

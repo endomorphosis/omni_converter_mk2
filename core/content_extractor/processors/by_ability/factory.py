@@ -53,3 +53,16 @@ def make_processors():
     """
     available_processor = _get_available_processors()
 
+def create_llm_processor() -> LLMProcessor:
+    """
+    Factory function to create an LLMProcessor instance.
+    
+    Args:
+        resources: Dictionary of resources for dependency injection
+        configs: Configuration parameters
+        
+    Returns:
+        Configured LLMProcessor instance
+    """
+    resources = {}
+    return LLMProcessor(resources=resources, configs=configs)

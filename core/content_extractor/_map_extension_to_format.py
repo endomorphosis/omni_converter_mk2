@@ -18,3 +18,4 @@ def map_extension_to_format(ext: str) -> str:
     SupportedFormats.FORMAT_EXTENSIONS
     if clean_ext in SupportedFormats.FORMAT_EXTENSIONS:
         return SupportedFormats.FORMAT_EXTENSIONS[clean_ext]
+

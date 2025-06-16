@@ -117,7 +117,7 @@ class _Processing(BaseModel):
     llm_api_key: str = Field(default="", description="API key for external services, if required")
 
 class _Output(BaseModel):
-    format: str = Field(default="txt", description="Default output format")
+    default_format: str = Field(default="txt", description="Default output format")
     include_metadata: bool = Field(default=True, description="Include metadata in output")
     preserve_structure: bool = Field(default=True, description="Attempt to preserve document structure")
     encoding: str = Field(default="utf-8", description="Output file encoding")
@@ -156,7 +156,7 @@ class Configs(BaseModel):
             - whisper_language: Language for Whisper model. Defaults to "en".
             - tesseract_language: Tesseract model for OCR. Defaults to "eng".
         output: Output settings for processed files.
-            - format: Default output format. Defaults to "txt".
+            - default_format: Default output format. Defaults to "txt".
             - include_metadata: Include metadata in output. Defaults to True.
             - preserve_structure: Attempt to preserve document structure. Defaults to True.
             - encoding: Output file encoding. Defaults to "utf-8".

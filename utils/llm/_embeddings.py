@@ -11,6 +11,7 @@ try:
 except ImportError:
     BaseModel = object
 
+from types_ import Dependency
 from logger import logger
 
 

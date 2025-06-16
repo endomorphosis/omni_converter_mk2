@@ -45,18 +45,10 @@ def extract_metadata(
     for meta in meta_tags:
         name = meta.get('name', '').lower()
         content = meta.get('content', '')
-        
-        if name == 'description':
-            metadata['description'] = content
-        elif name == 'keywords':
-            metadata['keywords'] = content
-        elif name == 'author':
-            metadata['author'] = content
-        elif name == 'viewport':
-            metadata['viewport'] = content
-        elif name == 'robots':
-            metadata['robots'] = content
-    
+
+        if name and content:
+            metadata[name] = content
+
     # Extract Open Graph metadata
     og_tags = soup.find_all('meta', attrs={'property': re.compile(r'^og:')})
     for og in og_tags:
@@ -196,8 +188,8 @@ def extract_sections(
     return sections
 
 
-def process_html(
-    file_content: Any,
+def process(
+    file_content: bytes | str,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
