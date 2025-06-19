@@ -11,12 +11,13 @@ def extract_text(data: str | bytes) -> str:
     Returns:
         Extracted text as a string.
     """
-    if isinstance(data, bytes):
-        return data.decode('utf-8', errors='ignore')
-    elif isinstance(data, str):
-        return data
-    else:
-        raise ValueError("Unsupported data type for text extraction")
+    match data:
+        case str():
+            return data
+        case bytes():
+            return data.decode('utf-8', errors='ignore')
+        case _:
+            raise ValueError(f"Unsupported data type for text extraction '{type(data)}'. Expected str or bytes.")
 
 
 def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
@@ -72,6 +73,7 @@ def extract_sections(text: str) -> list[dict[str, Any]]:
         'type': 'text',
         'content': text
     }]
+
 
 def process(
         data: bytes | str, 

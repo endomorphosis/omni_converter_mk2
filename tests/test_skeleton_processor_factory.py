@@ -16,7 +16,7 @@ from core.content_extractor.processors.factory import (
     _make_processor,
     make_processors,
     _mock_processor,
-    ProcessorResources,
+    _ProcessorResources,
 )
 from configs import Configs
 
@@ -36,7 +36,7 @@ class TestMakeProcessor(unittest.TestCase):
         }
 
         # Basic processor resources
-        self.basic_resources: ProcessorResources = {
+        self.basic_resources: _ProcessorResources = {
             "supported_formats": {"xlsx", "xlsm"},
             "processor_name": "test_processor",
             "dependencies": self.mock_dependencies,
@@ -262,11 +262,11 @@ class TestMakeProcessors(unittest.TestCase):
 
 
 class TestProcessorResources(unittest.TestCase):
-    """Test the ProcessorResources TypedDict structure."""
+    """Test the _ProcessorResources TypedDict structure."""
 
     def test_processor_resources_structure_is_valid(self) -> None:
         """
-        Test that ProcessorResources TypedDict has correct structure.
+        Test that _ProcessorResources TypedDict has correct structure.
         
         Expected behavior:
         - Has all required fields

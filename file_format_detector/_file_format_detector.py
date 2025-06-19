@@ -169,7 +169,7 @@ class FileFormatDetector:
             The category if found, None otherwise.
         """
         for category, formats in self._format_registry.items():
-            self._logger.debug(f"Format set: {formats}")
+            #self._logger.debug(f"Format set: {formats}")
             if format_name in formats:
                 return category
         return None

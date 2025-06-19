@@ -15,6 +15,7 @@ from typing import (
     Protocol, TYPE_CHECKING,
     TypeAlias, TypedDict, 
     TypeVar, Union,
+    Generator
 )
 from protocols import Processor
 

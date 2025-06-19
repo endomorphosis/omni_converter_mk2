@@ -120,15 +120,15 @@ class ProcessingPipeline:
         
         try:
             # Detect format
-            self._logger.debug(f"Detecting format for {file_path}")
+            self._logger.debug(f"Detecting format for '{file_path}'")
             format_name, category = self._format_detector.detect_format(file_path)
             if not format_name:
-                errors =  ValueError(f"Unable to detect format for {file_path}")
+                errors =  ValueError(f"Unable to detect format for '{file_path}'")
 
             self._logger.info(f"Detected format: {format_name} ({category})", {'file_path': file_path})
 
             # Validate file
-            self._logger.debug(f"Validating file {file_path}")
+            self._logger.debug(f"Validating file '{file_path}'")
             validation_result = self._file_validator.validate_file(file_path, format_name)
             if not validation_result.is_valid:
                 error_message = f"Validation failed: {', '.join(validation_result.errors)}"
@@ -155,15 +155,15 @@ class ProcessingPipeline:
                 return result
             
             # Extract content
-            self._logger.debug(f"File is valid. Extracting content from {file_path}")
+            self._logger.debug(f"File is valid. Extracting content from '{file_path}' with format '{format_name}'")
             content = self._content_extractor.extract_content(file_path, format_name, options)
             
             # Normalize text
-            self._logger.debug(f"Normalizing text from {file_path}")
+            self._logger.debug(f"Normalizing text from '{file_path}'")
             normalized_content = self._text_normalizer.normalize_text(content, normalizers)
             
             # Format output
-            self._logger.debug(f"Formatting output for {file_path}")
+            self._logger.debug(f"Formatting output for '{file_path}'")
             try:
                 formatted_output = self._output_formatter.format_output(
                     normalized_content,
@@ -214,7 +214,7 @@ class ProcessingPipeline:
             return result
             
         except Exception as e:
-            self._logger.exception(f"Error processing {file_path}: {e}")
+            self._logger.exception(f"Error processing '{file_path}': {e}")
             
             # Create failure result
             result = self._processing_result(

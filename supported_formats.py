@@ -73,7 +73,7 @@ class SupportedFormats:
         return { # NOTE More will be added as more formats are implemented.
             "html": frozenset(("html", "htm", "xhtml", "xml")),
             "xml": frozenset(("xml",)),
-            "plain": frozenset(("txt", "text", "plain")),
+            "plain": frozenset(("txt", "text", "plain", "plaintext")),
             "calendar": frozenset(("ics", "ical")),
             "csv": frozenset(("csv",))
         }
@@ -143,7 +143,7 @@ class SupportedFormats:
         }
 
     @_classproperty
-    def VECTOR_IMAGE_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+    def VECTOR_IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping vector image format names to their supported file extensions.
 
         Example:
@@ -158,8 +158,9 @@ class SupportedFormats:
             "eps": frozenset(("eps",)),
             "ai": frozenset(("ai",))
         }
+
     @_classproperty
-    def RASTER_IMAGE_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
+    def RASTER_IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping raster image format names to their supported file extensions.
 
         Example:
@@ -170,12 +171,7 @@ class SupportedFormats:
             "webp": frozenset(("webp",))
             }
         """
-        return {
-            "jpeg": frozenset(("jpeg", "jpg")),
-            "png": frozenset(("png",)),
-            "gif": frozenset(("gif",)),
-            "webp": frozenset(("webp",))
-        }
+        return frozenset(("jpeg", "jpg", "png", "gif", "webp"))
 
     # Video formats
     @_classproperty
@@ -208,7 +204,7 @@ class SupportedFormats:
                 "audio": {"mp3", "wav", "ogg", "flac", "aac"},
                 "video": {"mp4", "webm", "avi", "mkv", "mov"},
                 "image": {"jpeg", "jpg", "png", "gif", "webp", "svg+xml"},
-                "text": {"html", "xml", "plain", "calendar", "csv"},
+                "text": {"html", "xml", "plaintext", "calendar", "csv"},
                 "application": {"pdf", "json", "docx", "xlsx", "zip"}
             }
         """
@@ -230,18 +226,15 @@ class SupportedFormats:
                 "mobi": frozenset(("mobi",))
             }
         """
-        return {
-            "epub": frozenset(("epub",)),
-            "mobi": frozenset(("mobi",))
-        }
+        return frozenset(("epub", "mobi"))
 
     @_classproperty
-    def SUPPORTED_HTML_FORMATS(cls) -> dict[str, frozenset[tuple[str]]]:
+    def HTML_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """Set of supported HTML formats."""
         return cls.TEXT_FORMAT_EXTENSIONS['html']
 
     @_classproperty
-    def SUPPORTED_PLAINTEXT_FORMATS(cls) -> dict[str, frozenset[tuple[str]]]:
+    def PLAINTEXT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """Set of supported plaintext formats."""
         return cls.TEXT_FORMAT_EXTENSIONS['plain']
 
@@ -255,10 +248,35 @@ class SupportedFormats:
                 "doc": frozenset(("doc",))
             }
         """
-        return {
-            "docx": frozenset(("docx",)),
-            "doc": frozenset(("doc",))
-        }
+        return frozenset(("docx","doc",)) # TODO Add more document formats as needed,
+
+    @_classproperty
+    def XML_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
+        """Set of supported XML formats."""
+        return cls.TEXT_FORMAT_EXTENSIONS['xml']
+
+    @_classproperty
+    def CALENDAR_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
+        """Set of supported calendar formats."""
+        return cls.TEXT_FORMAT_EXTENSIONS['calendar']
+
+    @_classproperty
+    def CSV_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
+        """Set of supported CSV formats."""
+        return cls.TEXT_FORMAT_EXTENSIONS['csv']
+
+    @_classproperty
+    def TRANSCRIPTION_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
+        """Set of supported transcription formats."""
+        return frozenset(("srt", "vtt", "ass",)) # hehe 
+
+    @_classproperty
+    def ARCHIVE_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
+        """Set of supported ZIP formats."""
+        return frozenset((
+            "zip", "tar", "gz", "bz2", "xz", "7z", "rar",
+            "tar.gz", "tar.bz2", "tar.xz", "tar.7z",
+        ))
 
     @_classproperty
     def SUPPORTED_FORMATS(cls) -> set[str]:
@@ -375,7 +393,7 @@ class SupportedFormats:
             ".htm": "html",
             ".xhtml": "html",
             ".xml": "xml",
-            ".txt": "plain",
+            ".txt": "plaintext",
             ".ics": "calendar",
             ".csv": "csv",
             
@@ -456,7 +474,6 @@ class SupportedFormats:
             # Application/Specialized formats
             "java-archive", "x-java-jnlp-file", "x-bittorrent", "vnd.visio", "text"
         }
-
 
     @_classproperty
     def UNIMPLEMENTED_AUDIO_FORMATS_SET(cls) -> set[str]:
@@ -548,10 +565,10 @@ class SupportedFormats:
         }
 
     @classmethod
-    def __getitem__(self, name: str) -> bool:
+    def __getitem__(cls, name: str) -> bool:
         """Get a supported format by name."""
         try:
-            return getattr(self, name)
+            return getattr(cls, name)
         except AttributeError as e:
             raise KeyError(f"Supported format '{name}' not found in SupportedFormats.") from e
 

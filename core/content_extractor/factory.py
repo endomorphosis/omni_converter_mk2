@@ -47,7 +47,7 @@ def make_content_extractor() -> ContentExtractor:
         },
         "processors": processors,
         "file_format_detector": make_file_format_detector(),
-        "supported_formats": SupportedFormats.SUPPORTED_FORMATS,
+        "supported_formats": SupportedFormats,
         "map_extension_to_format": map_extension_to_format,
         "read_file": FileSystem.read_file,
         "splitext": os.path.splitext,

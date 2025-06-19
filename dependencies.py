@@ -1,13 +1,17 @@
 """
 Lazy loading of dependencies to optimize performance and reduce initial load time.
 
-Tools can access these dependencies via the `dependencies` object.
+Modules can access these dependencies via the `dependencies` object.
 """
 # NOTE Make imports private to enforce singleton pattern.
 from types import ModuleType as _ModuleType
 from importlib import import_module as _import_module # NOTE We import this outside the class to avoid circular imports.
 
 class _Dependencies:
+    """
+    Class to enable the lazy-loading of dependencies and third-party libraries.
+    This optimizes performance, allows for dynamic error checking, and reduce initial load time.
+    """
 
     _CRITICAL_DEPENDENCIES: list[str] = [
         "tqdm",  "yaml", "psutil", "pydantic"
@@ -17,6 +21,7 @@ class _Dependencies:
         self._cache: dict[str, _ModuleType | None] = {
             "anthropic": None,
             "bs4": None,  # BeautifulSoup for HTML processing
+            "chardet": None,  # Character encoding detection
             "cv2": None,
             "docx": None,
             "duckdb": None,
@@ -209,6 +214,11 @@ class _Dependencies:
         """Load the whisper module."""
         return self._load_module('whisper')
 
+    @property
+    def chardet(self) -> _ModuleType | None:
+        """Load the chardet module."""
+        return self._load_module('chardet')
+
     def keys(self) -> list[str]:
         """Get a list of all dependency names.
         
@@ -216,5 +226,19 @@ class _Dependencies:
             A list of dependency names.
         """
         return [name for name in self._cache.keys()]
+    
+    def __iter__(self):
+        """Iterate over the loaded modules."""
+        for name, module in self._cache.items():
+            if module is not None:
+                yield name, module
+
+    def __contains__(self, item: str) -> bool:
+        """Check if a specific module is loaded."""
+        return item in self._cache and self._cache[item] is not None
+
+    def __getitem__(self, item: str) -> _ModuleType | None:
+        """Get a specific module by name."""
+        return self._load_module(item)
 
 dependencies = _Dependencies()
