@@ -37,7 +37,7 @@ def get_processor_resource_configs() -> Generator[dict[str, Any], None, None]:
             "supported_formats": SupportedFormats.SUPPORTED_TEXT_FORMATS, #{"txt", "md", "rst"},
             "processor_name": "text_processor",
             "dependencies": {},
-            "critical_resources": ["extract_text", "process"],
+            "critical_resources": ["extract_text", "process", "extract_metadata", "extract_structure"],
             "optional_resources": ["extract_metadata", "analyze"],
         },
         {
@@ -58,8 +58,8 @@ def get_processor_resource_configs() -> Generator[dict[str, Any], None, None]:
             "supported_formats": SupportedFormats.HTML_FORMAT_EXTENSIONS, # {"html", "htm"},
             "processor_name": "html_processor",
             "dependencies": {"beautifulsoup4": None, "lxml": None},
-            "critical_resources": ["extract_text", "extract_structure"],
-            "optional_resources": ["extract_metadata", "extract_links"],
+            "critical_resources": ["extract_text", "process", "extract_metadata", "extract_structure"],
+            "optional_resources": ["extract_links"],
         },
         {
             "supported_formats": SupportedFormats.XML_FORMAT_EXTENSIONS, # {"xml"},
@@ -72,14 +72,14 @@ def get_processor_resource_configs() -> Generator[dict[str, Any], None, None]:
             "supported_formats": SupportedFormats.CALENDAR_FORMAT_EXTENSIONS, # {"ics", "ical"},
             "processor_name": "calendar_processor",
             "dependencies": {"icalendar": None},
-            "critical_resources": ["extract_events", "process"],
+            "critical_resources": ["extract_text", "process", "extract_metadata", "extract_structure"],
             "optional_resources": ["extract_metadata"],
         },
         {
             "supported_formats": SupportedFormats.CSV_FORMAT_EXTENSIONS, # {"csv"},
             "processor_name": "csv_processor",
             "dependencies": {"pandas": None},
-            "critical_resources": ["extract_data", "process"],
+            "critical_resources": ["extract_metadata", "extract_structure", "extract_text", "process"],
             "optional_resources": ["extract_metadata", "analyze"],
         },
         # {

@@ -1,0 +1,535 @@
+
+
+# def _make_processor(resources: _ProcessorResources) -> Optional[Any]:
+#     """Load a processor module. Try implementation first, then fallback.
+    
+#     Args:
+#         name: The processor name (e.g., 'plaintext_processor')
+#         base_path: Base path for processors (defaults to current file's parent)
+        
+#     Returns:
+#         The loaded module or None if not found
+#     """
+#     logger = resources["logger"]
+#     name = resources["processor_name"]
+#     is_tex_proc = True if name == "text_processor" else False
+
+#     def convert_to_pascal_case(string: str) -> str:
+#         """Convert a string to PascalCase."""
+#         return ''.join(word.capitalize() for word in string.split('_'))
+
+#     base_path = Path(__file__).parent
+#     # Default to a generic processor if no specific implementation is found.
+#         # This ensures we always have a processor class to assign the callables to.
+#     ProcessorClass = _GenericProcessor
+    
+#     # Debug statements for text_processor
+#     if is_tex_proc:
+#         logger.debug(f"_make_processor called for {name}")
+#         logger.debug(f"base_path = {base_path}")
+#         logger.debug(f"supported_formats = {resources['supported_formats']}")
+#         logger.debug(f"dependencies = {resources['dependencies']}")
+
+#     # Check if there's a processor for this specific mime-type.
+#     for format in resources["supported_formats"]:
+#         path = base_path / "by_mime_type" / f"_{format.lower()}_processor.py"
+#         if is_tex_proc:
+#             logger.debug(f"Checking mime-type path: {path}")
+#         if path.exists():
+#             if is_tex_proc:
+#                 logger.debug(f"Found mime-type processor at {path}")
+#             spec = importlib.util.spec_from_file_location(name, path)
+#             if spec and spec.loader:
+#                 module = importlib.util.module_from_spec(spec)
+#                 spec.loader.exec_module(module)
+#                 # Import the processor class from the module
+#                 pascal_case_name = convert_to_pascal_case(name)
+#                 logger.debug(f"pascal_case_name: {pascal_case_name}")
+#                 for attr in dir(module):
+#                     if attr.startswith("_"):
+#                         continue
+#                     # Ignore imports and non-class attributes
+#                     obj = getattr(module, attr)
+#                     # Skip imported classes (check if defined in this module)
+#                     if hasattr(obj, '__module__') and obj.__module__ != module.__name__:
+#                         continue
+
+#                     if is_tex_proc:
+#                         logger.debug(f"Checking attribute: {attr}")
+#                 ProcessorClass = getattr(module, pascal_case_name , None)
+
+#                 if is_tex_proc:
+#                     logger.debug(f"Loaded ProcessorClass: {ProcessorClass}")
+
+#                 if ProcessorClass is not None:
+#                     break
+
+#     callables_dict = {}
+
+#     dep_paths = [ # Check for dedicated dependencies first.
+#         path for path in (base_path / "by_dependency").iterdir()
+#         if not path.stem.startswith("_") and path.suffix == ".py"
+#     ]
+#     if any(resources["dependencies"].keys() in path.stem for path in dep_paths):
+#         callables_dict = load_functions_from_file(dep_paths, name=name, resources=resources, callables_dict=callables_dict)
+
+#         if is_tex_proc:
+#             logger.debug(f"dep_paths = {dep_paths}")
+
+#     if not callables_dict:
+#         # If no callables found, try to load the functions from the fallback folder.
+#         fallback_paths = [ # Check for dedicated dependencies first.
+#             path for path in (base_path / "fallbacks").iterdir()
+#         ]
+#         if is_tex_proc:
+#             logger.debug(f"No callables found, trying fallback_paths = {fallback_paths}")
+#         callables_dict = load_functions_from_file(fallback_paths, name=name, resources=resources, callables_dict=callables_dict)
+
+#     if is_tex_proc:
+#         logger.debug(f"Final callables_dict = {callables_dict}")
+
+#     # Can't find any callables, return a mock processor.
+#     if not callables_dict:
+#         # If no processor class found, return a mock processor
+#         logger.debug(f"Returning MagicMock for processor {name}")
+#         return _make_mock(
+#             resources["critical_resources"],
+#             resources["optional_resources"],
+#             resources["supported_formats"],
+#             name,
+#             resources["logger"],
+#             resources["configs"],
+#         )
+
+#     # Update resources with the loaded callables
+#     for func_name, func in callables_dict.items():
+#         resources[func_name] = func
+
+#     if is_tex_proc:
+#         logger.debug(f"Creating ProcessorClass instance with resources: {resources}")
+
+#     # Dependency injection time baby!
+#     try:
+#         return ProcessorClass(resources=resources, configs=resources["configs"])
+#     except Exception as e:
+#         logger.error(f"Failed to create ProcessorClass instance: {e}")
+#         return _make_mock(
+#             resources["critical_resources"],
+#             resources["optional_resources"],
+#             resources["supported_formats"],
+#             name,
+#             resources["logger"],
+#             resources["configs"],
+#         )
+
+
+
+
+# def load_functions_from_file(paths: list[Path], name: str = None, resources: dict = None, callables_dict: dict = {}):
+#     logger = resources.get("logger") if resources else None
+#     crit_resources = resources["critical_resources"]
+    
+#     if logger and name == "text_processor":
+#         logger.debug(f"load_functions_from_file called with paths: {paths}")
+#         logger.debug(f"name: {name}")
+#         logger.debug(f"critical_resources: {resources['critical_resources'] if resources else None}")
+    
+#     for path in paths:
+#         if logger and name == "text_processor":
+#             logger.debug(f"Checking path: {path}")
+#             logger.debug(f"Path exists: {path.exists()}")
+        
+#         if path.exists():
+#             try:
+#                 if logger and name == "text_processor":
+#                     logger.debug(f"Attempting to load spec from {path}")
+                
+#                 spec = importlib.util.spec_from_file_location(name, path)
+#                 if spec and spec.loader:
+#                     if logger and name == "text_processor":
+#                         logger.debug(f"Successfully created spec, loading module")
+                    
+#                     module = importlib.util.module_from_spec(spec)
+#                     spec.loader.exec_module(module)
+                    
+#                     if logger and name == "text_processor":
+#                         logger.debug(f"Module loaded, scanning for functions")
+#                         logger.debug(f"Module dir: {dir(module)}")
+                    
+#                     # Get all the functions from the module
+#                     temp_dict = {
+#                         func_name: getattr(module, func_name)
+#                         for func_name in dir(module)
+#                         if (callable(getattr(module, func_name))
+#                             and not func_name.startswith("_")
+#                             and getattr(module, func_name).__module__ == module.__name__  # Only functions defined in this module
+#                         )
+#                     }
+                    
+#                     if logger and name == "text_processor":
+#                         logger.debug(f"Found callables: {temp_dict.keys()}")
+#                         logger.debug(f"Required critical resources: {resources['critical_resources'] if resources else None}")
+                    
+#                     # If not all the callables can be found, skip it and try the next.
+#                     if all(func in temp_dict.keys() for func in crit_resources):
+#                         if logger and name == "text_processor":
+#                             logger.debug(f"All critical resources found, updating callables_dict with {temp_dict}")
+#                         callables_dict.update(temp_dict)
+#                         logger.debug(f"Updated callables_dict: {callables_dict}")
+#                         break
+#                     else:
+#                         if logger and name == "text_processor":
+#                             logger.debug(f"Not all critical resources found, continuing to next path")
+#                             missing = [func for func in crit_resources if func not in temp_dict.keys()]
+#                             logger.debug(f"Missing critical resources: {missing}")
+#                 else:
+#                     if logger and name == "text_processor":
+#                         logger.debug(f"Failed to create spec for {path}")
+                        
+#             except Exception as e:
+#                 if logger and name == "text_processor":
+#                     logger.debug(f"Exception loading {path}: {e}")
+#                 continue # Skip this file if it fails to load.
+    
+#     if logger and name == "text_processor":
+#         logger.debug(f"Returning callables_dict: {callables_dict}")
+    
+#     return callables_dict
+
+
+# def get_fallback_processor(resources: _ProcessorResources, processor_name: str) -> Any:
+#     """Get a fallback processor by name.
+
+#     Args:
+#         processor_name: Name of the processor to retrieve
+        
+#     Returns:
+#         Fallback processor instance
+#     """
+#     processor_name = resources["processor_name"]
+#     critical_resources = resources["critical_resources"]
+#     optional_resources = resources.get("optional_resources", [])
+#     logger = resources["logger"]
+#     configs = resources["configs"]
+#     supported_formats = resources["supported_formats"]
+
+#     logger.debug(f"Attempting to get fallback processor '{processor_name}'")
+#     logger.debug(f"Critical resources: {critical_resources}")
+#     logger.debug(f"Optional resources: {optional_resources}")
+#     logger.debug(f"Supported formats: {supported_formats}")
+
+#     module_path = Path(__file__).parent / "fallbacks" / f"_generic_{processor_name}.py"
+#     logger.debug(f"Looking for fallback module at: {module_path}")
+
+#     if not module_path.exists():
+#         logger.debug(f"Fallback module not found at {module_path}")
+#         raise ImportError(f"Processor '{processor_name}' not found in fallbacks folder.")
+
+#     logger.debug(f"Found fallback module, attempting to load spec")
+#     spec = importlib.util.spec_from_file_location(processor_name, module_path)
+
+#     if spec is None or spec.loader is None:
+#         logger.debug(f"Failed to create spec for {processor_name}")
+#         raise ImportError(f"Could not load spec for processor '{processor_name}'.")
+    
+#     logger.debug(f"Loading module from spec")
+#     module = importlib.util.module_from_spec(spec)
+#     spec.loader.exec_module(module)
+
+#     # Get the functions from the module and assign them to the processor
+#     for func_name in dir(module):
+#         if func_name.startswith("_"):
+#             continue
+#         func = getattr(module, func_name)
+#         if callable(func):
+#             setattr(module, func_name, func)
+
+#     available_deps = {"generic": None}
+#     available_impl = "generic"
+#     logger.debug(f"Using generic implementation with dependencies: {available_deps}")
+
+#     # Create and configure the processor
+#     logger.debug(f"Creating dynamic processor with fallback implementation")
+#     processor = _make_dynamic_processor(
+#         supported_formats=supported_formats,
+#         processor_name=processor_name,
+#         available_impl=available_impl,
+#         available_deps=available_deps,
+#         critical_resources=critical_resources,
+#         optional_resources=optional_resources,
+#         logger=logger,
+#         configs=configs,
+#     )
+
+#     logger.debug(f"Successfully created fallback processor '{processor_name}' from {module_path}")
+#     return processor
+
+
+
+
+# def _make_dynamic_processor(
+#         supported_formats: set[str],
+#         processor_name: str,
+#         available_impl: str,
+#         available_deps: dict[str, Any],
+#         critical_resources: list[str],
+#         optional_resources: list[str],
+#         logger: logging.Logger,
+#         configs: Configs,
+#         dependency_mapping: Optional[dict[str, list[str]]] = None,
+# ):
+#     """
+#     Create a dynamic processor instance with capabilities based on available dependencies.
+#     This factory function generates a processor class that adapts its functionality based on
+#     which dependencies are available in the system. It creates real method implementations
+#     when dependencies are satisfied, and mock implementations when they're not.
+
+#     Args:
+#         supported_formats (set[str]): Set of file format extensions this processor can handle
+#         processor_name (str): Name identifier for the processor
+#         available_impl (str): Implementation type being used (e.g., 'pypdf', 'fitz')
+#         available_deps (dict[str, Any]): Dictionary of available dependencies and their objects
+#         critical_resources (list[str]): List of critical method names that must be available
+#         optional_resources (list[str]): List of optional method names that can be mocked
+#         logger (logging.Logger): Logger instance for debugging and info messages
+#         configs (Configs): Configuration object containing processor settings
+#         dependency_mapping (Optional[dict[str, list[str]]]): Optional mapping of resource 
+#             names to their required dependencies. If None, all resources are assumed available.
+#     Returns:
+#         DynamicProcessor: An instance of the dynamically created processor class with:
+#             - Methods for each critical and optional resource
+#             - Real implementations when dependencies are available
+#             - Mock implementations when dependencies are missing
+#             - Processor info containing capabilities and implementation details
+#             - Support for checking processable file formats
+#     Note:
+#         The returned processor includes these predefined method types:
+#         - extract_text: Returns extracted text content
+#         - extract_metadata: Returns document metadata
+#         - extract_structure: Returns document structure information
+#         - extract_images: Returns list of extracted images
+#         - Generic methods for any other specified resources
+#     """
+#     # Create a processor-like object with available functionality
+#     class DynamicProcessor:
+#         def __init__(self):
+#             self.supported_formats = supported_formats
+#             self.logger = logger
+#             self.configs = configs
+#             self.processor_info = {
+#                 "processor_name": processor_name,
+#                 "capabilities": {},
+#                 "supported_formats": supported_formats,
+#                 "implementation_used": available_impl,
+#                 "dependencies": list(available_deps.keys())
+#             }
+            
+#             # Add methods based on available dependencies
+#             self._setup_methods()
+            
+#         def _setup_methods(self):
+#             """Setup methods based on available dependencies."""
+#             # Setup critical resources
+#             for resource in critical_resources:
+#                 if dependency_mapping and resource in dependency_mapping:
+#                     required_deps = dependency_mapping[resource]
+#                     if any(dep in available_deps for dep in required_deps):
+#                         self._add_real_method(resource)
+#                         self.processor_info["capabilities"][resource] = {
+#                             "available": True,
+#                             "implementation": available_impl
+#                         }
+#                     else:
+#                         self._add_mock_method(resource)
+#                         self.processor_info["capabilities"][resource] = {
+#                             "available": False,
+#                             "implementation": "mock"
+#                         }
+#                 else:
+#                     # No mapping specified, assume available
+#                     self._add_real_method(resource)
+#                     self.processor_info["capabilities"][resource] = {
+#                         "available": True,
+#                         "implementation": available_impl
+#                     }
+            
+#             # Setup optional resources
+#             for resource in optional_resources:
+#                 if dependency_mapping and resource in dependency_mapping:
+#                     required_deps = dependency_mapping[resource]
+#                     if any(dep in available_deps for dep in required_deps):
+#                         self._add_real_method(resource)
+#                         self.processor_info["capabilities"][resource] = {
+#                             "available": True,
+#                             "implementation": available_impl
+#                         }
+#                     else:
+#                         self._add_mock_method(resource)
+#                         self.processor_info["capabilities"][resource] = {
+#                             "available": False,
+#                             "implementation": "mock"
+#                         }
+#                 else:
+#                     self._add_real_method(resource)
+#                     self.processor_info["capabilities"][resource] = {
+#                         "available": True,
+#                         "implementation": available_impl
+#                     }
+
+#         def _add_real_method(self, method_name: str):
+#             """Add a real method implementation."""
+#             match method_name:
+#                 case "extract_text":
+#                     def extract_text():
+#                         self.logger.debug(f"Executing real {method_name} method")
+#                         return "Extracted text content"
+#                     setattr(self, method_name, extract_text)
+#                 case "extract_metadata":
+#                     def extract_metadata():
+#                         self.logger.debug(f"Executing real {method_name} method")
+#                         return {"title": "Document", "author": "Unknown"}
+#                     setattr(self, method_name, extract_metadata)
+#                 case "extract_structure":
+#                     def extract_structure():
+#                         self.logger.debug(f"Executing real {method_name} method")
+#                         return {"sections": [], "hierarchy": {}}
+#                     setattr(self, method_name, extract_structure)
+#                 case "extract_images":
+#                     def extract_images():
+#                         self.logger.debug(f"Executing real {method_name} method")
+#                         return ["image1.png", "image2.jpg"]
+#                     setattr(self, method_name, extract_images)
+#                 case _:
+#                     def generic_method():
+#                         self.logger.debug(f"Executing real {method_name} method")
+#                         return f"{method_name} result"
+#                     setattr(self, method_name, generic_method)
+                
+#         def _add_mock_method(self, method_name: str):
+#             """Add a mock method implementation."""
+#             mock_map = {
+#                 "extract_text": "Mocked text content",
+#                 "extract_metadata": {"mocked": "metadata"},
+#                 "extract_structure": {"mocked": "structure"},
+#                 "extract_images": [],
+#             }
+#             return_value = mock_map.get(method_name, f"Mocked {method_name}")
+#             setattr(self, method_name, lambda: return_value)
+
+#         def _add_can_process(self):
+#             """Add can_process method."""
+#             def can_process(file_path: str) -> bool:
+#                 self.logger.debug(f"Checking if can process: {file_path}")
+#                 return any(file_path.endswith(f".{fmt}") for fmt in self.supported_formats)
+#             self.can_process = can_process
+
+#         def __call__(self, *args, **kwargs):
+#             """Make the processor callable."""
+#             return self.process(*args, **kwargs)
+
+#     return DynamicProcessor()
+
+# def _make_mock(critical_resources, 
+#                optional_resources,
+#                 supported_formats, 
+#                 processor_name, 
+#                 logger, 
+#                 configs) -> MagicMock:
+#     # Create methods dict for mock
+#     methods = {}
+#     for resource in critical_resources + optional_resources:
+#         methods[resource] = "resource"
+#     methods["can_process"] = "validation"
+#     methods["process"] = "processing"
+#     methods["supported_formats"] = "property"
+#     methods["processor_info"] = "property"
+#     methods["logger"] = "property"
+#     methods["configs"] = "property"
+
+#     mock = _mock_processor(methods, supported_formats, processor_name)
+#     mock.supported_formats = supported_formats
+#     mock.processor_name = processor_name
+#     mock.processor_info
+#     mock.logger = logger
+#     mock.configs = configs
+#     return mock
+
+# def _mock_processor(methods: dict[Union[str, tuple[str, Any]], str], 
+#                     supported_formats,
+#                    processor_name: str) -> MagicMock:
+#     """
+#     Create a mock processor with specified methods.
+    
+#     Args:
+#         methods: Dictionary mapping method names to their categories
+#         processor_name: Name of the processor being mocked
+        
+#     Returns:
+#         MagicMock: Mock processor with all specified methods
+#     """
+#     mock = MagicMock(spec=list(methods.keys()))
+
+#     # Get the method signatures
+#     method_signatures = {
+#         method_spec: (method_spec[0] if isinstance(method_spec, tuple) else method_spec)
+#         for method_spec in methods
+#     }
+
+#     # Define mock return values based on method names
+#     mock_map = {
+#         "extract_text": "Mocked text content",
+#         "extract_metadata": {"mocked": "metadata"},
+#         "extract_structure": {"mocked": "structure"},
+#         "extract_images": [],
+#         "can_process": False,
+#         "process": True,
+#         "process_document": True,
+#         "open_file": True,
+#         "validate_format": True,
+#     }
+
+#     # Configure mock methods
+#     for method_spec, category in methods.items():
+#         # Handle tuple specifications
+#         if isinstance(method_spec, tuple):
+#             method_name = method_spec[0]
+#         else:
+#             method_name = method_spec
+
+#         # Create mock method
+#         if method_name in mock_map:
+#             setattr(mock, method_name, MagicMock(return_value=mock_map[method_name]))
+#         else:
+#             # Heuristic for unknown methods
+#             if "extract" in method_name:
+#                 setattr(mock, method_name, MagicMock(return_value={}))
+#             elif "process" in method_name:
+#                 setattr(mock, method_name, MagicMock(return_value=True))
+#             elif "open" in method_name:
+#                 setattr(mock, method_name, MagicMock(return_value=True))
+#             elif "validate" in method_name:
+#                 setattr(mock, method_name, MagicMock(return_value=True))
+#             else:
+#                 setattr(mock, method_name, MagicMock(return_value="Mocked"))
+    
+#     # Add processor_info property
+#     mock.processor_info = {
+#         "processor_name": processor_name,
+#         "capabilities": {},
+#         "supported_formats": set(),
+#         "implementation_used": "mock",
+#         "dependencies": []
+#     }
+    
+#     # Mark all capabilities as mocked
+#     for method_spec in methods:
+#         if isinstance(method_spec, tuple):
+#             method_name = method_spec[0]
+#         else:
+#             method_name = method_spec
+#         mock.processor_info["capabilities"][method_name] = {
+#             "available": False,
+#             "implementation": "mock"
+#         }
+    
+#     return mock

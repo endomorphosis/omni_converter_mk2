@@ -7,10 +7,7 @@ import re
 import html
 from typing import Any, Optional
 
-def extract_metadata(
-    data: str,
-    options: Optional[dict[str, Any]] = None
-) -> dict[str, Any]:
+def extract_metadata(data: str, options: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Extract metadata from HTML content.
     
     Args:
@@ -51,10 +48,7 @@ def extract_metadata(
     return metadata
 
 
-def extract_content(
-    data: str,
-    options: Optional[dict[str, Any]] = None
-) -> str:
+def extract_text(data: str, options: Optional[dict[str, Any]] = None) -> str:
     """
     Extract plain text content from HTML.
     
@@ -83,12 +77,8 @@ def extract_content(
     return text
 
 
-def extract_structure(
-    data: str,
-    metadata: dict[str, Any]
-) -> list[dict[str, Any]]:
-    """
-    Create sections from HTML content.
+def extract_structure(data: str, metadata: dict[str, Any]) -> list[dict[str, Any]]:
+    """Create sections from HTML content.
     
     Args:
         data: The HTML content as text.
@@ -123,7 +113,7 @@ def extract_structure(
             })
     
     # Add body section
-    text = extract_content(data)
+    text = extract_text(data)
     sections.append({
         'type': 'body',
         'content': text
@@ -136,8 +126,7 @@ def process(
     file_content: str | bytes,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
-    """
-    Process HTML content.
+    """Process HTML content.
     
     Args:
         file_content: The file content to process.
@@ -156,7 +145,7 @@ def process(
     metadata = extract_metadata(data, options)
     
     # Extract text content
-    text = extract_content(data, options)
+    text = extract_text(data, options)
     
     # Create sections
     sections = extract_structure(data, metadata)

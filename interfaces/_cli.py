@@ -188,7 +188,7 @@ class CLI:
             # Get output format from args, config, or default to txt
             output_format = output_path.split('.')[-1] if output_path and '.' in output_path else None
             if not output_format:
-                output_format = self.configs.get_config_value('output.format', 'txt')
+                output_format = self.configs.get_config_value('output.default_format', 'txt')
             
             # Set processing options
             if options is None:
@@ -350,7 +350,7 @@ class CLI:
         
         # Set configuration based on command-line arguments
         if args.format:
-            self.configs.set_config_value('output.format', args.format)
+            self.configs.set_config_value('output.default_format', args.format)
         
         if args.verbose:
             self.configs.set_config_value('output.verbose', True)

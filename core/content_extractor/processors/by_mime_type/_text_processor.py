@@ -24,7 +24,7 @@ class TextProcessor:
 
     def __call__(self, data: bytes | str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """Process plaintext content.
-        
+
         Args:
             file_content: The file content to process.
             options: Processing options.
@@ -35,6 +35,20 @@ class TextProcessor:
         text, metadata, sections = self._process(data, options)
 
         return text, metadata, sections
+
+    @property
+    def processor_info(self) -> dict[str, Any]:
+        """Get information about the processor.
+        
+        Returns:
+            A dictionary containing processor information.
+        """
+        return {
+            'processor_name': self._processor_name,
+            'version': self.get_version(),
+            'supported_formats': self._supported_formats,
+            'available': self._processor_available
+        }
 
     def get_version(self) -> str:
         """

@@ -13,21 +13,21 @@ from logger import logger
 
 
 def extract_metadata(
-    xml_content: str,
+    data: bytes | str,
     options: Optional[dict[str, Any]] = None
 ) -> dict[str, Any]:
     """
     Extract metadata from XML content.
     
     Args:
-        xml_content: The XML content as text.
+        data: The XML content as text.
         options: Optional extraction options.
         
     Returns:
         Dictionary of metadata.
     """
     try:
-        root = ET.fromstring(xml_content)
+        root = ET.fromstring(data)
         
         # Basic metadata
         metadata = {
@@ -40,7 +40,7 @@ def extract_metadata(
         
         # Get namespace info if available
         nsmap = {}
-        for match in re.finditer(r'xmlns:(\w+)=["\'](.*?)["\']', xml_content):
+        for match in re.finditer(r'xmlns:(\w+)=["\'](.*?)["\']', data):
             prefix, uri = match.groups()
             nsmap[prefix] = uri
         
@@ -76,21 +76,21 @@ def extract_text(element: ET.Element) -> str:
 
 
 def extract_structure(
-    xml_content: str,
+    data: bytes | str,
     options: Optional[dict[str, Any]] = None
 ) -> list[dict[str, Any]]:
     """
     Create sections from XML content.
     
     Args:
-        xml_content: The XML content as text.
+        data: The XML content as text.
         options: Optional extraction options.
         
     Returns:
         list of sections.
     """
     try:
-        root = ET.fromstring(xml_content)
+        root = ET.fromstring(data)
         sections = []
         
         # Create a section for each top-level element
@@ -109,31 +109,31 @@ def extract_structure(
 
 
 def process_xml(
-    file_content: Any,
+    data: bytes | str,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
     Process XML content.
-    
+
     Args:
-        file_content: The file content to process.
+        data: The file content to process.
         options: Processing options.
         
     Returns:
         tuple of (text content, metadata, sections).
     """
     # Get XML content as text
-    if hasattr(file_content, 'get_as_text'):
-        xml_content = file_content.get_as_text()
+    if hasattr(data, 'get_as_text'):
+        data = data.get_as_text()
     else:
-        xml_content = file_content
-    
+        data = data
+
     try:
         # Parse XML
-        root = ET.fromstring(xml_content)
+        root = ET.fromstring(data)
         
         # Extract metadata
-        metadata = extract_metadata(xml_content, options)
+        metadata = extract_metadata(data, options)
         
         # Extract text
         text = extract_text(root)
@@ -142,22 +142,22 @@ def process_xml(
         text = re.sub(r'\s+', ' ', text).strip()
         
         # Create sections
-        sections = extract_structure(xml_content, options)
+        sections = extract_structure(data, options)
         
         return text, metadata, sections
     
-    except ET.ParseError as e:
+    except ET.ParseError as e: # TODO This should be moved outside the processor. All exceptions should be handled by the handler.
         logger.warning(f"XML parsing failed, falling back to plain text: {e}")
-        
+
         # Fallback to plain text
         metadata = {
             'format': 'xml',
             'parse_error': str(e)
         }
-        
+
         sections = [{
             'type': 'text',
-            'content': xml_content
+            'content': data
         }]
-        
-        return xml_content, metadata, sections
+
+        return data, metadata, sections

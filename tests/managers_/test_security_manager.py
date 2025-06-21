@@ -26,13 +26,15 @@ from unittest.mock import MagicMock, patch
 import tempfile
 import shutil
 
+from logger import logger as debug_logger
 from core.content_extractor._content import Content
-from monitors.security_monitor._security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
+from types_ import Logger, Configs
+from monitors.security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
 from configs import configs
 
 from monitors._monitor_constants import Constants
 
-resources = { # NOTE: Since these are constants, we can use them directly
+resources = { # NOTE: Since these are constants, we can directly use them without mocking.
     "dangerous_patterns": Constants.SecurityMonitor.DANGEROUS_PATTERNS_REGEX,
     "executable_extensions": Constants.SecurityMonitor.EXECUTABLE_EXTENSIONS,
     "file_size_limits_in_bytes": Constants.SecurityMonitor.FILE_SIZE_LIMITS_IN_BYTES,
@@ -41,20 +43,14 @@ resources = { # NOTE: Since these are constants, we can use them directly
     "remove_active_content_regex": Constants.SecurityMonitor.REMOVE_ACTIVE_CONTENT_REGEX,
     "remove_scripts_regex": Constants.SecurityMonitor.REMOVE_SCRIPTS_REGEX,
     "security_rules": Constants.SecurityMonitor.SECURITY_RULES,
-    "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS
+    "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS,
 }
 
 class TestSecurityManager(unittest.TestCase):
     """Test the SecurityMonitor class."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
-        self.mock_configs = copy.deepcopy(configs) 
-        self.mock_resources = copy.deepcopy(resources)
-
-        # Create a security manager
-        self.security_monitor = SecurityMonitor(resources=self.mock_resources, configs=self.mock_configs)
-
         # Create a temp directory for test files
         self.temp_dir = tempfile.mkdtemp()
         
@@ -81,6 +77,42 @@ class TestSecurityManager(unittest.TestCase):
             # On Unix-like systems, we can check if the file is executable
             if not os.access(self.executable_file_path, os.X_OK):
                 raise PermissionError(f"File {self.executable_file_path} is not executable")
+
+        self.mock_configs = MagicMock(spec=Configs)
+
+        # Mock Content object for sanitization tests
+        self._mock_content = MagicMock(spec=Content)
+        self._mock_content.text = "Test text"
+        self._mock_content.metadata = {"format": "txt"}
+        self._mock_content.sections = [{"title": "Section 1", "content": "Content 1"}]
+        self._mock_content.source_format = "txt"
+        self._mock_content.source_path = "/path/to/file.txt"
+
+        self._mock_security_result = MagicMock(spec=SecurityResult)
+        self._mock_security_result.is_safe = MagicMock()
+        self._mock_security_result.issues = MagicMock()
+        self._mock_security_result.risk_level = MagicMock()
+        self._mock_security_result.metadata = MagicMock()
+
+        self._mock_security_result.is_safe.return_value = True
+        self._mock_security_result.issues.return_value = []
+        self._mock_security_result.risk_level.return_value = "low"
+        self._mock_security_result.metadata.return_value = {"file_path": self.test_file_path, "format": "plain"}
+
+        self._mock_sanitized_content = MagicMock(spec=SanitizedContent)
+        self._mock_sanitized_content.content = self._mock_content
+        self._mock_sanitized_content.sanitization_applied = ["remove_scripts", "remove_personal_data"]
+        self._mock_sanitized_content.removed_content = {"scripts": 2, "personal_data": 3}
+
+        self._mock_resources = {
+            **copy.deepcopy(resources),
+            "logger": MagicMock(spec=Logger),
+            "security_result": SecurityResult,
+            "sanitized_content": SanitizedContent,
+        }
+
+        # Create a security manager
+        self.security_monitor = SecurityMonitor(resources=self._mock_resources, configs=self.mock_configs)
 
     def tearDown(self):
         """Clean up test fixtures."""
@@ -137,50 +169,51 @@ class TestSecurityManager(unittest.TestCase):
     def test_sanitized_content_init(self):
         """Test SanitizedContent initialization."""
         sanitized = SanitizedContent(
-            text="Test text",
-            metadata={"format": "txt"},
-            sections=[{"title": "Section 1", "content": "Content 1"}],
-            source_format="txt",
-            source_path="/path/to/file.txt",
+            content=self._mock_content,
             sanitization_applied=["remove_scripts", "remove_personal_data"],
             removed_content={"scripts": 2, "personal_data": 3}
         )
         
-        self.assertEqual(sanitized.text, "Test text")
-        self.assertEqual(sanitized.metadata["format"], "txt")
-        self.assertEqual(len(sanitized.sections), 1)
-        self.assertEqual(sanitized.source_format, "txt")
-        self.assertEqual(sanitized.source_path, "/path/to/file.txt")
+        self.assertEqual(sanitized.content.text, "Test text")
+        self.assertEqual(sanitized.content.metadata["format"], "txt")
+        self.assertEqual(len(sanitized.content.sections), 1)
+        self.assertEqual(sanitized.content.source_format, "txt")
+        self.assertEqual(sanitized.content.source_path, "/path/to/file.txt")
         self.assertEqual(len(sanitized.sanitization_applied), 2)
         self.assertEqual(sanitized.removed_content["scripts"], 2)
         self.assertEqual(sanitized.removed_content["personal_data"], 3)
     
     def test_sanitized_content_to_dict(self):
         """Test SanitizedContent.to_dict()."""
-        sanitized = SanitizedContent(
+        mock_content = Content( # Use Content class with mock data
             text="Test text",
             metadata={"format": "txt"},
             sections=[{"title": "Section 1", "content": "Content 1"}],
             source_format="txt",
-            source_path="/path/to/file.txt",
+            source_path=self.test_file_path
+        )
+        sanitized = SanitizedContent(
+            content=mock_content,
             sanitization_applied=["remove_scripts", "remove_personal_data"],
             removed_content={"scripts": 2, "personal_data": 3}
         )
         
         result_dict = sanitized.to_dict()
+        debug_logger.debug(f"Sanitized content dict: {result_dict}")
         
         self.assertEqual(result_dict["text"], "Test text")
         self.assertEqual(result_dict["metadata"]["format"], "txt")
         self.assertEqual(len(result_dict["sections"]), 1)
         self.assertEqual(result_dict["source_format"], "txt")
-        self.assertEqual(result_dict["source_path"], "/path/to/file.txt")
+        self.assertEqual(str(result_dict["source_path"]), self.test_file_path)
         self.assertEqual(len(result_dict["sanitization_applied"]), 2)
         self.assertEqual(result_dict["removed_content"]["scripts"], 2)
         self.assertEqual(result_dict["removed_content"]["personal_data"], 3)
-    
+
     def test_validate_security_normal_file(self):
         """Test validating a normal file."""
         result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
+        debug_logger.debug(f"Security result: {result.to_dict()}") 
         
         self.assertTrue(result.is_safe)
         self.assertEqual(len(result.issues), 0)
@@ -191,22 +224,22 @@ class TestSecurityManager(unittest.TestCase):
     def test_validate_security_large_file(self):
         """Test validating a file that exceeds size limits."""
         result = self.security_monitor.validate_security(self.large_file_path, format_name="plain")
-        
+
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
         self.assertIn("exceeds limit", result.issues[0])
         self.assertNotEqual(result.risk_level, "low")
-    
+
     def test_validate_security_executable_file(self):
         """Test validating an executable file."""
         result = self.security_monitor.validate_security(self.executable_file_path)
-        
+
         self.assertFalse(result.is_safe)
         self.assertEqual(len(result.issues), 1)
         self.assertIn("executable", result.issues[0])
         # The actual risk level appears to be 'medium' based on the implementation
         self.assertEqual(result.risk_level, "medium")
-    
+
     def test_validate_security_nonexistent_file(self):
         """Test validating a file that doesn't exist."""
         nonexistent_path = os.path.join(self.temp_dir, "nonexistent.txt")
@@ -220,17 +253,18 @@ class TestSecurityManager(unittest.TestCase):
     def test_validate_security_disallowed_format(self):
         """Test validating a file with a disallowed format."""
         # Set allowed formats
-        self.security_monitor.set_allowed_formats(["html", "pdf"])
-        
-        result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
-        
-        self.assertFalse(result.is_safe)
-        self.assertEqual(len(result.issues), 1)
-        self.assertIn("not allowed", result.issues[0])
-        
-        # Reset allowed formats for other tests
-        self.security_monitor.set_allowed_formats([])
-    
+        try:
+            self.security_monitor.set_allowed_formats(["html", "pdf"])
+            
+            result = self.security_monitor.validate_security(self.test_file_path, format_name="plain")
+            
+            self.assertFalse(result.is_safe)
+            self.assertEqual(len(result.issues), 1)
+            self.assertIn("not allowed", result.issues[0])
+        finally:
+            # Reset allowed formats for other tests
+            self.security_monitor.set_allowed_formats([])
+
     def test_is_file_safe(self):
         """Test checking if a file is safe."""
         # Normal file should be safe
@@ -269,19 +303,24 @@ class TestSecurityManager(unittest.TestCase):
         </body>
         </html>
         """
-        
-        content = Content(
+        # Write the HTML content to a file
+        with open(self.test_file_path, 'w') as f:
+            f.write(html_with_scripts)
+
+        mock_content = Content(
             text=html_with_scripts,
             metadata={"format": "html"},
-            source_format="html"
+            sections=[{"title": "Test Page", "content": "This is a test."}],
+            source_format="html",
+            source_path=self.test_file_path
         )
         
         # Sanitize content
-        sanitized = self.security_monitor.sanitize_content(content)
+        sanitized = self.security_monitor.sanitize_content(mock_content)
         
         # Check that scripts were removed
-        self.assertNotIn("<script>", sanitized.text)
-        self.assertNotIn("javascript:", sanitized.text)
+        self.assertNotIn("<script>", sanitized.content.text)
+        self.assertNotIn("javascript:", sanitized.content.text)
         self.assertIn("sanitization_applied", sanitized.to_dict())
         self.assertIn("remove_scripts", sanitized.sanitization_applied)
     
@@ -314,10 +353,10 @@ class TestSecurityManager(unittest.TestCase):
         sanitized = self.security_monitor.sanitize_content(content)
         
         # Check that active content was removed
-        self.assertNotIn("<iframe", sanitized.text)
-        self.assertNotIn("<object", sanitized.text)
-        self.assertNotIn("<embed", sanitized.text)
-        self.assertNotIn("<form", sanitized.text)
+        self.assertNotIn("<iframe", sanitized.content.text)
+        self.assertNotIn("<object", sanitized.content.text)
+        self.assertNotIn("<embed", sanitized.content.text)
+        self.assertNotIn("<form", sanitized.content.text)
         self.assertIn("remove_active_content", sanitized.sanitization_applied)
     
     def test_sanitize_content_with_personal_data(self):
@@ -340,45 +379,46 @@ class TestSecurityManager(unittest.TestCase):
         sanitized = self.security_monitor.sanitize_content(content)
         
         # Check that personal data was removed
-        self.assertNotIn("user@example.com", sanitized.text)
-        self.assertNotIn("555-123-4567", sanitized.text)
-        self.assertNotIn("123-45-6789", sanitized.text)
-        self.assertNotIn("4111-1111-1111-1111", sanitized.text)
+        self.assertNotIn("user@example.com", sanitized.content.text)
+        self.assertNotIn("555-123-4567", sanitized.content.text)
+        self.assertNotIn("123-45-6789", sanitized.content.text)
+        self.assertNotIn("4111-1111-1111-1111", sanitized.content.text)
         self.assertIn("remove_personal_data", sanitized.sanitization_applied)
     
     def test_sanitize_content_with_metadata(self):
         """Test sanitizing content with sensitive metadata."""
         # Create content with sensitive metadata
-        content = Content(
-            text="Test content",
-            metadata={
-                "format": "plain",
-                "author": "John Doe",
-                "email": "john@example.com",
-                "company": "Acme Inc.",
-                "safe_key": "safe_value"
-            },
-            source_format="plain"
-        )
-        
-        # Configure security manager to remove metadata
-        self.security_monitor.set_security_rules({"remove_metadata": True})
-        
-        # Sanitize content
-        sanitized = self.security_monitor.sanitize_content(content)
-        
-        # Check that sensitive metadata was removed
-        self.assertNotIn("author", sanitized.metadata)
-        self.assertNotIn("email", sanitized.metadata)
-        self.assertNotIn("company", sanitized.metadata)
-        self.assertIn("format", sanitized.metadata)  # Should keep non-sensitive metadata
-        # It seems the current implementation removes all keys matching any sensitive keys,
-        # not just those exact keys. Adjust our expectation.
-        # self.assertIn("safe_key", sanitized.metadata)
-        self.assertIn("remove_metadata", sanitized.sanitization_applied)
-        
-        # Reset security rules
-        self.security_monitor.set_security_rules({"remove_metadata": False})
+        try:
+            content = Content(
+                text="Test content",
+                metadata={
+                    "format": "plain",
+                    "author": "John Doe",
+                    "email": "john@example.com",
+                    "company": "Acme Inc.",
+                    "safe_key": "safe_value"
+                },
+                source_format="plain"
+            )
+            
+            # Configure security manager to remove metadata
+            self.security_monitor.set_security_rules({"remove_metadata": True})
+            
+            # Sanitize content
+            sanitized = self.security_monitor.sanitize_content(content)
+            
+            # Check that sensitive metadata was removed
+            self.assertNotIn("author", sanitized.content.metadata)
+            self.assertNotIn("email", sanitized.content.metadata)
+            self.assertNotIn("company", sanitized.content.metadata)
+            self.assertIn("format", sanitized.content.metadata)  # Should keep non-sensitive metadata
+            # It seems the current implementation removes all keys matching any sensitive keys,
+            # not just those exact keys. Adjust our expectation.
+            # self.assertIn("safe_key", sanitized.content.metadata)
+            self.assertIn("remove_metadata", sanitized.sanitization_applied)
+        finally:
+            # Reset security rules
+            self.security_monitor.set_security_rules({"remove_metadata": False})
     
     def test_sanitize_content_with_sanitization_disabled(self):
         """Test sanitizing content with sanitization disabled."""
@@ -393,41 +433,46 @@ class TestSecurityManager(unittest.TestCase):
         </body>
         </html>
         """
-        
-        content = Content(
-            text=html_with_scripts,
-            metadata={"format": "html"},
-            source_format="html"
-        )
-        
-        # Disable sanitization
-        self.security_monitor.set_security_rules({"sanitize_content": False})
-        
-        # Sanitize content
-        sanitized = self.security_monitor.sanitize_content(content)
-        
-        # Content should be unchanged
-        self.assertEqual(sanitized.text, html_with_scripts)
-        self.assertIn("sanitization_applied", sanitized.to_dict())
-        self.assertEqual(sanitized.sanitization_applied, ["none"])
-        
-        # Reset security rules
-        self.security_monitor.set_security_rules({"sanitize_content": True})
+        try:
+            content = Content(
+                text=html_with_scripts,
+                metadata={"format": "html"},
+                source_format="html"
+            )
+            
+            # Disable sanitization
+            self.security_monitor.set_security_rules({"sanitize_content": False})
+            
+            # Sanitize content
+            sanitized = self.security_monitor.sanitize_content(content)
+            
+            # Content should be unchanged
+            self.assertEqual(sanitized.content.text, html_with_scripts)
+            self.assertIn("sanitization_applied", sanitized.to_dict())
+            self.assertEqual(sanitized.sanitization_applied, ["none"])
+            
+            # Reset security rules
+        finally:
+            self.security_monitor.set_security_rules({"sanitize_content": True})
     
     def test_set_security_rules(self):
         """Test setting security rules."""
-        # Set new rules
-        self.security_monitor.set_security_rules({
-            "reject_executable": False,
-            "remove_scripts": False,
-            "unknown_rule": True  # Should be ignored
-        })
-        
-        # Check if rules were updated
-        self.assertFalse(self.security_monitor._security_rules["reject_executable"])
-        self.assertFalse(self.security_monitor._security_rules["remove_scripts"])
-        self.assertNotIn("unknown_rule", self.security_monitor._security_rules)
-    
+        try:
+            # Set new rules
+            self.security_monitor.set_security_rules({
+                "reject_executable": False,
+                "remove_scripts": False,
+                "unknown_rule": True  # Should be ignored
+            })
+
+            # Check if rules were updated
+            self.assertFalse(self.security_monitor._security_rules["reject_executable"])
+            self.assertFalse(self.security_monitor._security_rules["remove_scripts"])
+            self.assertNotIn("unknown_rule", self.security_monitor._security_rules)
+        finally:
+            # Reset to default rules
+            self.security_monitor.set_security_rules(Constants.SecurityMonitor.SECURITY_RULES)
+
     def test_set_allowed_formats(self):
         """Test setting allowed formats."""
         # Initially all formats are allowed
@@ -453,14 +498,14 @@ class TestSecurityManager(unittest.TestCase):
             "text": 20 * 1024 * 1024,  # 20 MB
             "new_category": 30 * 1024 * 1024  # 30 MB
         })
-        
+
         # Check if limits were updated
         self.assertEqual(self.security_monitor._file_size_limits["text"], 20 * 1024 * 1024)
         self.assertEqual(self.security_monitor._file_size_limits["new_category"], 30 * 1024 * 1024)
-        
+
         # Other limits should remain unchanged
         self.assertEqual(self.security_monitor._file_size_limits["default"], 100 * 1024 * 1024)
-    
+
     def test_is_executable(self):
         """Test checking if a file is executable."""
         # Test a non-executable file

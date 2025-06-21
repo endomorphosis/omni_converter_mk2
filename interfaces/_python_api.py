@@ -259,7 +259,7 @@ class PythonAPI:
         """
         options = { # TODO All these options should be set in the config file.
             # Output options
-            "format": self.configs.get_config_value("output.format", "txt"),
+            "format": self.configs.get_config_value("output.default_format", "txt"),
             "include_metadata": self.configs.get_config_value("output.include_metadata", True),
             
             # Processing options

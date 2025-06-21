@@ -18,7 +18,7 @@ This test suite validates the ResourceMonitor component against several criteria
    - Tests verify graceful handling when system resources are constrained
    - Tests ensure appropriate logging and notification of resource issues
 """
-
+import copy
 import unittest
 from unittest.mock import MagicMock, patch
 import threading
@@ -28,6 +28,8 @@ import psutil
 
 from monitors._resource_monitor import ResourceMonitor
 from utils.resource_monitor.dependencies.psutil import PsUtil
+from types_ import Logger
+from logger import logger as debug_logger
 from configs import configs, Configs
 
 resources = {
@@ -49,12 +51,19 @@ class TestResourceMonitor(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Create a resource monitor with test limits
-        self.configs = configs
-        self.configs.resources.memory_limit_gb = 0.5  # 500 MB
-        self.configs.resources.cpu_limit_percent = 80.0
-        self.configs.resources.monitoring_interval_seconds = 0.1  # Short interval for tests
 
-        self.resource_monitor = ResourceMonitor(resources=resources, configs=self.configs)
+        self.mock_configs = MagicMock(spec=Configs)
+        self.mock_configs.resources = MagicMock()
+        self.mock_configs.resources.memory_limit_mb = 512.0  # 512 MB
+        self.mock_configs.resources.cpu_limit_percent = 80.0  # 80% CPU limit
+        self.mock_configs.resources.monitoring_interval_seconds = 0.1  # Short interval for tests
+
+        self.mock_resources = {
+            **copy.deepcopy(resources),
+            "logger": MagicMock(spec=Logger),  # Mock the logger to avoid actual logging during tests
+        }
+
+        self.resource_monitor = ResourceMonitor(resources=self.mock_resources, configs=self.mock_configs)
 
     def tearDown(self):
         """Clean up test fixtures."""

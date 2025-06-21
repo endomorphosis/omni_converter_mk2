@@ -91,15 +91,12 @@ def process(
             
     Returns:
         Tuple of (text content, metadata, sections).
-        
-    Raises:
-        Exception: If an error occurs during processing.
     """
     # Get text content
     if hasattr(data, 'get_as_text'):
         text: str = data.get_as_text()
-    else:
-        text: str = extract_text(text, options)
+
+    text = extract_text(text, options)
 
     # Plain text is already in the desired format
     metadata = extract_metadata(text, options)

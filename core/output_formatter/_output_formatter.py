@@ -58,10 +58,10 @@ class OutputFormatter:
         self.output_formats["txt"] = self._format_as_txt
         self.output_formats["json"] = self._format_as_json
         self.output_formats["md"] = self._format_as_markdown
-        
+
         # Log the registered formats
         self._logger.info(f"Registered output formats: {', '.join(self.output_formats.keys())}")
-    
+
     def _format_as_txt(self, content: Content) -> str:
         """
         Format content as plain text.

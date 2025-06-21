@@ -49,25 +49,23 @@ class ResourceMonitor:
         self.monitoring_interval: float = self.configs.resources.monitoring_interval_seconds
 
         # Initialize resource usage methods
-        self._get_cpu_usage: Callable = self.resources['get_cpu_usage']
+        self._get_cpu_usage:                 Callable = self.resources['get_cpu_usage']
         self._get_virtual_memory_in_percent: Callable = self.resources['get_virtual_memory_in_percent']
-        self._get_memory_info: Callable = self.resources['get_memory_info']
-        self._get_memory_rss_usage_in_mb: Callable = self.resources['get_memory_rss_usage_in_mb']
-        self._get_memory_vms_usage_in_mb: Callable = self.resources['get_memory_vms_usage_in_mb']
-        self._get_disk_usage_in_percent: Callable = self.resources['get_disk_usage']
-        self._get_num_open_files: Callable = self.resources['get_open_files']
+        self._get_memory_info:               Callable = self.resources['get_memory_info']
+        self._get_memory_rss_usage_in_mb:    Callable = self.resources['get_memory_rss_usage_in_mb']
+        self._get_memory_vms_usage_in_mb:    Callable = self.resources['get_memory_vms_usage_in_mb']
+        self._get_disk_usage_in_percent:     Callable = self.resources['get_disk_usage']
+        self._get_num_open_files:            Callable = self.resources['get_open_files']
         self._get_shared_memory_usage_in_mb: Callable = self.resources['get_shared_memory_usage_in_mb']
-        self._get_memory_percent: Callable = self.resources['get_virtual_memory_in_percent']
+        self._get_memory_percent:            Callable = self.resources['get_virtual_memory_in_percent']
 
         self._logger: Logger = self.resources['logger']
-
         self.active_monitoring = False
         self.monitoring_thread = None
         self._current_usage: dict = {"cpu": 0.0, "memory": 0}
 
     def start_monitoring(self) -> bool:
-        """
-        Start active resource monitoring.
+        """Start active resource monitoring.
 
         Returns:
             True if monitoring started successfully, False otherwise.
@@ -161,7 +159,7 @@ class ResourceMonitor:
                 f"({100 * usage.get('memory', 0)/self.memory_limit:.1f}%)"
             )
 
-    @property # NOTE We purposefully don't cache this property to always get the latest usage
+    @property # NOTE We purposefully don't cache this property, as we always want the latest usage
     def is_resource_available(self) -> tuple[bool, Optional[str]]:
         """
         Check if resources are available for processing.

@@ -118,11 +118,68 @@ def extract_text(
     
     return text_content
 
-def extract_structure(): # TODO: This function should be implemented, even if it is just a dummy.
-    pass
+
+def extract_structure(data: bytes | str, options: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract sections from the svg.
+    
+    Args:
+        data: The data to extract sections from.
+        options: Processing options.
+
+    Returns:
+        A list of sections, each represented as a dictionary.
+    """
+    # Convert bytes to string if needed
+    svg_content = data.decode('utf-8') if isinstance(data, bytes) else data
+    
+    sections = []
+    
+    # Extract SVG root attributes for basic info
+    width = height = "Unknown"
+    width_match = re.search(r'width="([^"]*)"', svg_content)
+    if width_match:
+        width = width_match.group(1)
+    
+    height_match = re.search(r'height="([^"]*)"', svg_content)
+    if height_match:
+        height = height_match.group(1)
+    
+    # Add basic image info section
+    sections.append({
+        'type': 'image_info',
+        'content': f"SVG Image: {width}x{height}",
+        'metadata': {
+            'width': width,
+            'height': height,
+            'format': 'svg'
+        }
+    })
+    
+    # Extract title and description elements
+    title_elements = re.findall(r'<title[^>]*>(.*?)</title>', svg_content, re.DOTALL)
+    desc_elements = re.findall(r'<desc[^>]*>(.*?)</desc>', svg_content, re.DOTALL)
+    
+    if title_elements or desc_elements:
+        sections.append({
+            'type': 'metadata',
+            'content': {
+                'title': title_elements[0].strip() if title_elements else None,
+                'description': desc_elements[0].strip() if desc_elements else None
+            }
+        })
+    
+    # Extract text content from text elements
+    text_elements = re.findall(r'<text[^>]*>(.*?)</text>', svg_content, re.DOTALL)
+    if text_elements:
+        sections.append({
+            'type': 'text_content',
+            'content': [text.strip() for text in text_elements if text.strip()]
+        })
+    
+    return sections
 
 
-def process_svg(
+def process(
     data: str | bytes,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:

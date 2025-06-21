@@ -1,10 +1,11 @@
 import os
+from typing import Optional
 
 def can_handle(
         supported_formats: frozenset[str], 
         format_extensions: frozenset[str], 
         file_path: str, 
-        format_name: str
+        format_name: Optional[str]
     ) -> bool:
     if format_name:
         return format_name in supported_formats

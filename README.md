@@ -80,7 +80,7 @@ print(formats)
 
 # Configure the converter
 api.set_config({
-    'output.format': 'json',
+    'output.default_format': 'json',
     'processing.normalize_text': True
 })
 ```

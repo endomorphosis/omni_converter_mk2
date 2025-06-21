@@ -121,6 +121,7 @@ class _Output(BaseModel):
     include_metadata: bool = Field(default=True, description="Include metadata in output")
     preserve_structure: bool = Field(default=True, description="Attempt to preserve document structure")
     encoding: str = Field(default="utf-8", description="Output file encoding")
+    verbose: bool = Field(default=False, description="Enable verbose output for debugging") # NOTE This should activate the logger's debug mode
 
 class Configs(BaseModel):
     """

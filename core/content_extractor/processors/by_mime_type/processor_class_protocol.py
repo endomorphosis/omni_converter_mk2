@@ -30,7 +30,7 @@ class Processor(Protocol):
         Process the given data and return a tuple of (text content, metadata, sections).
         """
         ...
-    
+
     def process(self, data: bytes | str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """
         Process the content and return it unchanged.
@@ -64,24 +64,25 @@ class Processor(Protocol):
         """
         ...
 
-
-
-
-class FallbackProcessor:
+def apply_processor_protocol_to_files_in_this_dir():
     """
-    Fallback processor that uses python's builtins to process data.
-    This is used when no other processor is available.
+    Dynamically apply the Processor protocol to all modules in the current directory.
+    
+    NOTE: As dependencies may vary widely in functionality, some dependencies may implement only stubs for the protocol methods.
+    Alternatively, some processors may implement additional methods that are not part of the protocol. 
+    Anything defined outside the class should be a private method to avoid conflicts with the protocol.
+    
     """
+    from pathlib import Path
+    import importlib
+    import pkgutil
+    this_dir = Path(__file__).parent.name
 
-    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None):
-        self.resources=resources
-        self.configs = configs
-
-    def __call__(self, data: bytes | str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
-        return self.process(data, options)
-
-    def process(self, content: str) -> str:
-        """
-        Process the content and return it unchanged.
-        """
-        return content
+    for module_info in pkgutil.iter_modules([Path(__file__).parent]):
+        module_name = f"{this_dir}.{module_info.name}"
+        module = importlib.import_module(module_name)
+        for attr in dir(module):
+            if attr.startswith('_'):
+                continue
+            else:
+                assert isinstance(module, Processor), f"Mime-type processor '{module_name}' does not implement Processor protocol"

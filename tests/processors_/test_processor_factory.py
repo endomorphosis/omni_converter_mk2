@@ -95,10 +95,10 @@ class TestMakeProcessor(unittest.TestCase):
             **self.basic_resources,
             "dependencies": all_available_dependencies,
         }
-        
+
         # Act
         processor = _make_processor(resources)
-        
+
         # Assert
         self.assertIsNotNone(processor)
         self.assertNotIsInstance(processor, MagicMock)
@@ -108,14 +108,14 @@ class TestMakeProcessor(unittest.TestCase):
         self.assertTrue(hasattr(processor, "can_process"))
         self.assertTrue(hasattr(processor, "supported_formats"))
         self.assertEqual(processor.supported_formats, {"xlsx", "xlsm"})
-        
+
         # Verify processor reports full capabilities
         processor_info = processor.processor_info
         self.assertIn("capabilities", processor_info)
         self.assertIn("extract_text", processor_info["capabilities"])
         self.assertIn("extract_metadata", processor_info["capabilities"])
         self.assertIn("extract_images", processor_info["capabilities"])
-        
+
         # Verify all capabilities are marked as available (not mocked)
         for capability in ["extract_text", "extract_metadata", "extract_images"]:
             self.assertTrue(processor_info["capabilities"][capability]["available"])
@@ -793,7 +793,7 @@ class TestCrossProcessorDependencies(unittest.TestCase):
     
     def test_apply_cross_processor_dependencies_missing_source_processor(self):
         """Test handling of missing source processor."""
-        with self.assertLogs(level='WARNING') as log:
+        with self.assertLogs('logger', level='WARNING') as log:
             result = _apply_cross_processor_dependencies(
                 {"image_processor": self.mock_image_processor},  # xlsx_processor missing
                 [("xlsx_processor", "extract_images", "image_processor", "process_image")]
@@ -806,7 +806,7 @@ class TestCrossProcessorDependencies(unittest.TestCase):
     
     def test_apply_cross_processor_dependencies_missing_target_processor(self):
         """Test handling of missing target processor."""
-        with self.assertLogs(level='WARNING') as log:
+        with self.assertLogs('logger', level='WARNING') as log:
             result = _apply_cross_processor_dependencies(
                 {"xlsx_processor": self.mock_xlsx_processor},  # image_processor missing
                 [("xlsx_processor", "extract_images", "image_processor", "process_image")]
@@ -828,7 +828,7 @@ class TestCrossProcessorDependencies(unittest.TestCase):
             "image_processor": self.mock_image_processor
         }
 
-        with self.assertLogs(level='WARNING') as log:
+        with self.assertLogs('logger', level='WARNING') as log:
             result = _apply_cross_processor_dependencies(
                 processors,
                 [("xlsx_processor", "extract_images", "image_processor", "process_image")]
@@ -848,7 +848,7 @@ class TestCrossProcessorDependencies(unittest.TestCase):
             "image_processor": processor_without_method
         }
         
-        with self.assertLogs(level='WARNING') as log:
+        with self.assertLogs('logger', level='WARNING') as log:
             result = _apply_cross_processor_dependencies(
                 processors,
                 [("xlsx_processor", "extract_images", "image_processor", "process_image")]
@@ -907,7 +907,7 @@ class TestCrossProcessorDependencies(unittest.TestCase):
     
     def test_apply_cross_processor_dependencies_invalid_dependency_format(self):
         """Test handling of invalid dependency format."""
-        with self.assertLogs(level='WARNING') as log:
+        with self.assertLogs('logger', level='WARNING') as log:
             result = _apply_cross_processor_dependencies(
                 self.processors,
                 [("xlsx_processor", "extract_images")]  # Missing target processor and method

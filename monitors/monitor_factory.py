@@ -1,7 +1,3 @@
-
-
-
-
 from configs import configs
 from logger import logger
 from utils.resource_monitor.dependencies.psutil import PsUtil
@@ -58,8 +54,6 @@ def make_security_monitor() -> SecurityMonitor:
         "security_result": SecurityResult,
         "sanitized_content": SanitizedContent,
         "logger": logger,
-        "SanitizedContent": SanitizedContent,
     }
 
-    # Global security manager instance
     return SecurityMonitor(resources=resources, configs=configs)

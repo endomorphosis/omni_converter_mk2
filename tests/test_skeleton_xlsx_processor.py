@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 
-from core.content_extractor.processors.by_mime_type._xlsx_processor import XLSXProcessor
+from core.content_extractor.processors.by_mime_type._xlsx_processor import XlsxProcessor
 
 
 class TestXLSXProcessorInitialization(unittest.TestCase):

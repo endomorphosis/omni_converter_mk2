@@ -1,15 +1,8 @@
-from typing import Any
+from dataclasses import dataclass, field
+from types_ import Any, Content
 
 
-from types_ import Content
-
-
-try:
-    from pydantic import BaseModel, Field
-except ImportError:
-    raise ImportError("Pydantic is required for this module. Please install it with 'pip install pydantic'.")
-
-
+@dataclass
 class SanitizedContent:
     """
     Sanitized content from a file.
@@ -21,9 +14,9 @@ class SanitizedContent:
         removed_content (dict[str, Any]): Information about content that was removed.
     """
     content: Content
-    sanitization_applied: list[str] = Field(default_factory=list)
-    removed_content: dict[str, Any] = Field(default_factory=dict)
-    
+    sanitization_applied: list[str] = field(default_factory=list)
+    removed_content: dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> dict[str, Any]:
         """
         Convert to a dictionary.
@@ -31,7 +24,7 @@ class SanitizedContent:
         Returns:
             A dictionary representation of the sanitized content.
         """
-        result = Content.to_dict()
+        result = self.content.to_dict()
         result["sanitization_applied"] = self.sanitization_applied
         result["removed_content"] = self.removed_content
         return result
