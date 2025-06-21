@@ -96,7 +96,7 @@ def extract_text(
     return text
 
 
-def extract_sections(
+def extract_structure(
     html_content: str,
     metadata: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -215,6 +215,6 @@ def process(
     text = extract_text(html_content, options)
     
     # Create sections
-    sections = extract_sections(html_content, metadata)
+    sections = extract_structure(html_content, metadata)
     
     return text, metadata, sections

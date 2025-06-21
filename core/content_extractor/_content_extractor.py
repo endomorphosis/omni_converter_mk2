@@ -52,6 +52,10 @@ class ContentExtractor:
         self._logger:                  Logger               = self.resources["logger"]
         self._content:                 'Content'            = self.resources["content"]
 
+        for value in self._processors.values():
+            assert isinstance(value, tuple) and len(value) == 3, \
+                f"Processor value must be a tuple of (name, processor, supported_formats), got: {value}"
+
     # TODO can_handle is not used anywhere, remove it?
     def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
         """
@@ -197,14 +201,17 @@ class ContentExtractor:
 
         # Get parser for this format
         processor = None
-        self._logger.debug(f"Getting processor for format: {format_name}\nprocessors: {self._processors.items()}")
+        #self._logger.debug(f"Getting processor for format: {format_name}\nprocessors: {self._processors.items()}")
         for proc_name, values in self._processors.items():
-            _, processor, set_ = values
+            self._logger.debug(values)
+            _, available_processor, set_ = values
             if format_name in set_:
                 self._logger.debug(f"Processor '{proc_name}' supports format '{format_name}'")
+                processor = available_processor
                 break
 
         # processor = self._processors.get(format_name)
+        self._logger.debug(f"Processor for format '{format_name}': {processor}")
         if not processor:
             raise ValueError(f"No processor available for format: {format_name}")
 
@@ -228,6 +235,7 @@ class ContentExtractor:
             metadata: dict[str, Any]
             sections: list[dict[str, Any]]
 
+            self._logger.debug(f"Processing file content with processor: {processor}")
             text, metadata, sections = processor(file_content, processor_options)
 
             # Create content object
@@ -241,5 +249,5 @@ class ContentExtractor:
             return content
 
         except Exception as e:
-            self._logger.error(f"Error extracting content from {format_name}: {file_path}\n{e}")
+            self._logger.exception(f"Error extracting content from {format_name}: {file_path}\n{e}")
             raise

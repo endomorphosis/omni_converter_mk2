@@ -1,29 +1,27 @@
 """
-HTML processing with base python 3.12.
+Generic HTML processor, using only base python 3.12 features.
 
-This module contains generic functions for processing HTML content.
-It uses no external libraries and can be used when no third-party dependencies are available.
+supported file formats: text/html, application/xhtml+xml
 """
 import re
 import html
 from typing import Any, Optional
 
 def extract_metadata(
-    html_content: str,
+    data: str,
     options: Optional[dict[str, Any]] = None
 ) -> dict[str, Any]:
-    """
-    Extract metadata from HTML content.
+    """Extract metadata from HTML content.
     
     Args:
-        html_content: The HTML content as text.
+        data: The HTML content as text.
         options: Optional extraction options.
         
     Returns:
         Dictionary of metadata.
     """
     # Extract title
-    title_match = re.search(r'<title[^>]*>(.*?)</title>', html_content, re.IGNORECASE | re.DOTALL)
+    title_match = re.search(r'<title[^>]*>(.*?)</title>', data, re.IGNORECASE | re.DOTALL)
     title = title_match.group(1) if title_match else ""
     
     # Extract metadata from meta tags
@@ -34,19 +32,19 @@ def extract_metadata(
     
     # Extract description
     desc_match = re.search(r'<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']\s*/?>', 
-                        html_content, re.IGNORECASE | re.DOTALL)
+                        data, re.IGNORECASE | re.DOTALL)
     if desc_match:
         metadata['description'] = desc_match.group(1)
     
     # Extract keywords
     keywords_match = re.search(r'<meta\s+name=["\']keywords["\']\s+content=["\'](.*?)["\']\s*/?>', 
-                            html_content, re.IGNORECASE | re.DOTALL)
+                            data, re.IGNORECASE | re.DOTALL)
     if keywords_match:
         metadata['keywords'] = keywords_match.group(1)
     
     # Extract author
     author_match = re.search(r'<meta\s+name=["\']author["\']\s+content=["\'](.*?)["\']\s*/?>', 
-                            html_content, re.IGNORECASE | re.DOTALL)
+                            data, re.IGNORECASE | re.DOTALL)
     if author_match:
         metadata['author'] = author_match.group(1)
     
@@ -54,21 +52,21 @@ def extract_metadata(
 
 
 def extract_content(
-    html_content: str,
+    data: str,
     options: Optional[dict[str, Any]] = None
 ) -> str:
     """
     Extract plain text content from HTML.
     
     Args:
-        html_content: The HTML content as text.
+        data: The HTML content as text.
         options: Optional extraction options.
         
     Returns:
         Plain text extracted from HTML.
     """
     # Remove script and style tags
-    text = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<script[^>]*>.*?</script>', '', data, flags=re.IGNORECASE | re.DOTALL)
     text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.IGNORECASE | re.DOTALL)
     
     # Replace common tags with newlines or spaces
@@ -85,15 +83,15 @@ def extract_content(
     return text
 
 
-def create_sections(
-    html_content: str,
+def extract_structure(
+    data: str,
     metadata: dict[str, Any]
 ) -> list[dict[str, Any]]:
     """
     Create sections from HTML content.
     
     Args:
-        html_content: The HTML content as text.
+        data: The HTML content as text.
         metadata: Metadata extracted from the HTML.
         
     Returns:
@@ -111,7 +109,7 @@ def create_sections(
     
     # Extract headings
     heading_pattern = r'<h([1-6])[^>]*>(.*?)</h\1>'
-    headings = re.findall(heading_pattern, html_content, re.IGNORECASE | re.DOTALL)
+    headings = re.findall(heading_pattern, data, re.IGNORECASE | re.DOTALL)
     
     for level, content in headings:
         # Clean up the heading content
@@ -125,7 +123,7 @@ def create_sections(
             })
     
     # Add body section
-    text = extract_content(html_content)
+    text = extract_content(data)
     sections.append({
         'type': 'body',
         'content': text
@@ -134,8 +132,8 @@ def create_sections(
     return sections
 
 
-def process_html(
-    file_content: Any,
+def process(
+    file_content: str | bytes,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
@@ -150,17 +148,17 @@ def process_html(
     """
     # Get HTML content as text
     if hasattr(file_content, 'get_as_text'):
-        html_content = file_content.get_as_text()
+        data = file_content.get_as_text()
     else:
-        html_content = file_content
+        data = file_content
     
     # Extract metadata
-    metadata = extract_metadata(html_content, options)
+    metadata = extract_metadata(data, options)
     
     # Extract text content
-    text = extract_content(html_content, options)
+    text = extract_content(data, options)
     
     # Create sections
-    sections = create_sections(html_content, metadata)
+    sections = extract_structure(data, metadata)
     
     return text, metadata, sections

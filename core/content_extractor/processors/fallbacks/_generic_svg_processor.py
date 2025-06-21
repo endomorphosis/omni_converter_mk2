@@ -15,14 +15,14 @@ from utils.filesystem import FileSystem
 
 
 def extract_metadata(
-    svg_text: str,
-    file_path: str
+    data: str,
+    options: dict
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Extract metadata from SVG text.
     
     Args:
-        svg_text: The SVG file content as text.
+        data: The SVG file content as text.
         file_path: The path to the SVG file.
         
     Returns:
@@ -30,18 +30,18 @@ def extract_metadata(
     """
     # Try to extract dimensions
     width = height = "Unknown"
-    width_match = re.search(r'width="([^"]*)"', svg_text) # TODO All regex should be moved to constants.py file.
+    width_match = re.search(r'width="([^"]*)"', data) # TODO All regex should be moved to constants.py file.
     if width_match:
         width = width_match.group(1)
     
-    height_match = re.search(r'height="([^"]*)"', svg_text)
+    height_match = re.search(r'height="([^"]*)"', data)
     if height_match:
         height = height_match.group(1)
     
     # Extract text content from SVG tags that might contain text
-    text_elements = re.findall(r'<text[^>]*>(.*?)</text>', svg_text, re.DOTALL)
-    title_elements = re.findall(r'<title[^>]*>(.*?)</title>', svg_text, re.DOTALL)
-    desc_elements = re.findall(r'<desc[^>]*>(.*?)</desc>', svg_text, re.DOTALL)
+    text_elements = re.findall(r'<text[^>]*>(.*?)</text>', data, re.DOTALL)
+    title_elements = re.findall(r'<title[^>]*>(.*?)</title>', data, re.DOTALL)
+    desc_elements = re.findall(r'<desc[^>]*>(.*?)</desc>', data, re.DOTALL)
     
     # Create metadata
     metadata = {
@@ -118,19 +118,19 @@ def extract_text(
     
     return text_content
 
-def extract_sections(): # TODO: This function should be implemented, even if it is just a dummy.
+def extract_structure(): # TODO: This function should be implemented, even if it is just a dummy.
     pass
 
 
 def process_svg(
-    file_content: Any,
+    data: str | bytes,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
     Process an SVG file and extract content.
     
     Args:
-        file_content: The file content to process.
+        data: The file content to process.
         options: Processing options including format information.
         
     Returns:
@@ -145,22 +145,17 @@ def process_svg(
     
     if not file_path:
         raise ValueError("File path is required for SVG processing")
+
+    # Get SVG text
+    data = data.get_as_text() if hasattr(data, 'get_as_text') else data
     
-    try:
-        # Get SVG text
-        svg_text = file_content.get_as_text() if hasattr(file_content, 'get_as_text') else file_content
-        
-        # Extract text elements from SVG tags that might contain text
-        text_elements = re.findall(r'<text[^>]*>(.*?)</text>', svg_text, re.DOTALL) # TODO Regex should be moved to constants.py.
-        
-        # Extract metadata and sections
-        metadata, sections = extract_metadata(svg_text, file_path)
-        
-        # Generate text description
-        text_content = extract_text(file_path, metadata, text_elements)
-        
-        return "\n".join(text_content), metadata, sections
-        
-    except Exception as e:
-        logger.error(f"Error processing SVG file: {file_path}\n{e}")
-        raise
+    # Extract text elements from SVG tags that might contain text
+    text_elements = re.findall(r'<text[^>]*>(.*?)</text>', data, re.DOTALL) # TODO Regex should be moved to constants.py.
+    
+    # Extract metadata and sections
+    metadata, sections = extract_metadata(data, file_path)
+    
+    # Generate text description
+    text_content = extract_text(file_path, metadata, text_elements)
+    
+    return "\n".join(text_content), metadata, sections

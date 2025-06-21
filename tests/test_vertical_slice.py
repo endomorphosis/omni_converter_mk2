@@ -30,9 +30,7 @@ class TestVerticalSlice(unittest.TestCase):
             # Assert
             self.assertIsNotNone(result)
             self.assertTrue(result)
-            #self.assertIn(test_content, result.content)
-            #self.assertEqual(result.format, 'text/plain')
-            
+
         finally:
             # Cleanup
             os.unlink(test_file_path)
@@ -56,19 +54,22 @@ class TestVerticalSlice(unittest.TestCase):
             
             # Assert
             self.assertTrue(result.success)
+            print(f"Processing result: {result}")
 
             # Check if the output file was created
             output_file_path = result.output_path
+            print(f"Output file path: {output_file_path}")
             self.assertTrue(Path(output_file_path).exists())
 
             # Check if the content matches
             with open(output_file_path, 'r') as output_file:
                 output_content = output_file.read()
+                print(f"Test Content: {test_content}\nOutput content: {output_content}")
                 self.assertIn(test_content, output_content)
 
-            
         finally:
             os.unlink(test_file_path)
+            #os.unlink(output_file_path)
 
 
 if __name__ == "__main__":

@@ -166,22 +166,21 @@ class TextNormalizer:
         
         # Apply each normalizer in sequence
         text = content.text
+        normalized_text = None
         applied_normalizers = []
         
         for name in normalizers:
             normalizer = self.normalizers.get(name)
             if normalizer:
-                text = normalizer(text)
+                normalized_text = normalizer(text)
                 applied_normalizers.append(name)
                 self._logger.debug(f"Applied normalizer: {name}")
+
+        content.text = normalized_text if normalized_text is not None else text
         
         # Create normalized content
         return self._normalized_content(
-            text=text,
-            metadata=content.metadata,
-            sections=content.sections,
-            source_format=content.source_format,
-            source_path=content.source_path,
+            content=content,
             normalized_by=applied_normalizers
         )
     

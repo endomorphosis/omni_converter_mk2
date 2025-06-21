@@ -32,7 +32,7 @@ def _create_text_handler(processors):
         "html_processor": processors["html_processor"],
         "xml_processor": processors["xml_processor"],
         "calendar_processor": processors["calendar_processor"],
-        "plaintext_processor": processors["plaintext_processor"],
+        "text_processor": processors["text_processor"],
         "csv_processor": processors["csv_processor"],
         "format_extensions": SupportedFormats.TEXT_FORMAT_EXTENSIONS,
         "supported_formats": SupportedFormats.SUPPORTED_TEXT_FORMATS,

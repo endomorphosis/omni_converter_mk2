@@ -1217,7 +1217,7 @@ class TestCapabilityReporting(unittest.TestCase):
         processors = make_processors()
         
         # Get a formatted capability report
-        from core.content_extractor.processors.factory import generate_capability_report
+        from utils.handlers import generate_capability_report
         report = generate_capability_report(processors)
         
         # Assert
@@ -1257,7 +1257,7 @@ class TestCapabilityReporting(unittest.TestCase):
         # Act
         processors = make_processors()
         #_debug_logger.debug(processors)
-        from core.content_extractor.processors.factory import generate_startup_report
+        from utils.handlers import generate_startup_report
         startup_report = generate_startup_report(processors)
         
         # Assert

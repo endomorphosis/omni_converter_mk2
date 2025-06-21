@@ -1,7 +1,7 @@
 from __future__ import annotations
 from types_ import Any, Callable, Configs, Logger, TypeVar, Union, MagicMock, AbilityProcessor, DependencySpecificObject
 
-class XLSXProcessor:
+class XlsxProcessor:
     """
     XLSX processor framework.
     
@@ -236,25 +236,6 @@ class XLSXProcessor:
         except Exception as e:
             self._logger.error(f"Error extracting structure from XLSX: {e}")
             raise ValueError(f"Error extracting structure from XLSX: {e}")
-        
-    # def extract_computed_fields(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
-    #     """Extract computed fields from an XLSX document.
-        
-    #     Args:
-    #         data: The binary data of the XLSX document.
-    #         options: Processing options.
-            
-    #     Returns:
-    #         A list of dictionaries containing computed fields extracted from the XLSX document.
-            
-    #     Raises:
-    #         ValueError: If openpyxl is not available or the data cannot be processed as an XLSX.
-    #     """
-    #     try:
-    #         return self._extract_structure(data, options, include_computed_fields=True)
-    #     except Exception as e:
-    #         self._logger.error(f"Error extracting computed fields from XLSX: {e}")
-    #         raise ValueError(f"Error extracting computed fields from XLSX: {e}")
 
     def extract_images(self, data: DependencySpecificObject | bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract images from an XLSX document.

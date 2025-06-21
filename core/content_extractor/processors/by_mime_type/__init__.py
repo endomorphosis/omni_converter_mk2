@@ -5,5 +5,5 @@
 # from ._pdf_processor import PDFProcessor
 from ._csv_processor import CSVProcessor
 from ._xlsx_processor import XLSXProcessor
-from ._plaintext_processor import PlainTextProcessor
+from ._text_processor import PlainTextProcessor
 

@@ -31,29 +31,51 @@ def get_logger(name: str,
         # Usage
         logger = get_logger(__name__)
     """
-    # Create a custom logger
+    # Create the logger itself.
     logger = logging.getLogger(name)
-    logger.setLevel(level)
 
-    # Create handlers
-    console_handler = logging.StreamHandler()
+    # Set the default log level.
+    logger.setLevel(level)
+    logger.propagate = False # Prevent logs from being handled by parent loggers
 
     # Create 'logs' directory in the current working directory if it doesn't exist
     logs_dir = Path.cwd() / 'logs'
     logs_dir.mkdir(parents=True, exist_ok=True)
-
     log_file_path = logs_dir / log_file_name
-    file_handler = RotatingFileHandler(log_file_path.resolve(), maxBytes=max_size, backupCount=backup_count)
 
-    # Create formatters and add it to handlers
-    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
-    formatter = logging.Formatter(log_format)
-    console_handler.setFormatter(formatter)
-    file_handler.setFormatter(formatter)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
 
-    # Add handlers to the logger
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
+    if not logger.handlers:
+        # Create handlers (file and console)
+        console_handler = logging.StreamHandler()
+        file_handler = RotatingFileHandler(log_file_path.resolve(), maxBytes=max_size, backupCount=backup_count)
+
+        # Set level for handlers
+        file_handler.setLevel(logging.DEBUG) # We want to log everything to the file.
+        console_handler.setLevel(level)
+
+        # Create formatters and add it to handlers
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+
+        # Add handlers to the logger
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+
+    # # Create handlers
+    # console_handler = logging.StreamHandler()
+
+    # log_file_path = logs_dir / log_file_name
+    # file_handler = RotatingFileHandler(log_file_path.resolve(), maxBytes=max_size, backupCount=backup_count)
+
+    # # Create formatters and add it to handlers
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    # console_handler.setFormatter(formatter)
+    # file_handler.setFormatter(formatter)
+
+    # # Add handlers to the logger
+    # logger.addHandler(console_handler)
+    # logger.addHandler(file_handler)
 
     return logger
 

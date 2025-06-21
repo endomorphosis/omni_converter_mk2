@@ -37,7 +37,7 @@ class TextHandler:
         self._html_processor: Callable = self.resources["html_processor"]
         self._xml_processor: Callable = self.resources["xml_processor"]
         self._calendar_processor: Callable = self.resources["calendar_processor"]
-        self._plaintext_processor: Callable = self.resources["plaintext_processor"]
+        self._text_processor: Callable = self.resources["text_processor"]
         self._csv_processor: Callable = self.resources["csv_processor"]
 
         self._format_extensions: dict = self.resources["format_extensions"]
@@ -78,7 +78,7 @@ class TextHandler:
             case 'xml':
                 processor = self._xml_processor
             case 'plain':
-                processor = self._plaintext_processor
+                processor = self._text_processor
             case 'calendar':
                 processor = self._calendar_processor
             case 'csv':

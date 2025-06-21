@@ -1,6 +1,6 @@
 from types_ import Any, Callable, Configs, Content, Logger
 
-class PlainTextProcessor:
+class TextProcessor:
 
     def __init__(self, 
                  resources: dict[str, Callable] = None, 
@@ -18,7 +18,6 @@ class PlainTextProcessor:
         self._extract_structure: Callable = self.resources["extract_structure"]
         self._extract_text: Callable = self.resources["extract_text"]
         self._extract_metadata: Callable = self.resources["extract_metadata"]
-        self._open_file: Callable = self.resources["open_file"]
         self._process: Callable = self.resources["process"]
 
         self._logger: Logger = self.resources["logger"]
@@ -33,15 +32,8 @@ class PlainTextProcessor:
         Returns:
             tuple of (text content, metadata, sections).
         """
-        # Get text content
-        text = self._extract_text(data, options)
+        text, metadata, sections = self._process(data, options)
 
-        # Get metadata
-        metadata = self._extract_metadata(data, options)
-
-        # Create sections
-        sections = self._extract_structure(data, options)
-        
         return text, metadata, sections
 
     def get_version(self) -> str:

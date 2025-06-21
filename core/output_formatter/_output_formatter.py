@@ -169,7 +169,9 @@ class OutputFormatter:
         # Format the content
         formatter = self.output_formats[output_format]
         formatted_content = formatter(content)
-        
+
+        self._logger.debug(f"Formatted content for {content.source_path} in {output_format} format\n{formatted_content}")
+
         # Create formatted output
         return  self._formatted_output(
             content=formatted_content,

@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     # from core._processing_pipeline import ProcessingPipeline
     # # from core._processing_result import ProcessingResult
     # #from core.content_extractor.content import Content # TODO
-    # #from core.text_normalizer._normalized_content import NormalizedContent
+    # #from core.text_normalizer._normalized_content import _normalized_content
     # from dependencies import _Dependencies as Dependencies
     # from external_programs import ExternalPrograms
     # from file_format_detector._file_format_detector import FileFormatDetector

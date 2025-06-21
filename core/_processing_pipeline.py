@@ -83,7 +83,9 @@ class ProcessingPipeline:
             - If it's a directory, the output will be written to a file in that directory. 
                 The name will be the same as the input file's. 
                 Any extension will be removed and replaced with the one specified in output_format.
-            - If None, the text is still extracted but not written to a file.
+            - If None, the text is still extracted but written to a file in the temp directory.
+                The name will be the same as the input file's, with the extension replaced by the one specified in output_format.
+                If a file already exists at that path, the first 4 characters of the content_hash will be appended to the filename to avoid overwriting.
             normalizers: A list of normalizers to apply to the text post-extraction.
             - If None, extracted text will return as-is.
 
@@ -166,7 +168,7 @@ class ProcessingPipeline:
             self._logger.debug(f"Formatting output for '{file_path}'")
             try:
                 formatted_output = self._output_formatter.format_output(
-                    normalized_content,
+                    normalized_content.content,
                     output_format,
                     options,
                     output_path
@@ -175,20 +177,23 @@ class ProcessingPipeline:
                 self._logger.warning(f"Format error: {e}, falling back to txt format")
                 # Fall back to txt format if the specified format fails
                 formatted_output = self._output_formatter.format_output(
-                    normalized_content,
+                    normalized_content.content,
                     'txt',
                     options,
                     output_path
                 )
             
-            # Write output to file if output_path is provided
-            if output_path:
-                self._logger.debug(f"Writing output to {output_path}")
-                formatted_output.write_to_file(output_path)
-            
             # Calculate content hash for verification # TODO Change to Ipfs CID
             content_hash = hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest() # TODO Make this injected.
             
+            # Write output to file if output_path is provided
+            if output_path:
+                self._logger.debug(f"Writing output to {output_path}")
+            else:
+                # Get rid of the extension and replace it with the output format
+                output_path = f"{file_path.rsplit('.', 1)[0]}_{content_hash[:3]}.{output_format}"
+                formatted_output.write_to_file(output_path)
+
             # Create success result
             result = self._processing_result(
                 success=True,
@@ -210,6 +215,7 @@ class ProcessingPipeline:
                 'output_path': output_path,
                 'format': format_name
             })
+            self._logger.debug(f"result: {result.to_dict()}")
             
             return result
             

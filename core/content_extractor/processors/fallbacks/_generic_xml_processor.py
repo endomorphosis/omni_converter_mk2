@@ -75,7 +75,7 @@ def extract_text(element: ET.Element) -> str:
     return text
 
 
-def extract_sections(
+def extract_structure(
     xml_content: str,
     options: Optional[dict[str, Any]] = None
 ) -> list[dict[str, Any]]:
@@ -142,7 +142,7 @@ def process_xml(
         text = re.sub(r'\s+', ' ', text).strip()
         
         # Create sections
-        sections = extract_sections(xml_content, options)
+        sections = extract_structure(xml_content, options)
         
         return text, metadata, sections
     

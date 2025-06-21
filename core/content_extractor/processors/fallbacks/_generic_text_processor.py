@@ -1,7 +1,11 @@
+"""
+Generic Text Processor
+supported mime-types: text/plain, text/csv, text/tab-separated-values, text/markdown
+"""
 from typing import Any
 
 
-def extract_text(data: str | bytes) -> str:
+def extract_text(data: str | bytes, options: dict[str, Any]) -> str:
     """
     Extract text from the provided data.
     
@@ -21,8 +25,7 @@ def extract_text(data: str | bytes) -> str:
 
 
 def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
-    """
-    Extract metadata from plain text content.
+    """Extract metadata from plain text content.
 
     This function analyzes plain text and returns basic metadata including
     format type, line count, character count, and word count statistics.
@@ -58,9 +61,8 @@ def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def extract_sections(text: str) -> list[dict[str, Any]]:
-    """
-    Extract sections from the text.
+def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract sections from the text.
     
     Args:
         text: The text to extract sections from.
@@ -97,12 +99,12 @@ def process(
     if hasattr(data, 'get_as_text'):
         text: str = data.get_as_text()
     else:
-        text: str = extract_text(data)
+        text: str = extract_text(text, options)
 
     # Plain text is already in the desired format
     metadata = extract_metadata(text, options)
-    
+
     # Create a single section
-    sections = extract_sections(text)
+    sections = extract_structure(text, options)
     
     return text, metadata, sections

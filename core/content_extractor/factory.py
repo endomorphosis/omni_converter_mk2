@@ -55,32 +55,3 @@ def make_content_extractor() -> ContentExtractor:
         "content": Content, 
     }
     return ContentExtractor(resources=resources, configs=configs)
-
-
-
-# def make_format_registry():
-#     """
-#     Initialize the format registry with all available handlers.
-
-#     Args:
-#         resources: Optional additional resources to provide.
-#         configs: Configuration settings.
-        
-#     Returns:
-#         Configured FormatRegistry instance.
-#     """
-#     # Create handler factories
-#     logger.debug("Creating handler factories...")
-#     handler_factories = make_all_handlers()
-
-#     # Prepare resources for the registry
-#     registry_resources = {
-#         "file_format_detector": make_file_format_detector(),
-#         "map_extension_to_format": map_extension_to_format,
-#         "handler_factories": handler_factories,
-#     }
-
-#     # Create and return the registry
-#     logger.info("Initializing format registry...")
-#     return FormatRegistry(registry_resources, configs)
-
