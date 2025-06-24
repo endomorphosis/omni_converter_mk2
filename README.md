@@ -1,8 +1,8 @@
 # Omni-Converter
 # Version: 1.7.0
-# Authors: Claude 3.7 Sonnet, Kyle Rose
+# Authors: Kyle Rose, Claude 3.7 Sonnet, Claude 4 Sonnet, Claude 4 Opus
 
-A Python-based application designed to convert various file types to plaintext for Large Language Model (LLM) training data preparation.
+A Python program to convert various file types to plaintext for Large Language Model (LLM) training data preparation.
 
 ## Overview
 
@@ -64,22 +64,22 @@ cd omni_converter
 
 ```python
 # Import the API
-from interfaces.python_api import api
+from interfaces.python_api import convert
 
 # Convert a single file
-result = api.convert_file('my_file.html')
+result = convert.this_file('my_file.html',to='txt')
 print(f"Extracted text: {result.content}")
 
 # Process a directory of files
-batch_result = api.convert_batch('/path/to/directory', output_dir='/path/to/output')
+batch_result = convert.this_batch('/path/to/directory', output_dir='/path/to/output')
 print(f"Processed {batch_result.total_files} files with {batch_result.successful_files} successful")
 
 # Get supported formats
-formats = api.supported_formats
+formats = convert.supported_formats
 print(formats)
 
 # Configure the converter
-api.set_config({
+convert.set_config({
     'output.default_format': 'json',
     'processing.normalize_text': True
 })
@@ -133,11 +133,21 @@ The project has achieved 100% format coverage across all targeted MIME-type cate
 | Application | 100% | 5/5 formats |
 | **Overall** | **100%** | **25/25 formats** |
 
+
+### Out-of-Scope Formats
+The following formats are currently out of scope for this project:
+| Format | Reason |
+|--------|--------|
+| exe | Executable files are not supported due to security risks and complexity |
+| dmg, iso | Disk image files are not supported due to platform-specific dependencies |
+| Compiled code formats (e.g., .class, .pyc) | Use a decompiler damnit!  |
+
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
-
+- Ben Barber, for being 
 - Python community for providing excellent libraries
 - Open source projects that inspired this work

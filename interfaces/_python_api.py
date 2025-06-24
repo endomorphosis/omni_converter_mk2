@@ -13,39 +13,6 @@ from types_ import (
     Configs, Logger, BatchProcessor, BatchResult, ProcessingResult, ProcessingPipeline, ResourceMonitor
 )
 
-from dataclasses import dataclass
-
-try:
-    from pydantic import BaseModel, Field
-except ImportError:
-    raise ImportError("Pydantic is required for the Python API.")
-
-
-class Options(BaseModel):
-    output_dir: Optional[str] = Field(default=None)
-    format: str = Field(default="txt")
-    include_metadata: bool = Field(default=True)
-    extract_metadata: bool = Field(default=True)
-    normalize_text: bool = Field(default=True)
-    quality_threshold: float = Field(default=0.9)
-    continue_on_error: bool = Field(default=True)
-    max_batch_size: int = Field(default=100)
-    parallel: bool = Field(default=False)
-    max_workers: int = Field(default=4)
-    sanitize: bool = Field(default=True)
-    max_cpu: int = Field(default=80)
-    max_memory: int = Field(default=6144)  # 6GB in MB
-    show_progress: bool = Field(default=False)  # TODO Unused argument. Implement.
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to a dictionary.
-
-        Returns:
-            A dictionary representation of the options.
-        """
-        return self.model_dump()
-
-
 class PythonAPI:
     """
     Python API for the Omni-Converter.
@@ -64,24 +31,25 @@ class PythonAPI:
         resources: dict[str, Callable] = None,
         configs: Configs = None,
     ):
-        """
-        Initialize the Python API.
-        
-        Args:
-            configs: Custom configuration manager to use.
-            batch processor: Custom batch processor to use.
-                If None, the global batch_processor will be used.
-        """
+        """Initialize the Python API."""
         self.configs = configs
         self.resources = resources
 
         self._api_timeout = self.configs.api_timeout
 
         self._batch_processor: BatchProcessor = self.resources['batch_processor']
-        self._resource_monitor: ResourceMonitor = self.resources['resource_monitor']
         self._supported_formats: set[str] = self.resources['supported_formats']
         self._processing_pipeline: ProcessingPipeline = self.resources['processing_pipeline']
         self._logger: Logger = self.resources['logger']
+
+        self._make_resource_monitor: Callable = self.resources['make_resource_monitor']
+        self._make_error_monitor: Callable = self.resources['error_monitor']
+        self._make_security_monitor: Callable = self.resources['security_monitor']
+
+        # Initialize monitors
+        self._resource_monitor: ResourceMonitor = self._make_resource_monitor()
+        self._error_monitor: Callable = self._make_error_monitor()
+        self._security_monitor: Callable = self._make_security_monitor()
 
     def convert_file(
         self,
@@ -106,11 +74,22 @@ class PythonAPI:
         Convert a single file to text.
         
         Args:
-            file_path: The path to the file to convert.
-            output_path: The path to write the output to.
-                If None, the text is still extracted but not written to a file.
-            options: Conversion options. If None, default options are used.
-                
+            - file_path: The path to the file to convert.
+            - output_path: Optional path to write the output to.
+            - output_dir: Optional[str] - Directory to write output files to.
+            - format: str - Output format for the converted text (default: "txt").
+            - include_metadata: bool - Whether to include file metadata in the output (default: True).
+            - extract_metadata: bool - Whether to extract metadata from the data in the input files (default: True).
+            - normalize_text: bool - Whether to normalize text (e.g., remove extra whitespace, convert to lowercase, etc.) (default: True).
+            - quality_threshold: float - Arbitrary threshold for quality filtering (default: 0.9).
+            - continue_on_error: bool - Whether to continue processing files even if some fail (default: True).
+            - max_batch_size: int - Maximum number of files to process in a single batch (default: 100).
+            - parallel: bool - Whether to process files in parallel (default: False).
+            - max_workers: int - Maximum number of worker threads to use for parallel processing (default: 4).
+            - sanitize: bool - Whether to sanitize output files (e.g. remove executable code, etc.) (default: True).
+            - max_cpu: int - Maximum CPU usage percentage allowed (default: 80).
+            - max_memory: int - Maximum memory usage in MB (default: 6144 i.e. 6GB).
+            - show_progress: bool - Whether to show a progress bar (default: False, TODO: Unused argument. Implement).
         Returns:
             A ProcessingResult object with the result of the conversion.
             

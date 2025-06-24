@@ -248,7 +248,7 @@ def create_csv_sections(
         }]
 
 
-def process_csv(
+def process(
     file_content: Any,
     options: dict[str, Any]
 ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:

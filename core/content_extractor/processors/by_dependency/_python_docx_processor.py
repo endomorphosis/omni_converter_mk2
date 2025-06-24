@@ -260,7 +260,37 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
     
     return structure
 
-def process_document(data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+def extract_images(data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract images from a DOCX document.
+    
+    Args:
+        data: The binary data of the DOCX document.
+        options: Processing options.
+        
+    Returns:
+        A list of dictionaries containing information about the images in the DOCX document.
+        
+    Raises:
+        ValueError: If python-docx is not available or the data cannot be processed as a DOCX.
+    """
+    doc = open_docx_file(data)
+
+    images = []
+
+    for rel in doc.part.rels.values():
+        if "image" in rel.reltype:
+            image_data = rel.target_part.blob if hasattr(rel.target_part, 'blob') else None
+            image_info = {
+                "type": "image",
+                "target": rel.target_ref,
+                "content_type": rel.target_part.content_type,
+                "size": getattr(rel.target_part, 'size', None),
+                "image_data": image_data
+            }
+            images.append(image_info)
+    return images
+
+def process(data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
     Process a DOCX document completely, extracting text, metadata, and structure.
     

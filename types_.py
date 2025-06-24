@@ -8,14 +8,14 @@ and I want to keep it clean, readable, and un-import-error-able.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from unittest.mock import MagicMock, Mock
 from types import ModuleType
 from typing import (
-    Any, Callable, Optional,
-    Protocol, TYPE_CHECKING,
-    TypeAlias, TypedDict, 
-    TypeVar, Union,
-    Generator
+    Any, Callable, Generator,
+    Optional, Protocol, TYPE_CHECKING,
+    Type, TypeAlias, TypedDict, 
+    TypeVar, Union
 )
 from protocols import Processor
 
@@ -25,7 +25,7 @@ except ImportError:
     raise ImportError("Critical dependency Pydantic is not installed.")
 
 if TYPE_CHECKING:
-    pass
+    pass # TODO Figure out how to import these types without causing circular imports.
     # #from configs import Configs
     # from core._pipeline_status import PipelineStatus
     # from core._processing_pipeline import ProcessingPipeline
@@ -52,12 +52,13 @@ SupportedFormats = TypeVar('SupportedFormats')
 FormatRegistry = TypeVar('FormatRegistry')
 
 
-Content = TypeVar('Content')
+Content = TypeVar('Content', bound=Callable[..., Any])
 FormatterFunc: TypeAlias = Callable[[Content], str]
 FormattedOutput: TypeAlias = Content
-NormalizedContent = TypeVar('NormalizedContent', bound=str)
+NormalizedContent = TypeVar('NormalizedContent', bound=Callable[..., Any])
 FileFormatDetector = TypeVar('FileFormatDetector', bound=ModuleType)
 SupportedFormats = TypeVar('SupportedFormats', bound=dict[str, Any])
+
 
 Logger: TypeAlias = logging.Logger
 Dependency: TypeAlias = ModuleType
@@ -72,9 +73,10 @@ ProcessingResult: TypeAlias = Any # Dataclass
 SecurityResult: TypeAlias = BaseModel
 ProcessingPipeline: TypeAlias = Any # Dataclass
 BatchResult = TypeVar("BatchResult", bound=dict[str, Any])
-SanitizedContent = TypeVar("SanitizedContent", bound=str)
-BatchProcessor = TypeVar("BatchProcessor")
+SanitizedContent = TypeVar("SanitizedContent", bound=Callable[..., Any])
+BatchProcessor = TypeVar("BatchProcessor", bound=Callable[..., Any])
 ContentExtractor = TypeVar("ContentExtractor", bound=Callable[..., Any])
+ErrorMonitor = TypeVar("ErrorMonitor", bound=Callable[..., Any])
 
 AbilityProcessor = TypeVar("AbilityProcessor", bound=Callable[..., Any])
 

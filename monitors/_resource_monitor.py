@@ -110,8 +110,7 @@ class ResourceMonitor:
                 time.sleep(self.monitoring_interval * 2)  # Back off on error
 
     def _get_resource_usage(self) -> dict[str, float]:
-        """
-        Get current resource usage.
+        """Get current resource usage.
 
         Returns:
             A dictionary with current CPU and memory usage.

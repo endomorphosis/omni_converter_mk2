@@ -69,6 +69,22 @@ class _GenericProcessor:
             "implementation_used": "native",
             "dependencies": list(resources["dependencies"].keys())
         }
+        for resources in resources["critical_resources"] + resources.get("optional_resources", []):
+            if hasattr(self, resources):
+                self.processor_info["capabilities"][resources] = {
+                    "available": True,
+                    "implementation": "native"
+                }
+            else:
+                self.processor_info["capabilities"][resources] = {
+                    "available": False,
+                    "implementation": "mock"
+                }
+
+    @property
+    def capabilities(self) -> dict[str, Any]:
+        """Return the capabilities of the processor."""
+        return self.processor_info.get("capabilities", {})
 
     def extract_structure(self, data: str | bytes, options: Optional[dict[str, Any]]):
         return self._extract_structure(data, options)
@@ -392,26 +408,23 @@ class _MakeProcessor:
         return ProcessorClass
 
 
-    def _mock_processor(self, methods: dict[Union[str, tuple[str, Any]], str], 
-                        supported_formats,
-                        processor_name: str) -> MagicMock:
+    def _mock_processor(self, 
+                        methods: dict[Union[str, tuple[str, Any]], str], 
+                        supported_formats: set[str],
+                        processor_name: str
+                        ) -> MagicMock:
         """
         Create a mock processor with specified methods.
         
         Args:
             methods: Dictionary mapping method names to their categories
+            supported_formats: Set of formats supported by the processor
             processor_name: Name of the processor being mocked
             
         Returns:
             MagicMock: Mock processor with all specified methods
         """
         mock = MagicMock(spec=list(methods.keys()))
-
-        # Get the method signatures
-        method_signatures = {
-            method_spec: (method_spec[0] if isinstance(method_spec, tuple) else method_spec)
-            for method_spec in methods
-        }
 
         # Define mock return values based on method names
         mock_map = {
@@ -427,7 +440,7 @@ class _MakeProcessor:
         }
 
         # Configure mock methods
-        for method_spec, category in methods.items():
+        for method_spec, _ in methods.items():
             # Handle tuple specifications
             if isinstance(method_spec, tuple):
                 method_name = method_spec[0]
@@ -438,17 +451,19 @@ class _MakeProcessor:
             if method_name in mock_map:
                 setattr(mock, method_name, MagicMock(return_value=mock_map[method_name]))
             else:
+                _return_value = None
                 # Heuristic for unknown methods
                 if "extract" in method_name:
-                    setattr(mock, method_name, MagicMock(return_value={}))
+                    _return_value = {}
                 elif "process" in method_name:
-                    setattr(mock, method_name, MagicMock(return_value=True))
+                    _return_value = True
                 elif "open" in method_name:
-                    setattr(mock, method_name, MagicMock(return_value=True))
+                    _return_value = True
                 elif "validate" in method_name:
-                    setattr(mock, method_name, MagicMock(return_value=True))
+                    _return_value = True
                 else:
-                    setattr(mock, method_name, MagicMock(return_value="Mocked"))
+                    _return_value="Mocked"
+                setattr(mock, method_name, MagicMock(return_value=_return_value))
 
         # Add processor_info property
         mock.processor_info = {
@@ -458,6 +473,7 @@ class _MakeProcessor:
             "implementation_used": "mock",
             "dependencies": []
         }
+        mock.format_extensions = supported_formats
         
         # Mark all capabilities as mocked
         for method_spec in methods:
@@ -498,37 +514,100 @@ class _MakeProcessor:
         mock.configs = MagicMock(spec=Configs)
         return mock
 
+    # def processor(self) -> Optional[Any]:
+    #     # Check if there's a processor for this specific mime-type.
+    #     self._ProcessorClass: Any | _GenericProcessor = self._get_processor_class_for_specific_mime_type()
+    #     callables_dict = {}
+    #     resources = {}
+
+    #     # Check for dedicated dependencies first.
+    #     if any(dep in path.stem for dep in self._dependencies.keys() for path in self._dep_paths.values()):
+    #         callables_dict = self._load_functions_from_file(self._dep_paths, callables_dict=callables_dict)
+
+    #     if not callables_dict:
+    #         # If no callables found, try to load the functions from the fallback folder.
+    #         callables_dict = self._load_functions_from_file(self._fallback_paths, callables_dict=callables_dict)
+
+    #     # Can't find any callables, return a mock processor.
+    #     if not callables_dict:
+    #         # If no processor class found, return a mock processor
+    #         #self._logger.debug(f"Could not find any callables for processor {self._name}. Returning MagicMock instead.")
+    #         return self._make_mock()
+    #     else:
+    #         # Update resources with the loaded callables
+    #         resources = {func_name: func for func_name, func in self.resources.items()}
+    #         resources.update(callables_dict)
+
+    #     resources["supported_formats"] = self._supported_formats
+    #     resources["format_extensions"] = self._supported_formats
+
+    #     _resources: _ProcessorResources = resources
+
+    #     self._logger.debug(f"Creating ProcessorClass instance for '{self._name}' with resources: {_resources}")
+    #     # Dependency injection time baby!
+    #     assert "extract_text" in _resources.keys(), f"The 'extract_text' callable must be provided in resources.\n{_resources.keys()}"
+    #     try:
+    #         return self._ProcessorClass(resources=_resources, configs=resources["configs"])
+    #     except Exception as e:
+    #         self._logger.error(f"Failed to create ProcessorClass instance due to {type(e).__name__}: {e}\n. Returning MagicMock instead.")
+    #         return self._make_mock()
+
     def processor(self) -> Optional[Any]:
+        self._logger.debug(f"=== PROCESSOR CREATION DEBUG for {self._name} ===")
+        self._logger.debug(f"ProcessorClass: {self._ProcessorClass}")
+        self._logger.debug(f"Critical resources needed: {self._crit_resources}")
+
         # Check if there's a processor for this specific mime-type.
         self._ProcessorClass: Any | _GenericProcessor = self._get_processor_class_for_specific_mime_type()
         callables_dict = {}
-        resources = {}
 
         # Check for dedicated dependencies first.
         if any(dep in path.stem for dep in self._dependencies.keys() for path in self._dep_paths.values()):
+            self._logger.debug("Checking dependency paths...")
             callables_dict = self._load_functions_from_file(self._dep_paths, callables_dict=callables_dict)
+            self._logger.debug(f"After dependency loading: {list(callables_dict.keys()) if callables_dict else 'None'}")
 
         if not callables_dict:
+            self._logger.debug("No dependency callables found, trying fallback paths...")
             # If no callables found, try to load the functions from the fallback folder.
             callables_dict = self._load_functions_from_file(self._fallback_paths, callables_dict=callables_dict)
+            self._logger.debug(f"After fallback loading: {list(callables_dict.keys()) if callables_dict else 'None'}")
 
         # Can't find any callables, return a mock processor.
         if not callables_dict:
-            # If no processor class found, return a mock processor
-            #self._logger.debug(f"Could not find any callables for processor {self._name}. Returning MagicMock instead.")
+            self._logger.debug("No callables found anywhere, returning mock")
             return self._make_mock()
         else:
-            # Update resources with the loaded callables
+            self._logger.debug(f"Successfully found callables: {list(callables_dict.keys())}")
+            
+            # Build resources
             resources = {func_name: func for func_name, func in self.resources.items()}
+            self._logger.debug(f"Initial resources keys: {list(resources.keys())}")
+            
             resources.update(callables_dict)
+            self._logger.debug(f"After adding callables: {list(resources.keys())}")
+            
+            resources["supported_formats"] = self._supported_formats
+            resources["format_extensions"] = self._supported_formats
+            self._logger.debug(f"Final resources keys: {list(resources.keys())}")
 
-        self._logger.debug(f"Creating ProcessorClass instance for '{self._name}' with resources: {resources}")
-        # Dependency injection time baby!
-        try:
-            return self._ProcessorClass(resources=resources, configs=resources["configs"])
-        except Exception as e:
-            self._logger.error(f"Failed to create ProcessorClass instance due to {type(e).__name__}: {e}\n. Returning MagicMock instead.")
-            return self._make_mock()
+            # Validate critical resources
+            for crit_res in self._crit_resources:
+                if crit_res in resources:
+                    self._logger.debug(f"✓ Critical resource '{crit_res}' found: {type(resources[crit_res])}")
+                else:
+                    self._logger.error(f"✗ Critical resource '{crit_res}' MISSING!")
+
+            try:
+                self._logger.debug(f"Attempting to create {self._ProcessorClass.__name__} instance...")
+                return self._ProcessorClass(resources=resources, configs=resources["configs"])
+            except KeyError as e:
+                self._logger.error(f"KeyError during instantiation: {e}")
+                self._logger.error(f"Available resources: {list(resources.keys())}")
+                return self._make_mock()
+            except Exception as e:
+                self._logger.error(f"Other error during instantiation: {e}")
+                return self._make_mock()
 
 
 def _make_processor(resources: _ProcessorResources) -> Any:
@@ -538,11 +617,69 @@ def _make_processor(resources: _ProcessorResources) -> Any:
         resources: Dictionary containing processor resources and configurations.
 
     Returns:
-        Processor instance or None if not found.
+        Processor instance with proper processor_info structure.
     """
     # Create a processor instance using the resources
     make = _MakeProcessor(resources)
-    return make.processor()
+    processor = make.processor()
+    
+    # Ensure proper processor_info structure for both real processors and mocks
+    if processor:
+        processor_name = resources["processor_name"]
+        critical_resources = resources["critical_resources"]
+        optional_resources = resources.get("optional_resources", [])
+        all_resources = critical_resources + optional_resources
+        
+        # Initialize or update processor_info
+        if not hasattr(processor, "processor_info"):
+            processor.processor_info = {}
+            
+        # Ensure basic structure
+        processor.processor_info.update({
+            "processor_name": processor_name,
+            "supported_formats": resources["supported_formats"],
+            "dependencies": list(resources["dependencies"].keys())
+        })
+        
+        # Build capabilities info
+        capabilities = {}
+        is_mock_processor = isinstance(processor, MagicMock)
+        
+        for resource_name in all_resources:
+            if hasattr(processor, resource_name) and callable(getattr(processor, resource_name)):
+                if is_mock_processor:
+                    # For mock processors, mark all as unavailable/mock
+                    capabilities[resource_name] = {
+                        "available": False,
+                        "implementation": "mock"
+                    }
+                else:
+                    # For real processors, mark as available
+                    capabilities[resource_name] = {
+                        "available": True,
+                        "implementation": "native"
+                    }
+            else:
+                # Missing capabilities are marked as mock
+                capabilities[resource_name] = {
+                    "available": False,
+                    "implementation": "mock"
+                }
+        
+        processor.processor_info["capabilities"] = capabilities
+        
+        # Set implementation_used
+        if is_mock_processor:
+            processor.processor_info["implementation_used"] = "mock"
+        else:
+            # Check if we used a specific dependency
+            available_deps = [dep for dep, val in resources["dependencies"].items() if val is not None]
+            if available_deps:
+                processor.processor_info["implementation_used"] = available_deps[0]
+            else:
+                processor.processor_info["implementation_used"] = "native"
+    
+    return processor
 
 
 # def _make_processor(resources: _ProcessorResources) -> Any:

@@ -6,6 +6,7 @@ Modules can access these dependencies via the `dependencies` object.
 # NOTE Make imports private to enforce singleton pattern.
 from types import ModuleType as _ModuleType
 from importlib import import_module as _import_module # NOTE We import this outside the class to avoid circular imports.
+import threading as _threading
 
 class _Dependencies:
     """
@@ -17,7 +18,7 @@ class _Dependencies:
         "tqdm",  "yaml", "psutil", "pydantic"
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache: dict[str, _ModuleType | None] = {
             "anthropic": None,
             "bs4": None,  # BeautifulSoup for HTML processing
@@ -33,7 +34,7 @@ class _Dependencies:
             "openai": None,
             "openpyxl": None,
             "pandas": None,
-            "PIL": None,  # Pillow for image processing
+            "PIL": None,  # Pillow for image processing NOTE Capitalization is important here.
             "playsound3": None,  # Playsound for audio playback
             "psutil": None,
             "pydantic": None, # TODO FIgure out how to get types from pydantic without importing it.
@@ -45,12 +46,11 @@ class _Dependencies:
             "pymediainfo": None,
             "rouge": None,
             "tiktoken": None,
-            "torch": None,  # PyTorch for deep learning
+            "torch": None,  # PyTorch for LLM usage.
             "tqdm": None,
             "whisper": None,
             "yaml": None,
         }
-        self.check_critical_dependencies()
 
     def check_critical_dependencies(self) -> None:
         """
@@ -72,7 +72,14 @@ class _Dependencies:
         This is called at the start of the program to check which dependencies are available.
         """
         for module_name in self._cache.keys():
-            self._load_module(module_name)
+            try:
+                self._load_module(module_name)
+            except Exception as e:
+                print(f"Dependency '{module_name}' is not available.")
+                pass # Ignore errors for non-critical dependencies.
+            finally:
+                print(f"Dependency '{module_name}' loaded successfully.")
+                self.clear_module(module_name)
 
     def _load_module(self, module_name: str) -> _ModuleType | None:
         if self._cache[module_name] is None:
@@ -241,4 +248,42 @@ class _Dependencies:
         """Get a specific module by name."""
         return self._load_module(item)
 
-dependencies = _Dependencies()
+try:
+    dependencies = _Dependencies()
+    dependencies.check_critical_dependencies()
+except ImportError as e:
+    # Prevent the application from starting if critical dependencies are missing.
+    import sys
+    sys.exit(1)
+
+def _test_for_non_critical_dependencies() -> None:
+    """
+    Test for non-critical dependencies in a separate thread to ensure the application starts promptly and to avoid dead.
+
+    This function creates a temporary instance of the `_Dependencies` class to load all required
+    modules without causing deadlocks. Once all modules have been checked, the temporary instance is
+    cleared from memory to optimize resource usage.
+
+    Key Steps:
+    1. Creates a separate `_Dependencies` instance to handle module loading.
+    2. Ensures all modules are loaded using `load_all_modules`.
+    3. Clears the cache and deletes the temporary instance to free up memory.
+    4. Triggers garbage collection to reclaim unused memory.
+
+    Note:
+    - This function is designed to handle non-critical dependencies, allowing the application
+        to start without waiting for all dependencies to be fully loaded.
+    """
+    import gc
+    # Make a separate _Dependencies instance to avoid deadlocks.
+    dependencies = _Dependencies()
+    try:
+        dependencies.load_all_modules()
+    finally:
+        # Delete and garbage collect the separate instance to free up memory.
+        dependencies.clear_cache()
+        del dependencies
+        gc.collect()
+
+_load_thread = _threading.Thread(target=_test_for_non_critical_dependencies, daemon=True)
+_load_thread.start()

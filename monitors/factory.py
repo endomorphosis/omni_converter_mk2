@@ -1,3 +1,4 @@
+import atexit
 from configs import configs
 from logger import logger
 from utils.resource_monitor.dependencies.psutil import PsUtil
@@ -8,6 +9,9 @@ from .security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
 from ._error_monitor import ErrorMonitor
 
 from ._monitor_constants import Constants
+
+import datetime
+import traceback
 
 
 def make_resource_monitor() -> ResourceMonitor:
@@ -27,8 +31,13 @@ def make_resource_monitor() -> ResourceMonitor:
 def make_error_monitor() -> ErrorMonitor:
     resources = {
         "logger": logger,
+        "traceback": traceback,
+        "datetime": datetime,
     }
-    return ErrorMonitor(resources=resources, configs=configs)
+    error_monitor = ErrorMonitor(resources=resources, configs=configs)
+    # Register core_dump function to run on an unexpected exit.
+    atexit.register(error_monitor.core_dump)
+    return error_monitor
 
 def make_security_monitor() -> SecurityMonitor:
     """

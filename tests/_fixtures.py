@@ -23,14 +23,14 @@ def _fixture_dict() -> dict[str, Any]:
         "batch_processor": make_batch_processor,
         "file_format_detector": make_file_format_detector,
         "resource_monitor": make_resource_monitor,
-        "security_monitor": make_security_monitor,  # Placeholder for security monitor
-        "logger": logger,  # Placeholder for logger
-        "error_monitor": make_error_monitor,  # Placeholder for error monitor
-        "configs": configs,  # Placeholder for configs
-        "dependencies": dependencies,  # Placeholder for dependencies
-        "external_programs": ExternalPrograms,  # Placeholder for external programs
+        "security_monitor": make_security_monitor,
+        "logger": logger,
+        "error_monitor": make_error_monitor,
+        "configs": configs,
+        "dependencies": dependencies,
+        "external_programs": ExternalPrograms,
         "file_validator": make_file_validator,
-        "content_extractor_object": ContentExtractor,  # Placeholder for content extractor
+        "content_extractor_object": ContentExtractor,
     }
 
 fixtures = _fixture_dict()

@@ -1,6 +1,6 @@
-import subprocess
-from logger import logger
-
+import threading as _threading
+import subprocess as _sub
+from logger import logger as _logger
 
 class _classproperty:
     """Helper decorator to turn class methods into properties."""
@@ -11,8 +11,7 @@ class _classproperty:
         return self.func(owner)
 
 class ExternalPrograms: # TODO Figure out how to run the program checks in parallel.
-    """
-    Check the availability of external programs.
+    """Check the availability of external programs.
     
     NOTE: As these programs are entirely external, this class does not provide access to them.
     It only checks if they exist and can be run.
@@ -25,7 +24,9 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
         cuda (bool): Whether nvcc (NVIDIA CUDA Compiler) is available.
         seven_zip (bool): Whether 7-zip is available.
         libreoffice (bool): Whether LibreOffice is available.
+        audacity (bool): Whether Audacity is available (optional, TODO: check for CLI).
     """
+
 
     _EXTERNAL_PROGRAMS = {
         "ffmpeg": False,  # ffmpeg for video processing
@@ -35,22 +36,33 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
         "nvcc": False,  # nvcc for CUDA compilation (optional)
         "7-zip": False,  # 7-zip for file compression/decompression (optional)
         "libreoffice": False,  # LibreOffice for document processing (optional)
+        "audacity": False,  # Audacity for audio processing (optional) TODO Figure out if there's a CLI for this.
     }
 
-    for program, bool_ in _EXTERNAL_PROGRAMS.items():
-        try: # TODO Every CLI program should have a --help option, but this should be confirmed. 
-            _ = subprocess.run([program, "--help"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            _EXTERNAL_PROGRAMS[program] = True
-            logger.info(f"'{program}' is available")
-        except subprocess.CalledProcessError:
-            logger.warning(f"'{program}' is available but returned an error when run with --help.")
-            _EXTERNAL_PROGRAMS[program] = False
-        except FileNotFoundError:
-            logger.warning(f"'{program}' is not available, functionality will be limited")
-            _EXTERNAL_PROGRAMS[program] = False
-        except Exception as e:
-            logger.warning(f"Unexpected {type(e).__name__} checking '{program}' availability: {e}")
-            _EXTERNAL_PROGRAMS[program] = False
+    @classmethod
+    def check_for_external_programs(cls) -> None:
+        """
+        Check if external programs are available.
+        
+        This method checks the availability of various external programs by attempting to run them
+        with the '--help' option. If the program is found and runs successfully, it is marked as available.
+        If it fails or is not found, it is marked as unavailable.
+        """
+        for program, _ in cls._EXTERNAL_PROGRAMS.items():
+            available = False
+            try: # TODO Every CLI program should have a --help option, but this should be confirmed. 
+                _ = _sub.run([program, "--help"], check=True, stdout=_sub.DEVNULL, stderr=_sub.DEVNULL)
+                available = True
+                _logger.info(f"'{program}' is available")
+            except _sub.CalledProcessError:
+                _logger.warning(f"'{program}' is available but returned an error when run with --help.")
+            except FileNotFoundError:
+                _logger.warning(f"'{program}' is not available, functionality will be limited")
+            except Exception as e:
+                _logger.warning(f"Unexpected {type(e).__name__} checking '{program}' availability: {e}")
+            finally:
+                cls._EXTERNAL_PROGRAMS[program] = available
+                continue
 
     @_classproperty
     def ffmpeg(cls) -> bool:
@@ -133,3 +145,26 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
             (name, getattr(cls, name)) # Check if the attribute exists. The second part of each tuple must be a boolean
             for name in cls.keys()
         ]
+
+def _test_for_non_critical_external_programs() -> None:
+    """
+    Test for non-critical dependencies in a separate thread to ensure the application starts promptly.
+
+    This function creates a temporary instance of the `_Dependencies` class to load all required
+    modules without causing deadlocks. Once the modules are loaded, the temporary instance is
+    cleared from memory to optimize resource usage.
+
+    Key Steps:
+    1. Creates a separate `_Dependencies` instance to handle module loading.
+    2. Ensures all modules are loaded using `load_all_modules`.
+    3. Clears the cache and deletes the temporary instance to free up memory.
+    4. Triggers garbage collection to reclaim unused memory.
+
+    Note:
+    - This function is designed to handle non-critical dependencies, allowing the application
+        to start without waiting for all dependencies to be fully loaded.
+    """
+    ExternalPrograms.check_for_external_programs()
+
+_load_thread = _threading.Thread(target=_test_for_non_critical_external_programs, daemon=True)
+_load_thread.start()

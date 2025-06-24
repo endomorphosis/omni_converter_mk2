@@ -5,7 +5,7 @@ This module provides a factory for creating interface instances, such as the CLI
 This allows for centralized configuration and management of interfaces.
 """
 from batch_processor import make_batch_processor
-from monitors import make_resource_monitor
+from monitors import make_resource_monitor, make_error_monitor, make_security_monitor
 from core import make_processing_pipeline
 from supported_formats import SupportedFormats
 
@@ -27,11 +27,17 @@ def make_cli() -> CLI:
         progress_callback, 
         list_supported_formats
     )
+    resource_monitor = make_resource_monitor()
+    error_monitor = make_error_monitor()
+    security_monitor = make_security_monitor()
+
     resources = {
         'supported_formats': SupportedFormats.SUPPORTED_FORMATS,
         'processing_pipeline': make_processing_pipeline(),
         'batch_processor': make_batch_processor(),
-        'resource_monitor': make_resource_monitor(),
+        'make_security_monitor': security_monitor,
+        'resource_monitor': resource_monitor,
+        'error_monitor': error_monitor,
         'list_supported_formats': list_supported_formats,
         'list_normalizers': list_normalizers,
         'list_output_formats': list_output_formats,
@@ -52,6 +58,8 @@ def make_api() -> PythonAPI:
         'processing_pipeline': make_processing_pipeline(),
         'batch_processor': make_batch_processor(),
         'resource_monitor': make_resource_monitor(),
+        'error_monitor': make_error_monitor(),
+        'security_monitor': make_security_monitor(),
         'logger': logger,
     }
     return PythonAPI(resources=resources,configs=configs)

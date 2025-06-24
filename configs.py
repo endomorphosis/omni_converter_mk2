@@ -115,6 +115,7 @@ class _Processing(BaseModel):
     whisper_language: str = Field(default="en", description="Language for Whisper model")
     tesseract_language: str = Field(default="eng", description="Tesseract model for OCR")
     llm_api_key: str = Field(default="", description="API key for external services, if required")
+    suppress_errors: bool = Field(default=False, description="Suppress errors during processing")
 
 class _Output(BaseModel):
     default_format: str = Field(default="txt", description="Default output format")

@@ -73,3 +73,5 @@ def apply_fallback_module_protocol_to_files_in_this_dir():
         module = importlib.import_module(module_name)
 
         assert isinstance(module, DependencyModuleProtocol), f"Dependency {module_name} does not implement DependencyModuleProtocol"
+
+apply_fallback_module_protocol_to_files_in_this_dir()

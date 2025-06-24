@@ -9,6 +9,7 @@ import argparse
 import glob
 import os
 import sys
+import threading
 
 
 from types_ import (
@@ -22,6 +23,8 @@ from types_ import (
     ProcessingPipeline,
     ProgressCallback,
     ProcessingResult,
+    ErrorMonitor,
+    SecurityMonitor,
 )
 
 
@@ -44,20 +47,24 @@ class CLI:
         self.resources = resources
 
         # Batch processing components
-        self._batch_processor:         BatchProcessor = self.resources['batch_processor']
-        self._progress_callback:     ProgressCallback = self.resources['progress_callback']
+        self._batch_processor:     BatchProcessor     = self.resources['batch_processor']
+        self._progress_callback:   ProgressCallback   = self.resources['progress_callback']
         self._processing_pipeline: ProcessingPipeline = self.resources['processing_pipeline']
-        
+
         # Information and listing functions
-        self._list_normalizers:              Callable = self.resources['list_normalizers']
-        self._list_output_formats:           Callable = self.resources['list_output_formats']
-        self._list_supported_formats:        Callable = self.resources['list_supported_formats']
-        self._show_version:                  Callable = self.resources['show_version']
-        
+        self._list_normalizers:       Callable = self.resources['list_normalizers']
+        self._list_output_formats:    Callable = self.resources['list_output_formats']
+        self._list_supported_formats: Callable = self.resources['list_supported_formats']
+        self._show_version:           Callable = self.resources['show_version']
+
         # System and utility components
-        self._logger:                          Logger = self.resources['logger']
-        self._resource_monitor:       ResourceMonitor = self.resources['resource_monitor']
+        self._logger:                      Logger = self.resources['logger']
         self._tqdm:                        Dependency = self.resources['tqdm']
+
+        # Initialize monitors
+        self._resource_monitor: ResourceMonitor = self.resources['resource_monitor']
+        self._error_monitor:    ErrorMonitor    = self.resources['error_monitor']
+        self._security_monitor: SecurityMonitor = self.resources['security_monitor']
 
     @staticmethod
     def parse_arguments() -> argparse.Namespace:
@@ -179,8 +186,22 @@ class CLI:
         Args:
             input_path: The path to the input file.
             output_path: The path to the output file. If None, print to stdout.
-            options: Processing options. If None, default options are used.
-            
+            output_dir: The directory to write output files to. If None, prints content to stdout.
+            format: The output format (e.g., "txt", "json", "md"). Default is "txt".
+            include_metadata: Whether to include metadata in the output. Default is True.
+            extract_metadata: Whether to extract metadata from the input file. Default is True.
+            normalize_text: Whether to normalize the text during processing. Default is True.
+            quality_threshold: The quality threshold for processing (0.0 to 1.0). Default is 0.9.
+            continue_on_error: Whether to continue processing if an error occurs. Default is True.
+            max_batch_size: The maximum number of files to process in a batch. Default is 100.
+            parallel: Whether to enable parallel processing. Default is False.
+            max_workers: The maximum number of worker threads for parallel processing. Default is 4.
+            sanitize: Whether to sanitize the content during processing. Default is True.
+            max_cpu: The maximum CPU usage percentage (0-100). Default is 80.
+            max_memory: The maximum memory usage in MB. Default is 6144 (6GB).
+            show_progress: Whether to show a progress bar during processing. Default is False.
+            options: Additional processing options. If None, default options are used.
+
         Returns:
             True if successful, False otherwise.
         """
@@ -301,7 +322,7 @@ class CLI:
             result = self._batch_processor.process_batch(
                 file_paths=dir_path, 
                 output_dir=output_dir,
-                options=options,
+                **options,
                 progress_callback=callback
             )
             
@@ -420,7 +441,7 @@ class CLI:
             result = self.process_directory(
                 dir_path=args.input,
                 output_dir=output_dir,
-                options=options,
+                **options,
                 show_progress=not args.no_progress,
                 recursive=args.recursive
             )

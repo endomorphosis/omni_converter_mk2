@@ -5,7 +5,7 @@ def can_handle(
         supported_formats: frozenset[str], 
         format_extensions: frozenset[str], 
         file_path: str, 
-        format_name: Optional[str]
+        format_name: Optional[str] = None
     ) -> bool:
     if format_name:
         return format_name in supported_formats
@@ -13,9 +13,9 @@ def can_handle(
     # If no format provided, check file extension
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
-
-    for format_type, extensions in format_extensions.items():
-        if ext in extensions and format_type in supported_formats:
-            return True
-
+    if not ext:
+        return False
+    ext = ext.lstrip('.')
+    if ext in supported_formats:
+        return True
     return False

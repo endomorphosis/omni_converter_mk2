@@ -44,7 +44,7 @@ class ProcessFunction(Protocol):
         """Process data.
 
         Args:
-            file_content (bytes | str): The file content to process.
+            data (bytes | str): The file content to process.
             options (dict[str, Any]): Processing options.
             
         Returns:

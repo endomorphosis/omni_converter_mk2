@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, Mock, patch
 from core.content_extractor.processors.factory import (
     _make_processor,
     make_processors,
-    _mock_processor,
+    #_mock_processor,
     _ProcessorResources,
 )
 from configs import Configs

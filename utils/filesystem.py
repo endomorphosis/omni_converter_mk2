@@ -17,8 +17,7 @@ from pydantic import BaseModel, Field, BeforeValidator, FilePath, PositiveInt
 
 
 def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
-    """
-    Determine the MIME type of a file.
+    """Determine the MIME type of a file.
     
     Args:
         file_path: The path to the file.

@@ -1,46 +1,91 @@
-# Omni-Converter Test Suite
+# Omni Converter Test Suite Documentation
 
-This directory contains the test suite for the Omni-Converter project. The tests are designed to verify that the converter meets the requirements specified in the [TESTING.md](TESTING.md) document.
+This directory contains comprehensive test documentation for the end-to-end text conversion pipeline. Each file contains pseudocode algorithms that serve as docstrings to guide test implementation.
 
 ## Test Categories
 
-1. **Format Support Coverage** - Tests if the required number of formats are supported in each category
-2. **Processing Success Rate** - Tests the success rate of processing valid files
-3. **Resource Utilization** - Tests memory and CPU usage during file processing
-4. **Processing Speed** - Tests processing speed for different file types
-5. **Error Handling** - Tests how well the system handles errors during processing
-6. **Security Effectiveness** - Tests how well the system prevents code execution from malicious inputs
-7. **Text Quality** - Tests the quality of text extraction across different file types
+### 1. [Core Functionality Tests](./core_functionality/)
+- Basic conversion tests across all formats
+- Empty and minimal file handling
+- Data structure variation tests
 
-## Running the Tests
+### 2. [Edge Cases and Error Handling](./edge_cases/)
+- Malformed input handling
+- File system operation tests
+- Large file and performance tests
 
-You can run individual tests with:
+### 3. [Batch Processing Tests](./batch_processing/)
+- Directory operation tests
+- Batch result tracking and reporting
 
-```bash
-python -m unittest tests.test_module_name
+### 4. [Configuration Tests](./configuration/)
+- Output configuration options
+- Processing configuration settings
+
+### 5. [Format Detection and Validation](./format_detection/)
+- Automatic format detection
+- Content validation (pre/post conversion)
+
+### 6. [API Behavior Tests](./api/)
+- Method signature validation
+- State management and thread safety
+
+### 7. [Integration Tests](./integration/)
+- Cross-format conversion matrix
+- System integration points
+
+### 8. [Error Recovery and Resilience](./resilience/)
+- Failure handling mechanisms
+- Recovery strategies
+
+### 9. [User Experience Tests](./user_experience/)
+- Error message quality
+- Feedback mechanisms
+
+### 10. [Extensibility Tests](./extensibility/)
+- Plugin system functionality
+
+## Directory Structure
+
+```
+tests/
+├── core_functionality/
+│   └── test_core_functionality.md
+├── edge_cases/
+│   └── test_edge_cases.md
+├── batch_processing/
+│   └── test_batch_processing.md
+├── configuration/
+│   └── test_configuration.md
+├── format_detection/
+│   └── test_format_detection.md
+├── api/
+│   └── test_api_behavior.md
+├── integration/
+│   └── test_integration.md
+├── resilience/
+│   └── test_resilience.md
+├── user_experience/
+│   └── test_user_experience.md
+├── extensibility/
+│   └── test_extensibility.md
+└── README.md (this file)
 ```
 
-Or run all tests with:
+## Usage
 
-```bash
-python tests/run_all_tests.py
-```
+Each test documentation file contains:
+1. **Algorithm name**: The test function/method name
+2. **Docstring**: Comprehensive description of what the test verifies
+3. **Step-by-step pseudocode**: Detailed implementation guide
 
-This will execute all tests and generate a summary report. The test results are saved to JSON files in the `tests/collected_results` directory.
+These serve as specifications for implementing the actual test suite in your preferred testing framework (pytest, unittest, etc.).
 
-## Test Results
+## Implementation Notes
 
-Test results are stored in the `collected_results` directory as JSON files. Each test generates its own JSON file with detailed results, and a summary file is also generated.
-
-## Test Documentation
-
-Comprehensive documentation for the test suite is available in the `docs/tests` directory. You can view the documentation starting from the [index.md](../docs/tests/index.md) file.
-
-## Dependencies
-
-The test suite requires the following dependencies:
-- Python 3.12+
-- psutil (for resource monitoring)
-- pandas, numpy, pydantic, duckdb (for various test utilities)
-
-These dependencies are installed by the [install.sh](../install.sh) script in the project root.
+- Tests should be independent and idempotent
+- Use fixtures for common setup/teardown
+- Mock external dependencies where appropriate
+- Measure and assert on performance metrics
+- Generate test reports with coverage information
+- Consider parameterized tests for format combinations

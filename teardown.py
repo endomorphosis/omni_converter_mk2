@@ -15,3 +15,10 @@ def purge_whisper_model():
     if whisper_processor and whisper_processor.model:
         whisper_processor.model = None
 
+def core_dump():
+    """
+    Function to handle core dump on unexpected exit.
+    This is a placeholder for actual core dump logic.
+    """
+    from monitors._error_monitor import ErrorMonitor
+    # Implement core dump logic here if needed
