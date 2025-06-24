@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 
-from core.content_extractor.processors.factory import (
+from core.content_extractor.processors.processor_factory import (
     _make_processor,
     make_processors,
     #_mock_processor,

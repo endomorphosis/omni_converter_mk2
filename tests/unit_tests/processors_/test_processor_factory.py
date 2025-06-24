@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 
-from core.content_extractor.processors.factory import (
+from core.content_extractor.processors.processor_factory import (
     _make_processor,
     make_processors,
     _apply_cross_processor_dependencies,
@@ -1328,7 +1328,7 @@ class TestProcessorResources(unittest.TestCase):
             AssertionError: If any resource is invalid
         """
         # Import the actual resource_list (assuming it exists in the factory module)
-        from core.content_extractor.processors.factory import get_processor_resource_configs
+        from core.content_extractor.processors.processor_factory import get_processor_resource_configs
         
         # Verify resource_list exists and is a list
         self.assertIsInstance(get_processor_resource_configs, Callable)

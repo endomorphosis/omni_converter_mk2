@@ -21,7 +21,7 @@ Implementation Status:
     - Audio Handlers: ✅ Complete
     - Video Handlers: ✅ Complete
 """
-from .factory import make_content_extractor
+from .content_extractor_factory import make_content_extractor
 
 extractor = make_content_extractor()
 

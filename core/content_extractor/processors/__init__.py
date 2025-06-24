@@ -15,7 +15,7 @@ Available processors:
 - OCR Processor: Implementation using PyTesseract for OCR
 - Video Processor: Implementation for video thumbnail extraction and frame processing
 """
-from .factory import make_processors
+from .processor_factory import make_processors
 
 __all__ = [
     "make_processors",

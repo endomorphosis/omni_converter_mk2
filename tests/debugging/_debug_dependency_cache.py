@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, '/home/kylerose1946/omni_converter_mk2')
 
 from unittest.mock import patch, MagicMock
-from core.content_extractor.processors.factory import dependency_cache, _make_processor
+from core.content_extractor.processors.processor_factory import dependency_cache, _make_processor
 
 print("Original dependency_cache:", type(dependency_cache))
 print("Available attributes:", dir(dependency_cache))
@@ -48,7 +48,7 @@ for target in alternative_targets:
         print(f"✗ Alternative target failed: {target} - {e}")
 
 # Let's also check the module structure
-import core.content_extractor.processors.factory as factory_module
+import core.content_extractor.processors.processor_factory as factory_module
 print("\nFactory module attributes:")
 for attr in dir(factory_module):
     if not attr.startswith('_'):

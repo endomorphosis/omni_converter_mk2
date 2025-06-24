@@ -18,7 +18,7 @@ from nltk.translate.bleu_score import sentence_bleu
 import string
 
 
-from core.factory import make_processing_pipeline
+from core.core_factory import make_processing_pipeline
 from core.file_validator._file_validator import FileValidator
 
 

@@ -8,11 +8,11 @@ def _fixture_dict() -> dict[str, Any]:
         A dictionary containing various test fixtures.
     """
     from core import make_processing_pipeline
-    from batch_processor.factory import make_batch_processor
+    from batch_processor.batch_processor_factory import make_batch_processor
     from monitors import make_resource_monitor, make_error_monitor, make_security_monitor
     from file_format_detector import make_file_format_detector
-    from core.file_validator.factory import FileValidator, make_file_validator
-    from core.content_extractor.factory import ContentExtractor
+    from core.file_validator.file_validator_factory import FileValidator, make_file_validator
+    from core.content_extractor.content_extractor_factory import ContentExtractor
     from logger import logger
     from configs import configs
     from dependencies import dependencies
