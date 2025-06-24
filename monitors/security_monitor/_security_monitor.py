@@ -40,7 +40,7 @@ class SecurityMonitor:
         self._dangerous_patterns:          list[re.Pattern] = self.resources['dangerous_patterns']
         self._executable_extensions:       list[str] = self.resources['executable_extensions']
         self._file_size_limits:            dict[str, int] = self.resources['file_size_limits_in_bytes']
-        self._format_names:                dict[str, list[str]] = self.resources['format_names']
+        #self._format_names:                dict[str, list[str]] = self.resources['format_names']
         self._pii_detection:               list[tuple[re.Pattern, str]] = self.resources['pii_detection_regex']
         self._remove_active_content_regex: list[re.Pattern] = self.resources['remove_active_content_regex']
         self._remove_scripts_regex:        list[re.Pattern] = self.resources['remove_scripts_regex']

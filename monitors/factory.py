@@ -8,7 +8,7 @@ from ._resource_monitor import ResourceMonitor
 from .security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
 from ._error_monitor import ErrorMonitor
 
-from ._monitor_constants import Constants
+from ._constants import Constants
 
 import datetime
 import traceback

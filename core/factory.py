@@ -42,7 +42,7 @@ def make_processing_pipeline() -> ProcessingPipeline:
     resources: _ProcessingPipelineResources = {
         "file_format_detector": make_file_format_detector(),
         "file_validator": make_file_validator(),
-        "content_extractor": make_content_extractor(),  # TODO: Add when content_extractor factory is available
+        "content_extractor": make_content_extractor(),
         "text_normalizer": make_text_normalizer(),
         "output_formatter": make_output_formatter(),
         "processing_result": ProcessingResult,

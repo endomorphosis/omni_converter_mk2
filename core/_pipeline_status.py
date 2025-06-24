@@ -1,11 +1,13 @@
-from typing import Any
-
+from typing import Any, Annotated as Ann
+from pathlib import Path
 
 try:
-    from pydantic import BaseModel, PositiveInt, FilePath
+    from pydantic import BaseModel, PositiveInt, FilePath, AfterValidator as AV, ConfigDict
 except ImportError:
     raise ImportError("Pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
+def _string_to_file_path(value: str) -> FilePath:
+    return Path(value)
 
 class PipelineStatus(BaseModel):
     """
@@ -24,9 +26,11 @@ class PipelineStatus(BaseModel):
     total_files: PositiveInt = 0
     successful_files: PositiveInt = 0
     failed_files: PositiveInt = 0
-    current_file: FilePath = ""
+    current_file: Ann[FilePath, AV(_string_to_file_path)] = ""
     is_processing: bool = False
     
+    model_config = ConfigDict(validate_assignment=True)
+
     def to_dict(self) -> dict[str, Any]:
         """
         Convert to a dictionary.

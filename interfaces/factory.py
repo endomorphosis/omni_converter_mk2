@@ -35,7 +35,7 @@ def make_cli() -> CLI:
         'supported_formats': SupportedFormats.SUPPORTED_FORMATS,
         'processing_pipeline': make_processing_pipeline(),
         'batch_processor': make_batch_processor(),
-        'make_security_monitor': security_monitor,
+        'security_monitor': security_monitor,
         'resource_monitor': resource_monitor,
         'error_monitor': error_monitor,
         'list_supported_formats': list_supported_formats,

@@ -77,7 +77,10 @@ SanitizedContent = TypeVar("SanitizedContent", bound=Callable[..., Any])
 BatchProcessor = TypeVar("BatchProcessor", bound=Callable[..., Any])
 ContentExtractor = TypeVar("ContentExtractor", bound=Callable[..., Any])
 ErrorMonitor = TypeVar("ErrorMonitor", bound=Callable[..., Any])
-
+TextNormalizer = TypeVar("TextNormalizer", bound=Callable[..., Any])
+FileValidator = TypeVar("FileValidator", bound=Callable[..., Any])
+SecurityMonitor = TypeVar("SecurityMonitor", bound=Callable[..., Any])
+OutputFormatter = TypeVar("OutputFormatter", bound=Callable[..., Any])
 AbilityProcessor = TypeVar("AbilityProcessor", bound=Callable[..., Any])
 
 # NOTE This is placeholder used to represent objects that are specific to a dependency

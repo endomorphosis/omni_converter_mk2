@@ -5,10 +5,8 @@ This module provides the ResourceMonitor class for monitoring and managing syste
 """
 import time
 import threading
-from typing import Any, Callable, Optional
 
-
-from types_ import Configs, Logger
+from types_ import Any, Callable, Optional, Configs, Logger
 from utils.common.try_except_decorator import try_except
 
 
@@ -44,8 +42,8 @@ class ResourceMonitor:
         self.resources = resources
 
         # Load resource limits from configs
-        self.cpu_limit_percent: float = self.configs.resources.cpu_limit_percent
-        self.memory_limit: float = self.configs.resources.memory_limit_mb
+        self.cpu_limit_percent:   float = self.configs.resources.cpu_limit_percent
+        self.memory_limit:        float = self.configs.resources.memory_limit_mb
         self.monitoring_interval: float = self.configs.resources.monitoring_interval_seconds
 
         # Initialize resource usage methods
@@ -58,11 +56,11 @@ class ResourceMonitor:
         self._get_num_open_files:            Callable = self.resources['get_open_files']
         self._get_shared_memory_usage_in_mb: Callable = self.resources['get_shared_memory_usage_in_mb']
         self._get_memory_percent:            Callable = self.resources['get_virtual_memory_in_percent']
+        self._logger:                        Logger   = self.resources['logger']
 
-        self._logger: Logger = self.resources['logger']
-        self.active_monitoring = False
-        self.monitoring_thread = None
-        self._current_usage: dict = {"cpu": 0.0, "memory": 0}
+        self.active_monitoring: bool = False
+        self.monitoring_thread: threading.Thread = None
+        self._current_usage: dict[str, Any] = {"cpu": 0.0, "memory": 0}
 
     def start_monitoring(self) -> bool:
         """Start active resource monitoring.

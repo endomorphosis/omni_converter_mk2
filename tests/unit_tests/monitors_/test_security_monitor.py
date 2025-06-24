@@ -32,7 +32,7 @@ from types_ import Logger, Configs
 from monitors.security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
 from configs import configs
 
-from monitors._monitor_constants import Constants
+from monitors._constants import Constants
 
 resources = { # NOTE: Since these are constants, we can directly use them without mocking.
     "dangerous_patterns": Constants.SecurityMonitor.DANGEROUS_PATTERNS_REGEX,
@@ -182,7 +182,7 @@ class TestSecurityManager(unittest.TestCase):
         self.assertEqual(len(sanitized.sanitization_applied), 2)
         self.assertEqual(sanitized.removed_content["scripts"], 2)
         self.assertEqual(sanitized.removed_content["personal_data"], 3)
-    
+
     def test_sanitized_content_to_dict(self):
         """Test SanitizedContent.to_dict()."""
         mock_content = Content( # Use Content class with mock data

@@ -42,7 +42,7 @@ resources = {
     "get_open_files": PsUtil._get_num_open_files,
     "get_shared_memory_usage_in_mb": PsUtil._get_shared_memory_usage_in_mb
 }
-# Note we convert GB to MB because 
+# NOTE we convert GB to MB because 
 # the psutil library returns memory in MB
 
 class TestResourceMonitor(unittest.TestCase):
@@ -51,7 +51,6 @@ class TestResourceMonitor(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Create a resource monitor with test limits
-
         self.mock_configs = MagicMock(spec=Configs)
         self.mock_configs.resources = MagicMock()
         self.mock_configs.resources.memory_limit_mb = 512.0  # 512 MB

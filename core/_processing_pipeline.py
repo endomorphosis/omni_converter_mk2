@@ -4,22 +4,26 @@ Processing pipeline module for the Omni-Converter.
 This module provides the ProcessingPipeline class for orchestrating the conversion
 of files to plaintext.
 """
-import hashlib
+from __future__ import annotations
+
 
 from ._pipeline_status import PipelineStatus
 from ._processing_result import ProcessingResult
 from types_ import (
     Any,
-    BuiltinModule,
+    ModuleType,
     Callable,
     Configs, 
     Logger, 
     Optional,
     StatusListenerFunc,
-    #PipelineStatus,
-    #ProcessingResult
     ContentExtractor,
+    FileFormatDetector,
+    TextNormalizer,
+    OutputFormatter,
+    FileValidator,
 )
+
 
 class ProcessingPipeline:
     """
@@ -30,12 +34,20 @@ class ProcessingPipeline:
     and output formatter.
 
     Attributes:
-        detector: The format detector to use.
-        validator: The validator to use for validating input files.
-        extractor: The content extractor to use.
-        normalizer: The text normalizer to use.
-        formatter: The output formatter to use.
-        status: The current status of the pipeline.
+        configs: A pydantic model containing configuration settings.
+        resources: A dictionary of callable classes and functions for the class to use.
+
+    Private Attributes:
+        _format_detector: An instance of FileFormatDetector for detecting file formats.
+        _file_validator: An instance of FileValidator for validating files.
+        _content_extractor: An instance of ContentExtractor for extracting content from files.
+        _text_normalizer: An instance of TextNormalizer for normalizing extracted text.
+        _output_formatter: An instance of OutputFormatter for formatting the output.
+        _processing_result: An instance of ProcessingResult for storing processing results.
+        _logger: An instance of Logger for logging messages.
+        _status: An instance of PipelineStatus for tracking the processing status.
+        _hashlib: The hashlib module for generating content hashes.
+        _listeners: A list of status listener functions to notify about processing events.
     """
     def __init__(
         self,
@@ -52,17 +64,18 @@ class ProcessingPipeline:
         self.configs = configs
         self.resources = resources
 
-        self._format_detector = self.resources['file_format_detector']
-        self._file_validator = self.resources['file_validator']
-        self._content_extractor = self.resources['content_extractor']
-        self._text_normalizer = self.resources['text_normalizer']
-        self._output_formatter = self.resources['output_formatter']
+        self._format_detector:   'FileFormatDetector' = self.resources['file_format_detector']
+        self._file_validator:    'FileValidator'      = self.resources['file_validator']
+        self._content_extractor: 'ContentExtractor'   = self.resources['content_extractor']
+        self._text_normalizer:   'TextNormalizer'     = self.resources['text_normalizer']
+        self._output_formatter:  'OutputFormatter'    = self.resources['output_formatter']
 
         self._processing_result: ProcessingResult = self.resources['processing_result']
-        self._logger:            Logger = self.resources['logger']
-        self._status:            PipelineStatus = self.resources['pipeline_status']
+        self._logger:            Logger           = self.resources['logger']
+        self._status:            PipelineStatus   = self.resources['pipeline_status']
+        self._hashlib:           ModuleType       = self.resources['hashlib']
+
         self._listeners:         list[StatusListenerFunc] = []
-        self._hashlib:           BuiltinModule = self.resources['hashlib']
 
     def process_file(
         self,
@@ -119,7 +132,7 @@ class ProcessingPipeline:
         self._status.total_files += 1
         self._notify_listeners("processing_started", {'file_path': file_path})
         errors = None
-        
+
         try:
             # Detect format
             self._logger.debug(f"Detecting format for '{file_path}'")
@@ -184,7 +197,7 @@ class ProcessingPipeline:
                 )
             
             # Calculate content hash for verification # TODO Change to Ipfs CID
-            content_hash = hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest() # TODO Make this injected.
+            content_hash = self._hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
             
             # Write output to file if output_path is provided
             if output_path:
