@@ -47,7 +47,7 @@ class ResourceMonitor:
         self.monitoring_interval: float = self.configs.resources.monitoring_interval_seconds
 
         # Initialize resource usage methods
-        self._get_cpu_usage:                 Callable = self.resources['get_cpu_usage']
+        self._get_cpu_usage:                 Callable = self.resources['get_cpu_usage_in_percent']
         self._get_virtual_memory_in_percent: Callable = self.resources['get_virtual_memory_in_percent']
         self._get_memory_info:               Callable = self.resources['get_memory_info']
         self._get_memory_rss_usage_in_mb:    Callable = self.resources['get_memory_rss_usage_in_mb']
@@ -61,6 +61,7 @@ class ResourceMonitor:
         self.active_monitoring: bool = False
         self.monitoring_thread: threading.Thread = None
         self._current_usage: dict[str, Any] = {"cpu": 0.0, "memory": 0}
+        self._LIMIT: float = 0.9
 
     def start_monitoring(self) -> bool:
         """Start active resource monitoring.
@@ -96,10 +97,10 @@ class ResourceMonitor:
                 cpu_usage = self.current_usage.get("cpu", 0)
                 memory_usage = self.current_usage.get("memory", 0)
 
-                if cpu_usage > (self.cpu_limit_percent * 0.9): # TODO Verify why 0.9
+                if cpu_usage > (self.cpu_limit_percent * self._LIMIT): # TODO Verify why 0.9
                     self._logger.warning(f"High CPU usage: {cpu_usage:.1f}%")
 
-                if memory_usage > (self.memory_limit * 0.9):
+                if memory_usage > (self.memory_limit * self._LIMIT):
                     self._logger.warning(f"High memory usage: {memory_usage} MB")
 
                 time.sleep(self.monitoring_interval)
@@ -119,7 +120,8 @@ class ResourceMonitor:
             "memory_percent": self._get_memory_percent(),
             "disk_usage": self._get_disk_usage_in_percent(),
             "open_files": self._get_num_open_files(),
-            "shared_memory": self._get_shared_memory_usage_in_mb()
+            "shared_memory": self._get_shared_memory_usage_in_mb(),
+            # "vram": self._get_memory_vms_usage_in_mb() # TODO Add VRAM support.
         }
 
     @property

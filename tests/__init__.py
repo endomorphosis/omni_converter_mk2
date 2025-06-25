@@ -22,12 +22,12 @@ if project_root not in sys.path:
 # Import test modules for easier access
 try:
     #from .test_skeleton_format_support_coverage import FormatSupportCoverageTest
-    from .test_skeleton_processing_success_rate import ProcessingSuccessRateTest
-    from .test_skeleton_resource_utilization import ResourceUtilizationTest
-    from .test_skeleton_processing_speed import ProcessingSpeedTest
-    #from .test_skeleton_error_handling import ErrorHandlingTest
-    from .test_skeleton_security_effectiveness import SecurityEffectivenessTest
-    from .test_skeleton_text_quality import TextQualityTest
+    # from .test_skeleton_processing_success_rate import ProcessingSuccessRateTest
+    # from .test_skeleton_resource_utilization import ResourceUtilizationTest
+    # from .test_skeleton_processing_speed import ProcessingSpeedTest
+    # #from .test_skeleton_error_handling import ErrorHandlingTest
+    # from .test_skeleton_security_effectiveness import SecurityEffectivenessTest
+    # from .test_skeleton_text_quality import TextQualityTest
     from tests.integration_tests.test_vertical_slice import TestVerticalSlice
 except ImportError as e:
     # Allow tests to run even if individual modules have import issues

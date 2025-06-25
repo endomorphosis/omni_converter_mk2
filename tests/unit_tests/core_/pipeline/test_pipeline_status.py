@@ -207,21 +207,21 @@ class TestPipelineStatusAttributes(unittest.TestCase):
             - Model validates new values
         """
         status = PipelineStatus()
-        
+
         # Test attribute modification
         status.total_files = 5
         self.assertEqual(status.total_files, 5)
-        
+
         status.current_file = self.test_file_path
         self.assertEqual(status.current_file, Path(self.test_file_path))
-        
+
         status.is_processing = True
         self.assertEqual(status.is_processing, True)
-        
+
         # Test validation on modification
         with self.assertRaises(ValidationError):
             status.total_files = "not_a_number"
-    
+
     def test_pydantic_model_fields(self):
         """
         GIVEN the PipelineStatus class

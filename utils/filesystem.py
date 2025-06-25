@@ -4,16 +4,18 @@ Filesystem utility functions for the Omni-Converter.
 This module provides filesystem utility functions for the Omni-Converter,
 including file reading, writing, and information retrieval.
 """
-from dataclasses import dataclass
+from datetime import datetime
 import glob
 import magic
 import mimetypes
 import os
-from datetime import datetime
 from typing import Any, Optional
 
 
-from pydantic import BaseModel, Field, BeforeValidator, FilePath, PositiveInt
+try:
+    from pydantic import BaseModel, Field, BeforeValidator as BV, FilePath, PositiveInt
+except ImportError:
+    raise ImportError("Pydantic is required for the Python API.")
 
 
 def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
@@ -100,20 +102,13 @@ class FileInfo(BaseModel):
     def to_dict(self) -> dict[str, Any]:
         """
         Convert to a dictionary.
-        
+
         Returns:
             A dictionary containing the file information.
         """
-        return {
-            'path': self.path,
-            'size': self.size,
-            'modified_time': self.modified_time.isoformat(),
-            'mime_type': self.mime_type,
-            'extension': self.extension,
-            'is_readable': self.is_readable,
-            'is_writable': self.is_writable
-        }
-
+        _dict = self.model_dump()
+        _dict['modified_time'] = self.modified_time.isoformat()  # Convert datetime to a human-readable format
+        return _dict
 
 
 class FileContent:

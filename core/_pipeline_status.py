@@ -2,7 +2,7 @@ from typing import Any, Annotated as Ann
 from pathlib import Path
 
 try:
-    from pydantic import BaseModel, PositiveInt, FilePath, AfterValidator as AV, ConfigDict
+    from pydantic import BaseModel, PositiveInt, FilePath, AfterValidator as AV, ConfigDict, Field, BeforeValidator as BV
 except ImportError:
     raise ImportError("Pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
@@ -28,7 +28,7 @@ class PipelineStatus(BaseModel):
     failed_files: PositiveInt = 0
     current_file: Ann[FilePath, AV(_string_to_file_path)] = ""
     is_processing: bool = False
-    
+
     model_config = ConfigDict(validate_assignment=True)
 
     def to_dict(self) -> dict[str, Any]:
@@ -39,3 +39,9 @@ class PipelineStatus(BaseModel):
             A dictionary representation of the pipeline status.
         """
         return self.model_dump()
+
+    def reset(self) -> None:
+        """Reset current_file and is_processing to initial values."""
+        # Suppress any validation errors when resetting these values
+        object.__setattr__(self, 'current_file', "")
+        object.__setattr__(self, 'is_processing', False)

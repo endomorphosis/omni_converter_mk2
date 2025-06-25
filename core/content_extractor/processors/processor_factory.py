@@ -112,6 +112,12 @@ class _GenericProcessor:
         # Call the processor with the provided arguments
         return self.process(data, options)
 
+    def __str__(self):
+        return f"<{self.__class__.__name__} processor_name={self.processor_info['processor_name']}>"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} processor_name={self.processor_info['processor_name']}>"
+
 
 def _get_supported_formats_from_resource_config(resource_config) -> set[str]:
     value = resource_config["supported_formats"]
@@ -192,6 +198,8 @@ def _apply_cross_processor_dependencies(
                 logger.debug(f"Processing dependency: {dependency}")
 
             source_proc_name, source_method_name, target_proc_name, target_method_name = dependency
+            logger.debug(f"Source processor: {source_proc_name}, Source method: {source_method_name}, "
+                         f"Target processor: {target_proc_name}, Target method: {target_method_name}")
 
             # Check if processors exist
             if source_proc_name not in processors:
@@ -208,12 +216,12 @@ def _apply_cross_processor_dependencies(
             try:
                 original_method = getattr(source_processor, source_method_name)
             except AttributeError:
-                logger.warning(f"Source processor '{source_proc_name}' does not have method '{source_method_name}'. Skipping.")
+                logger.warning(f"Source processor '{source_proc_name}' does not have method '{source_method_name}'. Skipping...")
                 continue
             try:
                 target_method = getattr(target_processor, target_method_name)
             except AttributeError:
-                logger.warning(f"Target processor '{target_proc_name}' does not have method '{target_method_name}'. Skipping.")
+                logger.warning(f"Target processor '{target_proc_name}' does not have method '{target_method_name}'. Skipping...")
                 continue
             
             # Create enhanced method
@@ -296,10 +304,10 @@ class _MakeProcessor:
         else:
             self._logger.setLevel(logging.INFO)
 
-        self._logger.debug(f"_make_processor called for {self._name}")
-        self._logger.debug(f"base_path: {self._base_path}")
-        self._logger.debug(f"supported_formats: {self._supported_formats}")
-        self._logger.debug(f"dependencies: {self._dependencies}")
+        # self._logger.debug(f"_make_processor called for {self._name}")
+        # self._logger.debug(f"base_path: {self._base_path}")
+        # self._logger.debug(f"supported_formats: {self._supported_formats}")
+        # self._logger.debug(f"dependencies: {self._dependencies}")
 
     @staticmethod
     def _get_python_files_from_directory(directory: Path) -> dict[str, Path]:
@@ -312,13 +320,13 @@ class _MakeProcessor:
         return ''.join(word.capitalize() for word in string.split('_'))
 
     def _load_module_from_path(self, path: Path, proc_name: str = None) -> ModuleType:
-        self._logger.debug(f"Attempting to load spec for {self._name} from {path}")
+        #self._logger.debug(f"Trying spec for '{self._name}' from '{path.parent.name}/{path.name}'")
         spec_name = proc_name or self._name
         if spec_name not in path.stem:
             raise ImportError(f"Module name '{spec_name}' does not match file name '{path.stem}'")
         spec = importlib.util.spec_from_file_location(spec_name, path)
         if spec and spec.loader:
-            self._logger.debug(f"Successfully created spec, loading module")
+            self._logger.debug(f"Successfully created spec from '{path.parent.name}/{path.stem}', loading module")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return module
@@ -337,7 +345,7 @@ class _MakeProcessor:
                 temp_dict[attr] = func
         func_dict = {attr: func for attr, func in attr_dict.items() if attr not in temp_dict}
 
-        self._logger.debug(f"func_dict: {func_dict}")
+        #self._logger.debug(f"func_dict: {func_dict}")
         return func_dict
 
     def _load_functions_from_file(self, paths: dict[str, Path], callables_dict: dict = {}):
@@ -346,6 +354,10 @@ class _MakeProcessor:
         #self._logger.debug(f"critical_resources: {self._crit_resources}")
 
         for path in paths.values():
+            # Skip __init__ files and non-Python files
+            if path.name.startswith("__init__") or not path.suffix == ".py":
+                #self._logger.debug(f"Skipping file: {path}")
+                continue
             #self._logger.debug(f"Checking path: {path}")
             try:
                 try:
@@ -370,7 +382,7 @@ class _MakeProcessor:
                 self._logger.exception(f"Exception loading {path}: {e}")
                 continue # Skip this file if it fails to load.
 
-        self._logger.debug(f"Returning callables_dict: {callables_dict}")
+        #self._logger.debug(f"Returning callables_dict: {callables_dict}")
 
         return callables_dict
 
@@ -386,25 +398,25 @@ class _MakeProcessor:
                 path = self._mime_type_paths[proc_name]
             else:
                 continue
-            self._logger.debug(f"Found mime-type processor at {path}")
+            #self._logger.debug(f"Found mime-type processor at {path}")
 
             try: # If the path exists, try to load the module.
                 module = self._load_module_from_path(path, proc_name)
             except ImportError as e:
-                self._logger.debug(f"Failed to load module from path {path}: {e}")
+                #self._logger.debug(f"Failed to load module from path {path}: {e}")
                 continue
 
             # Import the processor class from the module
             pascal_case_name = self._convert_to_pascal_case(self._name)
-            self._logger.debug(f"pascal_case_name: {pascal_case_name}")
+            #self._logger.debug(f"pascal_case_name: {pascal_case_name}")
             callable_dict = self._get_callables_from_module(module)
             if pascal_case_name in callable_dict:
                 ProcessorClass = getattr(module, pascal_case_name , _GenericProcessor)
                 if not is_generic(ProcessorClass):
-                    self._logger.debug(f"Loaded ProcessorClass: '{ProcessorClass}'")
+                    #self._logger.debug(f"Loaded ProcessorClass: '{ProcessorClass}'")
                     break
 
-        self._logger.debug(f"Using '{ProcessorClass}' for '{self._name}'")
+        #self._logger.debug(f"Using '{ProcessorClass}' for '{self._name}'")
         return ProcessorClass
 
 
@@ -514,48 +526,10 @@ class _MakeProcessor:
         mock.configs = MagicMock(spec=Configs)
         return mock
 
-    # def processor(self) -> Optional[Any]:
-    #     # Check if there's a processor for this specific mime-type.
-    #     self._ProcessorClass: Any | _GenericProcessor = self._get_processor_class_for_specific_mime_type()
-    #     callables_dict = {}
-    #     resources = {}
-
-    #     # Check for dedicated dependencies first.
-    #     if any(dep in path.stem for dep in self._dependencies.keys() for path in self._dep_paths.values()):
-    #         callables_dict = self._load_functions_from_file(self._dep_paths, callables_dict=callables_dict)
-
-    #     if not callables_dict:
-    #         # If no callables found, try to load the functions from the fallback folder.
-    #         callables_dict = self._load_functions_from_file(self._fallback_paths, callables_dict=callables_dict)
-
-    #     # Can't find any callables, return a mock processor.
-    #     if not callables_dict:
-    #         # If no processor class found, return a mock processor
-    #         #self._logger.debug(f"Could not find any callables for processor {self._name}. Returning MagicMock instead.")
-    #         return self._make_mock()
-    #     else:
-    #         # Update resources with the loaded callables
-    #         resources = {func_name: func for func_name, func in self.resources.items()}
-    #         resources.update(callables_dict)
-
-    #     resources["supported_formats"] = self._supported_formats
-    #     resources["format_extensions"] = self._supported_formats
-
-    #     _resources: _ProcessorResources = resources
-
-    #     self._logger.debug(f"Creating ProcessorClass instance for '{self._name}' with resources: {_resources}")
-    #     # Dependency injection time baby!
-    #     assert "extract_text" in _resources.keys(), f"The 'extract_text' callable must be provided in resources.\n{_resources.keys()}"
-    #     try:
-    #         return self._ProcessorClass(resources=_resources, configs=resources["configs"])
-    #     except Exception as e:
-    #         self._logger.error(f"Failed to create ProcessorClass instance due to {type(e).__name__}: {e}\n. Returning MagicMock instead.")
-    #         return self._make_mock()
-
     def processor(self) -> Optional[Any]:
-        self._logger.debug(f"=== PROCESSOR CREATION DEBUG for {self._name} ===")
-        self._logger.debug(f"ProcessorClass: {self._ProcessorClass}")
-        self._logger.debug(f"Critical resources needed: {self._crit_resources}")
+        #self._logger.debug(f"=== PROCESSOR CREATION DEBUG for {self._name} ===")
+        #self._logger.debug(f"ProcessorClass: {str(self._ProcessorClass)}")
+        #self._logger.debug(f"Critical resources needed: {self._crit_resources}")
 
         # Check if there's a processor for this specific mime-type.
         self._ProcessorClass: Any | _GenericProcessor = self._get_processor_class_for_specific_mime_type()
@@ -563,50 +537,52 @@ class _MakeProcessor:
 
         # Check for dedicated dependencies first.
         if any(dep in path.stem for dep in self._dependencies.keys() for path in self._dep_paths.values()):
-            self._logger.debug("Checking dependency paths...")
+            #self._logger.debug("Checking dependency paths...")
             callables_dict = self._load_functions_from_file(self._dep_paths, callables_dict=callables_dict)
-            self._logger.debug(f"After dependency loading: {list(callables_dict.keys()) if callables_dict else 'None'}")
+            #self._logger.debug(f"After dependency loading: {list(callables_dict.keys()) if callables_dict else 'None'}")
 
         if not callables_dict:
-            self._logger.debug("No dependency callables found, trying fallback paths...")
+            #self._logger.debug("No dependency callables found, trying fallback paths...")
             # If no callables found, try to load the functions from the fallback folder.
             callables_dict = self._load_functions_from_file(self._fallback_paths, callables_dict=callables_dict)
-            self._logger.debug(f"After fallback loading: {list(callables_dict.keys()) if callables_dict else 'None'}")
+            #self._logger.debug(f"After fallback loading: {list(callables_dict.keys()) if callables_dict else 'None'}")
 
         # Can't find any callables, return a mock processor.
         if not callables_dict:
-            self._logger.debug("No callables found anywhere, returning mock")
+            #self._logger.debug("No callables found anywhere, returning MagicMock.")
             return self._make_mock()
         else:
-            self._logger.debug(f"Successfully found callables: {list(callables_dict.keys())}")
+            #self._logger.debug(f"Successfully found callables: {list(callables_dict.keys())}")
             
             # Build resources
             resources = {func_name: func for func_name, func in self.resources.items()}
-            self._logger.debug(f"Initial resources keys: {list(resources.keys())}")
+            #self._logger.debug(f"Initial resources keys: {list(resources.keys())}")
             
             resources.update(callables_dict)
-            self._logger.debug(f"After adding callables: {list(resources.keys())}")
+            #self._logger.debug(f"After adding callables: {list(resources.keys())}")
             
             resources["supported_formats"] = self._supported_formats
             resources["format_extensions"] = self._supported_formats
-            self._logger.debug(f"Final resources keys: {list(resources.keys())}")
+            #self._logger.debug(f"Final resources keys: {list(resources.keys())}")
 
             # Validate critical resources
             for crit_res in self._crit_resources:
                 if crit_res in resources:
-                    self._logger.debug(f"✓ Critical resource '{crit_res}' found: {type(resources[crit_res])}")
+                    self._logger.debug(f"✓ Critical resource '{crit_res}' found.")
                 else:
                     self._logger.error(f"✗ Critical resource '{crit_res}' MISSING!")
 
             try:
-                self._logger.debug(f"Attempting to create {self._ProcessorClass.__name__} instance...")
-                return self._ProcessorClass(resources=resources, configs=resources["configs"])
+                #self._logger.debug(f"Attempting to create {self._ProcessorClass.__name__} instance...")
+                processor = self._ProcessorClass(resources=resources, configs=resources["configs"])
+                #self._logger.debug(f"Successfully created {self._ProcessorClass.__name__}")
+                return processor
             except KeyError as e:
                 self._logger.error(f"KeyError during instantiation: {e}")
                 self._logger.error(f"Available resources: {list(resources.keys())}")
                 return self._make_mock()
             except Exception as e:
-                self._logger.error(f"Other error during instantiation: {e}")
+                self._logger.error(f"Unexpected error during instantiation: {e}")
                 return self._make_mock()
 
 
@@ -682,57 +658,6 @@ def _make_processor(resources: _ProcessorResources) -> Any:
     return processor
 
 
-# def _make_processor(resources: _ProcessorResources) -> Any:
-#     """Create a processor instance based on the provided resources."""
-#     logger = resources["logger"]
-#     configs = resources["configs"]
-#     processor_name = resources["processor_name"]
-    
-#     # Create a processor instance using the resources
-#     make = _MakeProcessor(resources)
-#     processor = make.processor()
-    
-#     # If we got a real processor (not a mock), ensure it has proper attributes
-#     if processor and not isinstance(processor, MagicMock):
-#         # Ensure processor has required attributes
-#         if not hasattr(processor, "logger"):
-#             processor.logger = logger
-#         if not hasattr(processor, "configs"):
-#             processor.configs = configs
-#         if not hasattr(processor, "processor_info"):
-#             processor.processor_info = {
-#                 "processor_name": processor_name,
-#                 "capabilities": {},
-#                 "supported_formats": resources["supported_formats"],
-#                 "implementation_used": "native",
-#                 "dependencies": list(resources["dependencies"].keys())
-#             }
-            
-#         # Build capabilities info
-#         for resource in resources["critical_resources"] + resources.get("optional_resources", []):
-#             if hasattr(processor, resource):
-#                 processor.processor_info["capabilities"][resource] = {
-#                     "available": True,
-#                     "implementation": "native"
-#                 }
-#             else:
-#                 processor.processor_info["capabilities"][resource] = {
-#                     "available": False,
-#                     "implementation": "missing"
-#                 }
-                
-#         # Set implementation used based on available dependencies
-#         if resources.get("dependency_priority"):
-#             for dep in resources["dependency_priority"]:
-#                 if dep in resources["dependencies"] and resources["dependencies"][dep] is not None:
-#                     processor.processor_info["implementation_used"] = dep
-#                     break
-    
-#     return processor
-
-
-
-
 def make_processors() -> dict[str, Any]:
     """Create all processor instances.
 
@@ -743,6 +668,7 @@ def make_processors() -> dict[str, Any]:
     from logger import logger
     from __version__ import __version__
     from utils.handlers._can_handle import can_handle
+    from dependencies import dependencies as dependency_cache
 
     processors = {}
     frozenset_dict = {}
@@ -751,9 +677,13 @@ def make_processors() -> dict[str, Any]:
     for resource_config in get_processor_resource_configs():
         # Add logger and configs to resources
         resource_config["supported_formats"] = _get_supported_formats_from_resource_config(resource_config)
+        proc_name = resource_config["processor_name"]
+        if proc_name in processors.keys():
+            logger.warning(f"Processor {proc_name} already exists, skipping duplicate.")
+            continue
 
         frozenset_dict.update({
-            resource_config["processor_name"]: resource_config["supported_formats"]
+            proc_name: resource_config["supported_formats"]
         })
 
         resources = {
@@ -762,12 +692,13 @@ def make_processors() -> dict[str, Any]:
             "configs": configs,
             "get_version": lambda: __version__,
             "can_handle": can_handle, 
+            "dependencies": dependency_cache,  # Use the global dependencies cache
             "processor_available": True,  # Assume all processors are available by default
         }
         try:
             #logger.debug(f"Creating processor {resource_config['processor_name']} with resources: {resources}")
             processor = _make_processor(resources)
-            processors[resource_config["processor_name"]] = processor
+            processors[proc_name] = processor
         except Exception as e:
             logger.exception(f"Failed to create processor {resource_config['processor_name']}: {e}")
             continue # Skip processors that fail to initialize. NOTE This should be logged, but only when in production mode.
@@ -788,8 +719,8 @@ def make_processors() -> dict[str, Any]:
         processor = processors[proc_name]
         assert processor is not None, f"Processor {proc_name} is None, cannot add supported formats."
         proc_tuple = (proc_name, processor, set_)
-        if proc_name == "text_processor":
-            logger.debug(f"{(proc_name, processor, set_)}")
+        # if proc_name == "text_processor":
+        #     logger.debug(f"{(proc_name, processor, set_)}")
         temp_dict[proc_name] = proc_tuple
 
     processors = temp_dict
@@ -797,6 +728,6 @@ def make_processors() -> dict[str, Any]:
     for proc in processors.values():
         assert isinstance(proc, tuple), f"Processor {proc} is not a tuple, but a {type(proc)}."
 
-    print(processors)
+    #print(processors)
 
     return processors

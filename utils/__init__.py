@@ -52,3 +52,13 @@ Implementation Status:
 #     make_video_extractor,
 #     make_application_extractor,
 # )
+
+from .filesystem import FileSystem, FileInfo, FileContent
+from .hardware import Hardware
+
+__all__ = [
+    "FileSystem",
+    "FileInfo",
+    "FileContent",
+    "Hardware",
+]

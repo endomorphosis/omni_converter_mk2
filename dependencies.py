@@ -50,6 +50,11 @@ class _Dependencies:
             "tqdm": None,
             "whisper": None,
             "yaml": None,
+            "xformers": None,  # Optional for memory-efficient LLMs.
+            "xformers.ops": None,
+            "torch_directml": None,  # Optional for DirectML support on Windows.
+            "intel_extension_for_pytorch": None,  # Optional for Intel hardware acceleration.
+            "torch.mps": None,  # Optional for Apple Silicon support.
         }
 
     def check_critical_dependencies(self) -> None:
@@ -74,11 +79,11 @@ class _Dependencies:
         for module_name in self._cache.keys():
             try:
                 self._load_module(module_name)
+                print(f"✓ Dependency '{module_name}' loaded successfully.")
             except Exception as e:
-                print(f"Dependency '{module_name}' is not available.")
+                print(f"✗ Dependency '{module_name}' is not available.")
                 pass # Ignore errors for non-critical dependencies.
             finally:
-                print(f"Dependency '{module_name}' loaded successfully.")
                 self.clear_module(module_name)
 
     def _load_module(self, module_name: str) -> _ModuleType | None:
@@ -86,9 +91,9 @@ class _Dependencies:
             try:
                 self._cache[module_name] = _import_module(module_name)
             except ModuleNotFoundError as e:
-                print(f"Could not find third-party dependency '{module_name}'.")
+                print(f"✗ Could not find dependency '{module_name}'.")
             except Exception as e:
-                raise ImportError(f"Could not import third-party dependency '{module_name}': {e}") from e
+                raise ImportError(f"✗ Could not import dependency '{module_name}': {e}") from e
         return self._cache[module_name]
 
     def __str__(self) -> str:
@@ -114,8 +119,7 @@ class _Dependencies:
         self._cache = {key: None for key in self._cache.keys()}
 
     def clear_module(self, module_name: str) -> None:
-        """
-        Clear a specific module from the cache.
+        """Clear a specific module from the cache.
 
         Args:
             module_name (str): The name of the module to clear.
@@ -233,7 +237,23 @@ class _Dependencies:
             A list of dependency names.
         """
         return [name for name in self._cache.keys()]
-    
+
+    def values(self) -> list[_ModuleType | None]:
+        """Get a list of all loaded modules.
+        
+        Returns:
+            A list of loaded modules, with None for unloaded modules.
+        """
+        return list(self._cache.values())
+
+    def items(self) -> list[tuple[str, _ModuleType | None]]:
+        """Get a list of all dependencies as (name, module) tuples.
+        
+        Returns:
+            A list of tuples containing dependency names and their corresponding modules.
+        """
+        return [(name, module) for name, module in self._cache.items()]
+
     def __iter__(self):
         """Iterate over the loaded modules."""
         for name, module in self._cache.items():

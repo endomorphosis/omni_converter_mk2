@@ -6,10 +6,9 @@ into different output formats.
 """
 import json
 import os
-from typing import Any, Optional
 
 
-from types_ import Configs, Content, FormatterFunc, FormattedOutput, Logger
+from types_ import Any, Configs, Content, FormatterFunc, FormattedOutput, Optional, Logger, Callable
 
 
 class OutputFormatter:
@@ -23,7 +22,7 @@ class OutputFormatter:
         default_format (str): The default output format.
     """
     
-    def __init__(self, resources: dict[str, Any], configs: Configs):
+    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
         """
         Initialize an output formatter.
         
@@ -60,7 +59,7 @@ class OutputFormatter:
         self.output_formats["md"] = self._format_as_markdown
 
         # Log the registered formats
-        self._logger.info(f"Registered output formats: {', '.join(self.output_formats.keys())}")
+        self._logger.debug(f"Registered output formats: {', '.join(self.output_formats.keys())}")
 
     def _format_as_txt(self, content: Content) -> str:
         """

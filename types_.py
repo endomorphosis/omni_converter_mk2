@@ -15,7 +15,7 @@ from typing import (
     Any, Callable, Generator,
     Optional, Protocol, TYPE_CHECKING,
     Type, TypeAlias, TypedDict, 
-    TypeVar, Union
+    TypeVar, Union, NamedTuple
 )
 from protocols import Processor
 
@@ -92,4 +92,4 @@ DependencySpecificObject = TypeVar("DependencyObject", bound=Callable[..., Any])
 PythonAPI = TypeVar('PythonAPI')
 Cli = TypeVar('CLI')
 Gui = TypeVar('GUI')
-Configs = TypeVar('Configs')
+Options: TypeAlias = BaseModel

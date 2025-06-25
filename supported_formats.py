@@ -2,8 +2,21 @@ class SupportedFormats:
     """
     Utility class for managing supported formats and their extensions.
     
-    Attributes:
-
+    Properties:
+        SUPPORTED_AUDIO_FORMATS (frozenset[str]): Set of supported audio format extensions.
+        SUPPORTED_APPLICATION_FORMATS (frozenset[str]): Set of supported application format extensions.
+        SUPPORTED_VIDEO_FORMATS (frozenset[str]): Set of supported video format extensions.
+        SUPPORTED_IMAGE_FORMATS (frozenset[str]): Set of supported image format extensions.
+        SUPPORTED_TEXT_FORMATS (frozenset[str]): Set of supported text format extensions.
+        SUPPORTED_FORMATS (frozenset[str]): Set of all supported format extensions across categories.
+        FORMAT_REGISTRY (dict[str, frozenset[str]]): Mapping of format categories to their supported extensions.
+        FORMAT_SIGNATURES (dict[str, str]): Mapping of MIME types to format names.
+        FORMAT_EXTENSIONS (dict[str, str]): Mapping of file extensions to format names.
+        TEXT_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Text format names to extensions mapping.
+        AUDIO_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Audio format names to extensions mapping.
+        APPLICATION_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Application format names to extensions mapping.
+        IMAGE_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Image format names to extensions mapping.
+        VIDEO_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Video format names to extensions mapping.
     """
 
     def _make_frozen_set_from_frozen_set_dict(set_dict: dict[str, frozenset]) -> frozenset[str]:

@@ -25,10 +25,55 @@ from types_ import (
     ProcessingResult,
     ErrorMonitor,
     SecurityMonitor,
+    #Options,
 )
-
+from configs import Configs
+from .options import Options
 
 class CLI:
+    """
+    Command Line Interface for the Omni-Converter.
+
+    Attributes:
+        resources (dict[str, Callable]): Dictionary of callable functions and classes.
+        configs (Configs): A pydantic mode of settings to use across the program.
+
+    Private Attributes:
+        _batch_processor (BatchProcessor): Handles batch processing of files.
+        _progress_callback (ProgressCallback): Callback for progress updates.
+        _processing_pipeline (ProcessingPipeline): Pipeline for processing files.
+        _list_normalizers (Callable): Function to list available text normalizers.
+        _list_output_formats (Callable): Function to list available output formats.
+        _list_supported_formats (Callable): Function to list supported input formats.
+        _show_version (Callable): Function to display version information.
+        _logger (Logger): Logger instance for logging messages.
+        _tqdm (Dependency): Dependency for progress bar functionality.
+        _resource_monitor (ResourceMonitor): Monitors system resources during processing.
+        _error_monitor (ErrorMonitor): Monitors errors during processing.
+        _security_monitor (SecurityMonitor): Monitors security issues during processing.
+
+    Methods:
+        parse_arguments() -> argparse.Namespace:
+            Parses command line arguments and returns them as a Namespace object.
+        process_file(input_path: str, output_path: Optional[str] = None,
+                     output_dir: Optional[str] = None, format: str = "txt",
+                     include_metadata: bool = True, extract_metadata: bool = True,
+                     normalize_text: bool = True, quality_threshold: float = 0.9,
+                     continue_on_error: bool = True, max_batch_size: int = 100,
+                     parallel: bool = False, max_workers: int = 4,
+                     sanitize: bool = True, max_cpu: int = 80,
+                     max_memory: int = 6144, show_progress: bool = False,
+                     options: Optional[dict[str, Any]] = None) -> bool:
+            Processes a single file and converts it to the specified format.
+            Returns True if successful, False otherwise.
+        process_directory(dir_path: str, output_dir: Optional[str] = None,
+                          options: Optional[dict[str, Any]] = None,
+                          show_progress: bool = True, recursive: bool = False) -> BatchResult:
+            Processes all files in a directory and returns a BatchResult object with processing results.
+        main() -> int:
+            Main entry point for the CLI. Parses arguments and processes input files or directories.
+            Returns an exit code: 0 for success, 1 for failure.
+    """
 
     def __init__(
         self,
@@ -50,6 +95,7 @@ class CLI:
         self._batch_processor:     BatchProcessor     = self.resources['batch_processor']
         self._progress_callback:   ProgressCallback   = self.resources['progress_callback']
         self._processing_pipeline: ProcessingPipeline = self.resources['processing_pipeline']
+        self._options:             Options            = self.resources['options']
 
         # Information and listing functions
         self._list_normalizers:       Callable = self.resources['list_normalizers']
@@ -66,18 +112,22 @@ class CLI:
         self._error_monitor:    ErrorMonitor    = self.resources['error_monitor']
         self._security_monitor: SecurityMonitor = self.resources['security_monitor']
 
-    @staticmethod
-    def parse_arguments() -> argparse.Namespace:
-        """
-        Parse command line arguments.
-        
+
+    def parse_arguments(self) -> argparse.Namespace:
+        """Parse command line arguments.
+
         Returns:
             The parsed arguments.
         """
-        description = """
+        default_options = self._options.print_options()
+
+        description = f"""
         Parse command line arguments for the file conversion utility.
         This function sets up the argument parser with various options for controlling
         the input sources, output format, processing behavior, and resource utilization.
+        {self._options.print_options()}
+
+
         Input options:
             input: The input file or directory to process
             -r/--recursive: Process directories recursively, including all subdirectories
@@ -104,8 +154,6 @@ class CLI:
             -v/--verbose: Enables detailed logging during conversion
             --version: Displays program version information
             --no-progress: Disables the progress bar during batch operations
-            argparse.Namespace: An object containing all the parsed command line arguments
-            with appropriate defaults applied where arguments were not specified.
         """
         parser = argparse.ArgumentParser(description=description)
 
@@ -118,7 +166,7 @@ class CLI:
         parser.add_argument("-o", "--output", help="Output file or directory")
         parser.add_argument("-f", "--format", choices=["txt", "json", "md"],
                             default="txt", help="Output format (default: txt)")
-        
+
         # Processing options
         parser.add_argument("--batch-size", type=int, default=100,
                             help="Maximum number of files to process at once (default: 100)")
@@ -128,7 +176,7 @@ class CLI:
                             help="Comma-separated list of normalizers to apply")
         parser.add_argument("--sanitize", action="store_true", default=True,
                             help="Sanitize content during processing (default: True)")
-        
+
         # Batch processing options
         parser.add_argument("--parallel", action="store_true", default=False,
                             help="Enable parallel processing for batch operations")
@@ -158,7 +206,7 @@ class CLI:
                             help="Show version information and exit")
         parser.add_argument("--no-progress", action="store_true", default=False,
                             help="Disable progress bar for batch processing")
-        
+
         return parser.parse_args()
 
     def process_file(self, 
@@ -342,16 +390,27 @@ class CLI:
         """
         # Parse arguments
         args = self.parse_arguments()
-        
+
+        # Validate arguments.
+        try:
+            args: Options = Options(**vars(args))  # Convert Namespace to Options instance
+        except Exception as e:
+            print(f"Error parsing arguments: {e}", file=sys.stderr)
+            return 1
+
         # Set verbose logging if requested
         if args.verbose:
-            self._logger.set_log_level("DEBUG")
-        
+            self._logger.level = 10 # DEBUG
+
         # Show information if requested
         if args.version:
             self._show_version()
             return 0
-        
+
+        if args.show_options:
+            self._options.print_options()
+            return 0
+
         if args.list_formats:
             self._list_supported_formats()
             return 0
@@ -363,25 +422,25 @@ class CLI:
         if args.list_output_formats:
             self._list_output_formats()
             return 0
-        
+
         # Check for input file or directory
         if not args.input:
             print("Error: No input file or directory specified", file=sys.stderr)
             return 1
-        
+
         # Set configuration based on command-line arguments
         if args.format:
             self.configs.set_config_value('output.default_format', args.format)
         
         if args.verbose:
             self.configs.set_config_value('output.verbose', True)
-        
+
         # Configure resource limits if specified
         if args.max_cpu is not None:
             self._resource_monitor.set_max_cpu_percent(args.max_cpu)
         if args.max_memory is not None:
             self._resource_monitor.set_max_memory_mb(args.max_memory)
-        
+
         # Prepare processing options
         options = {
             'format': args.format,

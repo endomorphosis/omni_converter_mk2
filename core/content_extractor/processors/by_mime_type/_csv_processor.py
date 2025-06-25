@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional
 from types_ import Configs, Content, Logger
 
 
-class CSVProcessor:
+class CsvProcessor:
     """
     Processor for CSV files.
     """

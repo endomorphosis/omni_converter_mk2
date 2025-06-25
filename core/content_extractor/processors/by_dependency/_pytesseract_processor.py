@@ -89,7 +89,7 @@ def extract_metadata(
         logger.error(f"Error extracting metadata: {e}")
         raise ValueError(f"Failed to extract metadata: {e}") from e
 
-def extract_sections(
+def extract_structure(
     data: str | bytes,
     options: Optional[dict[str, Any]] = None
 ) -> list[dict[str, Any]]:
@@ -177,6 +177,6 @@ def process(
 
     text = extract_text(pil_image, options)
     metadata = extract_metadata(pil_image, options)
-    sections = extract_sections(pil_image, options)
+    sections = extract_structure(pil_image, options)
 
     return text, metadata, sections

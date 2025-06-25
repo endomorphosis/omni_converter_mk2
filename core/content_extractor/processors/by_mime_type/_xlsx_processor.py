@@ -253,7 +253,6 @@ class XlsxProcessor:
                 - text: A list of text extracted from the image, if applicable.
         """
         image_data: list[dict[str, Any]] = self._get_image_data(data)
-
         try:
             return self._extract_images(image_data, options)
         except Exception as e:

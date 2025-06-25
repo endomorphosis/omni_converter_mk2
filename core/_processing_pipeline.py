@@ -254,10 +254,9 @@ class ProcessingPipeline:
         
         finally:
             # Reset status
-            self._status.is_processing = False
-            self._status.current_file = ""
+            self._status.reset()
             self._notify_listeners("processing_completed", {'file_path': file_path})
-    
+
     @property
     def status(self) -> dict[str, Any]:
         """

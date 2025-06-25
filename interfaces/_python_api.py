@@ -37,19 +37,19 @@ class PythonAPI:
 
         self._api_timeout = self.configs.api_timeout
 
-        self._batch_processor: BatchProcessor = self.resources['batch_processor']
-        self._supported_formats: set[str] = self.resources['supported_formats']
+        self._batch_processor:     BatchProcessor     = self.resources['batch_processor']
+        self._supported_formats:   set[str]           = self.resources['supported_formats']
         self._processing_pipeline: ProcessingPipeline = self.resources['processing_pipeline']
-        self._logger: Logger = self.resources['logger']
+        self._logger:              Logger             = self.resources['logger']
 
         self._make_resource_monitor: Callable = self.resources['make_resource_monitor']
-        self._make_error_monitor: Callable = self.resources['error_monitor']
+        self._make_error_monitor:    Callable = self.resources['error_monitor']
         self._make_security_monitor: Callable = self.resources['security_monitor']
 
         # Initialize monitors
         self._resource_monitor: ResourceMonitor = self._make_resource_monitor()
-        self._error_monitor: Callable = self._make_error_monitor()
-        self._security_monitor: Callable = self._make_security_monitor()
+        self._error_monitor:    Callable        = self._make_error_monitor()
+        self._security_monitor: Callable        = self._make_security_monitor()
 
     def convert_file(
         self,

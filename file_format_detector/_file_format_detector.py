@@ -10,7 +10,7 @@ from types_ import Any, Callable, Configs, Logger, Optional
 class FileFormatDetector:
     """
     Format detector for the Omni-Converter.
-    
+
     Detects the format of files based on their content and extension using injected dependencies.
     If a format is not supported, it returns None.
 

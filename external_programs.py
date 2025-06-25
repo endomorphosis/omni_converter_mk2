@@ -12,7 +12,7 @@ class _classproperty:
 
 class ExternalPrograms: # TODO Figure out how to run the program checks in parallel.
     """Check the availability of external programs.
-    
+
     NOTE: As these programs are entirely external, this class does not provide access to them.
     It only checks if they exist and can be run.
 
@@ -26,8 +26,6 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
         libreoffice (bool): Whether LibreOffice is available.
         audacity (bool): Whether Audacity is available (optional, TODO: check for CLI).
     """
-
-
     _EXTERNAL_PROGRAMS = {
         "ffmpeg": False,  # ffmpeg for video processing
         "ffprobe": False,  # ffprobe for video metadata extraction
@@ -37,6 +35,7 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
         "7-zip": False,  # 7-zip for file compression/decompression (optional)
         "libreoffice": False,  # LibreOffice for document processing (optional)
         "audacity": False,  # Audacity for audio processing (optional) TODO Figure out if there's a CLI for this.
+        "nvidia-smi": False,  # nvidia-smi for GPU monitoring (optional)
     }
 
     @classmethod
@@ -53,13 +52,13 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
             try: # TODO Every CLI program should have a --help option, but this should be confirmed. 
                 _ = _sub.run([program, "--help"], check=True, stdout=_sub.DEVNULL, stderr=_sub.DEVNULL)
                 available = True
-                _logger.info(f"'{program}' is available")
+                _logger.info(f" ✓ '{program}' is available")
             except _sub.CalledProcessError:
-                _logger.warning(f"'{program}' is available but returned an error when run with --help.")
+                _logger.warning(f"✗ '{program}' is available but returned an error when run with --help.")
             except FileNotFoundError:
-                _logger.warning(f"'{program}' is not available, functionality will be limited")
+                _logger.warning(f"✗ '{program}' is not available, functionality will be limited")
             except Exception as e:
-                _logger.warning(f"Unexpected {type(e).__name__} checking '{program}' availability: {e}")
+                _logger.warning(f"✗ Unexpected {type(e).__name__} checking '{program}' availability: {e}")
             finally:
                 cls._EXTERNAL_PROGRAMS[program] = available
                 continue
@@ -98,6 +97,11 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
     def libreoffice(cls) -> bool:
         """Check if LibreOffice is available."""
         return cls._EXTERNAL_PROGRAMS["libreoffice"]
+
+    @_classproperty
+    def nvidia_smi(cls) -> bool:
+        """Check if nvidia-smi is available."""
+        return cls._EXTERNAL_PROGRAMS["nvidia-smi"]
 
     def __getitem__(self, name: str) -> bool:
         """Get a external program by name."""

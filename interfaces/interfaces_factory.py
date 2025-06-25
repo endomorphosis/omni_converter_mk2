@@ -15,6 +15,7 @@ from interfaces._cli import CLI
 from configs import configs
 from logger import logger
 from dependencies import dependencies
+from .options import Options
 
 def make_cli() -> CLI:
     """
@@ -46,6 +47,7 @@ def make_cli() -> CLI:
         'progress_callback': progress_callback,
         'tqdm': dependencies.tqdm,
         'logger': logger,
+        'options': Options,
     }
     return CLI(resources=resources, configs=configs)
 

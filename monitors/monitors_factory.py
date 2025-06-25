@@ -1,7 +1,7 @@
 import atexit
 from configs import configs
 from logger import logger
-from utils.resource_monitor.dependencies.psutil import PsUtil
+from utils.hardware import Hardware
 
 
 from ._resource_monitor import ResourceMonitor
@@ -16,14 +16,14 @@ import traceback
 
 def make_resource_monitor() -> ResourceMonitor:
     resources = {
-        "get_cpu_usage": PsUtil._get_cpu_usage,
-        "get_virtual_memory_in_percent": PsUtil._get_virtual_memory_in_percent,
-        "get_memory_info": PsUtil._get_memory_info,
-        "get_memory_rss_usage_in_mb": PsUtil._get_memory_rss_usage_in_mb,
-        "get_memory_vms_usage_in_mb": PsUtil._get_memory_vms_usage_in_mb,
-        "get_disk_usage": PsUtil._get_disk_usage_in_percent,
-        "get_open_files": PsUtil._get_num_open_files,
-        "get_shared_memory_usage_in_mb": PsUtil._get_shared_memory_usage_in_mb,
+        "get_cpu_usage_in_percent": Hardware.get_cpu_usage_in_percent,
+        "get_virtual_memory_in_percent": Hardware.get_virtual_memory_in_percent,
+        "get_memory_info": Hardware.get_memory_info,
+        "get_memory_rss_usage_in_mb": Hardware.get_memory_rss_usage_in_mb,
+        "get_memory_vms_usage_in_mb": Hardware.get_memory_vms_usage_in_mb,
+        "get_disk_usage": Hardware.get_disk_usage_in_percent,
+        "get_open_files": Hardware.get_num_open_files,
+        "get_shared_memory_usage_in_mb": Hardware.get_shared_memory_usage_in_mb,
         "logger": logger,
     }
     return ResourceMonitor(resources=resources,configs=configs)
