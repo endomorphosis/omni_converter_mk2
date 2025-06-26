@@ -63,7 +63,7 @@ class PythonAPI:
         continue_on_error: bool = True,
         max_batch_size: int = 100,
         parallel: bool = False,
-        max_workers: int = 4,
+        max_threads: int = 4,
         sanitize: bool = True,
         max_cpu: int = 80,
         max_memory: int = 6144,  # 6GB in MB
@@ -85,7 +85,7 @@ class PythonAPI:
             - continue_on_error: bool - Whether to continue processing files even if some fail (default: True).
             - max_batch_size: int - Maximum number of files to process in a single batch (default: 100).
             - parallel: bool - Whether to process files in parallel (default: False).
-            - max_workers: int - Maximum number of worker threads to use for parallel processing (default: 4).
+            - max_threads: int - Maximum number of worker threads to use for parallel processing (default: 4).
             - sanitize: bool - Whether to sanitize output files (e.g. remove executable code, etc.) (default: True).
             - max_cpu: int - Maximum CPU usage percentage allowed (default: 80).
             - max_memory: int - Maximum memory usage in MB (default: 6144 i.e. 6GB).
@@ -125,7 +125,7 @@ class PythonAPI:
         continue_on_error: bool = True,
         max_batch_size: int = 100,
         parallel: bool = False,
-        max_workers: int = 4,
+        max_threads: int = 4,
         sanitize: bool = True,
         max_cpu: int = 80,
         max_memory: int = 6144,  # 6GB in MB
@@ -155,8 +155,8 @@ class PythonAPI:
         if "continue_on_error" in options:
             self._batch_processor.set_continue_on_error(options["continue_on_error"])
         
-        if "max_workers" in options and "parallel" in options and options["parallel"]:
-            self._batch_processor.set_max_workers(options["max_workers"])
+        if "max_threads" in options and "parallel" in options and options["parallel"]:
+            self._batch_processor.set_max_workers(options["max_threads"])
         else:
             self._batch_processor.set_max_workers(1)  # Sequential mode
         
@@ -250,7 +250,7 @@ class PythonAPI:
             "continue_on_error": self.configs.get_config_value("processing.continue_on_error", True),
             "max_batch_size": self.configs.get_config_value("resources.max_batch_size", 100),
             "parallel": self.configs.get_config_value("resources.parallel", False),
-            "max_workers": self.configs.get_config_value("resources.max_workers", 4),
+            "max_threads": self.configs.get_config_value("resources.max_threads", 4),
             
             # Security options
             "sanitize": self.configs.get_config_value("security.sanitize_output", True),

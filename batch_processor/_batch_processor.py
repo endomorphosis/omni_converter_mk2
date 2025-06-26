@@ -8,10 +8,9 @@ import glob
 import os
 import threading
 import time
-from typing import Any, Callable, Optional, Union
 
 
-from types_ import Configs, BatchResult, Logger, ProgressCallback, ProcessingResult
+from types_ import Any, Callable, Optional, Union, Configs, BatchResult, Logger, ProgressCallback, ProcessingResult
 
 
 class BatchProcessor:
@@ -28,7 +27,7 @@ class BatchProcessor:
         security_monitor: The security manager to use.
         max_batch_size (int): Maximum number of files to process in a single batch.
         continue_on_error (bool): Whether to continue processing if errors occur.
-        max_workers (int): Maximum number of worker threads for parallel processing.
+        max_threads (int): Maximum number of worker threads for parallel processing.
         cancel_requested (bool): Whether processing cancellation has been requested.
     """
     
@@ -52,10 +51,11 @@ class BatchProcessor:
         self.resource_monitor = self.resources['resource_monitor']
         self.security_monitor = self.resources['security_monitor']
         self._logger: Logger = self.resources['logger']
-        self._processing_result: 'ProcessingResult' = self.resources['processing_result']
+        self._processing_result: ProcessingResult = self.resources['processing_result']
+        self._batch_result: BatchResult = self.resources['batch_result']
 
         self.max_batch_size = self.configs.resources.max_batch_size
-        self.max_workers = self.configs.resources.max_workers
+        self.max_threads = self.configs.resources.max_threads
         self.continue_on_error = self.configs.processing.continue_on_error
 
         self.cancel_requested = False
@@ -101,7 +101,7 @@ class BatchProcessor:
                 raise ValueError(error_message)
         
         # Initialize batch result
-        batch_result = BatchResult(start_time=time.time())
+        batch_result = self._batch_result(start_time=time.time())
         
         # Start resource monitoring
         self.resource_monitor.start_monitoring()
@@ -117,8 +117,8 @@ class BatchProcessor:
                 chunk = resolved_paths[i:i + self.max_batch_size]
                 
                 # Check resource availability
-                self._logger.debug(f"self.resource_monitor.is_resource_available: {self.resource_monitor.is_resource_available}")
-                resources_available, reason = self.resource_monitor.is_resource_available
+                self._logger.debug(f"self.resource_monitor.are_resources_available: {self.resource_monitor.are_resources_available}")
+                resources_available, reason = self.resource_monitor.are_resources_available
                 if not resources_available:
                     self._logger.warning(f"Insufficient resources: {reason}")
                     
@@ -129,7 +129,7 @@ class BatchProcessor:
                         gc.collect(2)
                         
                         # Check if resources are now available
-                        resources_available, reason = self.resource_monitor.is_resource_available
+                        resources_available, reason = self.resource_monitor.are_resources_available
                         if resources_available:
                             self._logger.info("Resource constraints resolved after garbage collection")
                         else:
@@ -208,7 +208,7 @@ class BatchProcessor:
         options = options or {}
         
         # Determine processing mode (parallel or sequential)
-        use_parallel = self.max_workers > 1 and len(file_paths) > 1
+        use_parallel = self.max_threads > 1 and len(file_paths) > 1
         
         if use_parallel:
             # Process files in parallel
@@ -252,7 +252,7 @@ class BatchProcessor:
         progress_counter = 0
         
         # Use cf.ThreadPoolExecutor for parallel processing
-        with cf.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        with cf.ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             # Submit all tasks
             future_to_path = {}
             for path in file_paths:
@@ -396,7 +396,7 @@ class BatchProcessor:
                 # Handle security issues
                 error_message = f"Security validation failed: {', '.join(security_result.issues)}"
                 self._logger.warning(error_message, {'file_path': file_path})
-                return ProcessingResult(
+                return self._processing_result(
                     success=False,
                     file_path=file_path,
                     output_path=output_path,
@@ -424,7 +424,7 @@ class BatchProcessor:
             )
             
             # Create a failure result
-            return ProcessingResult(
+            return self._processing_result(
                 success=False,
                 file_path=file_path,
                 output_path=output_path,
@@ -570,6 +570,6 @@ class BatchProcessor:
         Args:
             count: Maximum number of worker threads.
         """
-        self.max_workers = max(1, count)
-        self._logger.info(f"Max workers set to {self.max_workers}")
+        self.max_threads = max(1, count)
+        self._logger.info(f"Max workers set to {self.max_threads}")
 

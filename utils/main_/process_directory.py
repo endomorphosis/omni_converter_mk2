@@ -41,7 +41,7 @@ def process_directory(
     # Configure batch processor
     batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
     batch_processor.set_continue_on_error(options.get('continue_on_error', True))
-    batch_processor.set_max_workers(options.get('max_workers', 4) if options.get('parallel', False) else 1)
+    batch_processor.set_max_workers(options.get('max_threads', 4) if options.get('parallel', False) else 1)
     
     # Create progress callback
     pbar = None

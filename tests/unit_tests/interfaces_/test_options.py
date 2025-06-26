@@ -66,7 +66,7 @@ class TestValidateMaxWorkers(unittest.TestCase):
     @patch('os.cpu_count')
     def test_validate_max_workers_valid(self, mock_cpu_count):
         """
-        GIVEN a max_workers value less than CPU cores
+        GIVEN a max_threads value less than CPU cores
         WHEN _validate_max_workers(4) is called
         THEN expect:
             - Returns the same value
@@ -79,7 +79,7 @@ class TestValidateMaxWorkers(unittest.TestCase):
     @patch('os.cpu_count')
     def test_validate_max_workers_exceeds_cpu_cores(self, mock_cpu_count):
         """
-        GIVEN a max_workers value greater than available CPU cores
+        GIVEN a max_threads value greater than available CPU cores
         WHEN _validate_max_workers(1000) is called
         THEN expect:
             - Raises ValidationError
@@ -471,7 +471,7 @@ class TestOptionsPrintOptions(unittest.TestCase):
         mock_print.assert_called()
         # Check that print was called with some expected content
         printed_content = ''.join([str(call.args[0]) for call in mock_print.call_args_list])
-        self.assertIn("defaults", printed_content.lower())
+        self.assertIn("default", printed_content.lower())
 
     @patch('builtins.print')
     def test_print_options_current(self, mock_print):
@@ -505,7 +505,7 @@ class TestOptionsPrintOptions(unittest.TestCase):
 
 
 class TestOptionsMakeArgparse(unittest.TestCase):
-    """Test the make_argparse method of Options."""
+    """Test the add_arguments_to_parser method of Options."""
 
     def setUp(self):
         """Create temporary file and parser for testing."""
@@ -525,14 +525,14 @@ class TestOptionsMakeArgparse(unittest.TestCase):
     def test_make_argparse_all_arguments(self):
         """
         GIVEN an Options instance and ArgumentParser
-        WHEN make_argparse(parser) is called
+        WHEN add_arguments_to_parser(parser) is called
         THEN expect:
             - All fields added as arguments
             - Correct types assigned
             - Help text included
         """
         options = Options(input=self.temp_file)
-        result_parser = options.make_argparse(self.parser)
+        result_parser = options.add_arguments_to_parser(self.parser)
         
         self.assertIsInstance(result_parser, argparse.ArgumentParser)
         
@@ -545,14 +545,14 @@ class TestOptionsMakeArgparse(unittest.TestCase):
     # def test_make_argparse_aliases(self): # NOTE Removed aliases for now.
     #     """
     #     GIVEN an Options instance and ArgumentParser
-    #     WHEN make_argparse(parser) is called
+    #     WHEN add_arguments_to_parser(parser) is called
     #     THEN expect:
     #         - Fields with aliases have short options
     #         - Short options use first letter of alias
     #         - Long options use full alias
     #     """
     #     options = Options(input=self.temp_file)
-    #     result_parser = options.make_argparse(self.parser)
+    #     result_parser = options.add_arguments_to_parser(self.parser)
         
     #     help_text = result_parser.format_help()
     #     # Check for aliases
@@ -564,13 +564,13 @@ class TestOptionsMakeArgparse(unittest.TestCase):
     def test_make_argparse_defaults(self):
         """
         GIVEN an Options instance and ArgumentParser
-        WHEN make_argparse(parser) is called
+        WHEN add_arguments_to_parser(parser) is called
         THEN expect:
             - All arguments have correct defaults
             - Defaults match field definitions
         """
         options = Options(input=self.temp_file)
-        result_parser = options.make_argparse(self.parser)
+        result_parser = options.add_arguments_to_parser(self.parser)
         
         # Parse with minimal required args to get defaults
         args = result_parser.parse_args(['--input', self.temp_file])
@@ -604,7 +604,7 @@ class TestOptionsMakeArgparse(unittest.TestCase):
         self.assertFalse(args.verbose)
         self.assertFalse(args.list_formats)
         self.assertFalse(args.version)
-        self.assertEqual(args.batch_size, 100)
+        self.assertEqual(args.max_batch_size, 100)
         self.assertEqual(args.retries, 0)
 
 

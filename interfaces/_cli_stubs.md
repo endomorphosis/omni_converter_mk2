@@ -32,7 +32,7 @@ class CLI:
                      include_metadata: bool = True, extract_metadata: bool = True,
                      normalize_text: bool = True, quality_threshold: float = 0.9,
                      continue_on_error: bool = True, max_batch_size: int = 100,
-                     parallel: bool = False, max_workers: int = 4,
+                     parallel: bool = False, max_threads: int = 4,
                      sanitize: bool = True, max_cpu: int = 80,
                      max_memory: int = 6144, show_progress: bool = False,
                      options: Optional[dict[str, Any]] = None) -> bool:
@@ -84,7 +84,7 @@ Returns:
 ## process_file
 
 ```python
-def process_file(self, input_path: str, output_path: Optional[str] = None, output_dir: Optional[str] = None, format: str = "txt", include_metadata: bool = True, extract_metadata: bool = True, normalize_text: bool = True, quality_threshold: float = 0.9, continue_on_error: bool = True, max_batch_size: int = 100, parallel: bool = False, max_workers: int = 4, sanitize: bool = True, max_cpu: int = 80, max_memory: int = 6144, show_progress: bool = False, options: Optional[dict[str, Any]] = None) -> bool:
+def process_file(self, input_path: str, output_path: Optional[str] = None, output_dir: Optional[str] = None, format: str = "txt", include_metadata: bool = True, extract_metadata: bool = True, normalize_text: bool = True, quality_threshold: float = 0.9, continue_on_error: bool = True, max_batch_size: int = 100, parallel: bool = False, max_threads: int = 4, sanitize: bool = True, max_cpu: int = 80, max_memory: int = 6144, show_progress: bool = False, options: Optional[dict[str, Any]] = None) -> bool:
     """
     Process a single file.
 
@@ -100,7 +100,7 @@ Args:
     continue_on_error: Whether to continue processing if an error occurs. Default is True.
     max_batch_size: The maximum number of files to process in a batch. Default is 100.
     parallel: Whether to enable parallel processing. Default is False.
-    max_workers: The maximum number of worker threads for parallel processing. Default is 4.
+    max_threads: The maximum number of worker threads for parallel processing. Default is 4.
     sanitize: Whether to sanitize the content during processing. Default is True.
     max_cpu: The maximum CPU usage percentage (0-100). Default is 80.
     max_memory: The maximum memory usage in MB. Default is 6144 (6GB).

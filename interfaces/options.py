@@ -39,7 +39,7 @@ def _validate_format(format: str) -> str:
         raise ValueError(f"Unsupported output format: {format}. Supported formats are: {supported_formats}")
     return format
 
-def _validate_max_workers(max_workers: PositiveInt) -> PositiveInt:
+def _validate_max_workers(max_threads: PositiveInt) -> PositiveInt:
     """Validate the maximum number of worker threads.
 
     Returns:
@@ -48,9 +48,9 @@ def _validate_max_workers(max_workers: PositiveInt) -> PositiveInt:
     Raises:
         ValueError: If the maximum number of workers is less than 1.
     """
-    if Hardware.get_num_cpu_cores() < max_workers:
+    if Hardware.get_num_cpu_cores() < max_threads:
         raise ValueError("Maximum number of workers must be less than or equal to the number of physical CPU cores.")
-    return max_workers
+    return max_threads
 
 def _validate_max_memory(max_memory: PositiveInt) -> PositiveInt:
     """Validate the maximum memory usage in GB.
@@ -163,9 +163,11 @@ class Options(BaseModel):
     show_progress:     bool = Field(default=False, description="Show a progress bar during batch operations")  # TODO Unused argument. Implement.
     verbose:           bool = Field(default=False, description="Log detailed information during processing")
     list_formats:      bool = Field(default=False, description="List supported input formats and exit")
+    list_normalizers:  bool = Field(default=False, description="List supported text normalizers and exit")
+    list_output_formats: bool = Field(default=False, description="List supported output formats and exit")
     version:           bool = Field(default=False, description="Show version information and exit")
-    batch_size:        PositiveInt = Field(default=100, description="Number of files to process in a single batch.")  # TODO Make this dynamic somehow?
-    retries:           PositiveInt = Field(default=0, description="Number of retries for failed conversions")
+    max_batch_size:        PositiveInt = Field(default=100, description="Maximum number of files to process in a single batch.")  # TODO Make this dynamic somehow?
+    retries:           PositiveInt = Field(default=0, description="Maximum number of retries for failed conversions")
 
 
     def to_dict(self) -> dict[str, Any]:
@@ -178,38 +180,42 @@ class Options(BaseModel):
         print(f"model: {model}")
         return model
 
-    def print_options(self, type_: str = "defaults") -> None:
+    def print_options(self, type_: str = "defaults", return_string: bool = False) -> Optional[str]:
         """Pretty-print the options in a human-readable format.
         
         Args:
-            type_: Type of options to print ('defaults' or 'current').
+            type_: Type of options to print ('defaults', 'current', or 'argparse').
             Defaults will show the default values for each option.
             Current will show the current values set in the instance.
 
         Raises:
             ValueError: If an invalid type is specified.
         """
+        string = ""
         match type_:
             case "current":
-                print("Current Options:")
+                title = "Current Options:\n"
                 for name, field in self.model_fields.items():
                     value = getattr(self, name)
                     description = field.description or "No description available"
-                    print(f"{name}: {value} (Default: {field.get_default()})")
+                    string = f"{name}: {value} (Default: {field.get_default()})\n"
             case "defaults":
-                print("Default Options:")
+                title = "Default Options:\n"
                 for name, field in self.model_fields.items():
                     description = field.description or "No description available"
-                    print(f"{name}: {description} (Default: {field.get_default()}))")
+                    string += f"{name}: {description} (Default: {field.get_default()})\n"
             case "argparse":
-                print("argparse Options:")
+                title = "Argparse Options:\n"
                 for name, field in self.model_fields.items():
                     description = field.description or "No description available"
-                    print(f"{name}: {description} (Default: {field.get_default()}))")
+                    string = f"{name}: {description} (Default: {field.get_default()})\n"
             case _:
                 raise ValueError("Invalid type specified. Use 'defaults', 'current', or 'argparse'.")
+        print(title, string)
+        if return_string:
+            return string
 
-    def make_argparse(self, parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    def add_arguments_to_parser(self, parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         """Assign the options to an argparse parser.
 
         Args:
@@ -221,55 +227,50 @@ class Options(BaseModel):
         for name, field in self.model_fields.items():
             # Get the actual default value
             if hasattr(field, 'default_factory') and field.default_factory is not None:
-                default_value = field.default_factory()
+                default = field.default_factory()
             elif field.default is not None:
-                default_value = field.default
+                default = field.default
             else:
-                default_value = None
-                
+                default = None
+
             # Handle different field types for argparse
             arg_kwargs = {
                 'help': field.description,
-                'default': default_value
+                'default': default
             }
-            
+
             # Handle type conversion based on annotation
-            if field.annotation == bool:
+            annotation =  field.annotation
+            if annotation == bool:
                 # For boolean fields, use store_true/store_false
-                if default_value is True:
-                    arg_kwargs['action'] = 'store_false'
-                else:
-                    arg_kwargs['action'] = 'store_true'
-                # Remove default for action arguments
-                del arg_kwargs['default']
-            elif hasattr(field.annotation, '__origin__') and field.annotation.__origin__ == list:
+                arg_kwargs['action'] = 'store_false' if default is True else 'store_true'
+                del arg_kwargs['default'] # Remove default for action arguments
+            elif hasattr(annotation, '__origin__') and annotation.__origin__ == list:
                 # Handle list types
                 arg_kwargs['nargs'] = '*'
                 arg_kwargs['type'] = str  # Convert to strings, validation happens in Pydantic
-            elif field.annotation == OutputFormat:
+            elif annotation == OutputFormat:
                 # Handle enum types
                 arg_kwargs['choices'] = [e.value for e in OutputFormat]
                 arg_kwargs['type'] = str
-            elif field.annotation in (DirectoryPath, FilePath):
+            elif annotation in (DirectoryPath, FilePath):
                 # Handle path types
                 arg_kwargs['type'] = str
-            elif field.annotation in (PositiveInt, int):
+            elif annotation in (PositiveInt, int):
                 arg_kwargs['type'] = int
-            elif field.annotation in (PositiveFloat, NonNegativeFloat, float):
+            elif annotation in (PositiveFloat, NonNegativeFloat, float):
                 arg_kwargs['type'] = float
             else:
                 # Default to string type
                 arg_kwargs['type'] = str
-                
+
             # For required fields (no default), make them positional or required
-            if name == 'input' and default_value is None:
+            if name == 'input' and default is None:
                 # Make input a positional argument or mark as required
                 arg_kwargs['required'] = True
-                
+
             # Add the argument
-            if field.alias:
-                parser.add_argument(f"--{field.alias}", f"-{field.alias[0]}", **arg_kwargs)
-            else:
-                parser.add_argument(f"--{name}", **arg_kwargs)
-                
+            flags = (f"--{field.alias}", f"-{field.alias[0]}",) if field.alias else (f"--{name}",)
+            parser.add_argument(*flags, **arg_kwargs)
+
         return parser

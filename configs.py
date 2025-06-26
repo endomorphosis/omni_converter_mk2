@@ -78,7 +78,7 @@ class _Resources(BaseModel):
     cpu_limit_percent: PositiveFloat = Field(default=80, description="CPU utilization limit percentage")
     timeout_seconds: PositiveFloat = Field(default=3600, description="Timeout in seconds")
     max_batch_size: PositiveInt = Field(default=100, description="Maximum number of files to process in one batch")
-    max_workers: PositiveInt = Field(default_factory = lambda x: _get_cpu_cores(1), description="Maximum number of worker threads.") # TODO Abstract this out
+    max_threads: PositiveInt = Field(default_factory = lambda x: _get_cpu_cores(1), description="Maximum number of worker threads.")
     monitoring_interval_seconds: PositiveFloat = Field(default=1.0, description="Monitoring interval in seconds")
     force_mocks: bool = Field(default=False, description="Force use of mocks, even if libraries are available")
 
@@ -111,9 +111,9 @@ class _Processing(BaseModel):
     normalize_text: bool = Field(default=True, description="Normalize extracted text")
     quality_threshold: PositiveFloat = Field(default=0.9, description="Minimum quality score for text extraction")
     # TODO Add custom validators for whisper and tesseract models
-    whisper_model: str = Field(default="base", description="Whisper model to use for audio processing")
-    whisper_language: str = Field(default="en", description="Language for Whisper model")
-    tesseract_language: str = Field(default="eng", description="Tesseract model for OCR")
+    transcription_model: str = Field(default="base", description="Model to use for audio transcription.")
+    transcription_whisper_language: str = Field(default="en", description="Language for audio transcription model.")
+    ocr_model: str = Field(default="eng", description="Model to use for OCR")
     llm_api_key: str = Field(default="", description="API key for external services, if required")
     suppress_errors: bool = Field(default=False, description="Suppress errors during processing")
 
@@ -127,6 +127,7 @@ class _Output(BaseModel):
 class Configs(BaseModel):
     """
     Configurations for the Omni-Converter.
+    Unlike options, these configurations are 
     
     Attributes:
         resources: Resource limits and settings.
@@ -135,7 +136,7 @@ class Configs(BaseModel):
             - cpu_limit_percent: CPU utilization limit percentage. Defaults to 80%.
             - timeout_seconds: Timeout in seconds. Defaults to 3600 seconds (1 hour).
             - max_batch_size: Maximum number of files to process in one batch. Defaults to 100.
-            - max_workers: Maximum number of worker threads.
+            - max_threads: Maximum number of worker threads.
             - monitoring_interval_seconds: Monitoring interval in seconds.
             - force_mocks: Force use of mocks, even if libraries are available.
         formats: Supported file formats.

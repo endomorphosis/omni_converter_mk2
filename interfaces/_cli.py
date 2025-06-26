@@ -14,7 +14,7 @@ import threading
 
 from types_ import (
     Any, Callable, Optional,
-    Configs,
+    BaseModel,
     BatchProcessor,
     BatchResult,
     Dependency,
@@ -53,14 +53,14 @@ class CLI:
         _security_monitor (SecurityMonitor): Monitors security issues during processing.
 
     Methods:
-        parse_arguments() -> argparse.Namespace:
+        make_parser_from_options_basemodel() -> argparse.Namespace:
             Parses command line arguments and returns them as a Namespace object.
         process_file(input_path: str, output_path: Optional[str] = None,
                      output_dir: Optional[str] = None, format: str = "txt",
                      include_metadata: bool = True, extract_metadata: bool = True,
                      normalize_text: bool = True, quality_threshold: float = 0.9,
                      continue_on_error: bool = True, max_batch_size: int = 100,
-                     parallel: bool = False, max_workers: int = 4,
+                     parallel: bool = False, max_threads: int = 4,
                      sanitize: bool = True, max_cpu: int = 80,
                      max_memory: int = 6144, show_progress: bool = False,
                      options: Optional[dict[str, Any]] = None) -> bool:
@@ -113,101 +113,24 @@ class CLI:
         self._security_monitor: SecurityMonitor = self.resources['security_monitor']
 
 
-    def parse_arguments(self) -> argparse.Namespace:
+    def make_parser_from_options_basemodel(self) -> argparse.Namespace:
         """Parse command line arguments.
 
         Returns:
-            The parsed arguments.
+            argparse.Namespace: The parsed arguments.
         """
-        default_options = self._options.print_options()
+        default_options = self._options.print_options(type_='argparse')
 
         description = f"""
         Parse command line arguments for the file conversion utility.
         This function sets up the argument parser with various options for controlling
         the input sources, output format, processing behavior, and resource utilization.
-        {self._options.print_options()}
-
-
-        Input options:
-            input: The input file or directory to process
-            -r/--recursive: Process directories recursively, including all subdirectories
-        Output options:
-            -o/--output: Destination file or directory for the converted content
-            -f/--format: Output format selection (txt, json, md)
-        Processing options:
-            --batch-size: Controls how many files are processed in a single batch
-            --no-normalize: Disables the text normalization step
-            --normalizers: Specifies which text normalizers to apply (comma-separated)
-            --sanitize: Enables/disables content sanitization during processing
-        Batch processing options:
-            --parallel: Enables multi-threaded processing for performance
-            --max-workers: Controls thread pool size for parallel processing
-            --continue-on-error: Determines whether to halt or continue on file errors
-            --skip-security: Bypasses security validation checks for performance
-        Resource management:
-            --max-cpu: Limits CPU utilization during processing (percentage)
-            --max-memory: Caps memory usage during processing (MB)
-        Information and utilities:
-            -l/--list-formats: Displays supported input formats and exits
-            --list-normalizers: Shows available text normalization algorithms
-            --list-output-formats: Displays possible output format options
-            -v/--verbose: Enables detailed logging during conversion
-            --version: Displays program version information
-            --no-progress: Disables the progress bar during batch operations
+        {default_options}
         """
         parser = argparse.ArgumentParser(description=description)
-
-        # Input options
-        parser.add_argument("input", nargs="?", help="Input file or directory")
-        parser.add_argument("-r", "--recursive", action="store_true", 
-                            help="Process directories recursively")
-
-        # Output options
-        parser.add_argument("-o", "--output", help="Output file or directory")
-        parser.add_argument("-f", "--format", choices=["txt", "json", "md"],
-                            default="txt", help="Output format (default: txt)")
-
-        # Processing options
-        parser.add_argument("--batch-size", type=int, default=100,
-                            help="Maximum number of files to process at once (default: 100)")
-        parser.add_argument("--no-normalize", action="store_true",
-                            help="Skip text normalization")
-        parser.add_argument("--normalizers", 
-                            help="Comma-separated list of normalizers to apply")
-        parser.add_argument("--sanitize", action="store_true", default=True,
-                            help="Sanitize content during processing (default: True)")
-
-        # Batch processing options
-        parser.add_argument("--parallel", action="store_true", default=False,
-                            help="Enable parallel processing for batch operations")
-        parser.add_argument("--max-workers", type=int, default=4,
-                            help="Maximum number of worker threads for parallel processing (default: 4)")
-        parser.add_argument("--continue-on-error", action="store_true", default=True,
-                            help="Continue processing batch if errors occur (default: True)")
-        parser.add_argument("--skip-security", action="store_true", default=False,
-                            help="Skip security validation for faster processing")
-
-        # Resource options
-        parser.add_argument("--max-cpu", type=float, default=None,
-                            help="Maximum CPU usage percentage (0-100)")
-        parser.add_argument("--max-memory", type=int, default=None,
-                            help="Maximum memory usage in MB")
-
-        # Information options
-        parser.add_argument("-l", "--list-formats", action="store_true",
-                            help="List supported formats and exit")
-        parser.add_argument("--list-normalizers", action="store_true",
-                            help="List available text normalizers and exit")
-        parser.add_argument("--list-output-formats", action="store_true",
-                            help="List available output formats and exit")
-        parser.add_argument("-v", "--verbose", action="store_true",
-                            help="Enable verbose output")
-        parser.add_argument("--version", action="store_true",
-                            help="Show version information and exit")
-        parser.add_argument("--no-progress", action="store_true", default=False,
-                            help="Disable progress bar for batch processing")
-
+        parser = self._options.add_arguments_to_parser(parser)
         return parser.parse_args()
+
 
     def process_file(self, 
                      input_path: str, 
@@ -221,18 +144,22 @@ class CLI:
                     continue_on_error: bool = True,
                     max_batch_size: int = 100,
                     parallel: bool = False,
-                    max_workers: int = 4,
+                    max_threads: int = 4,
                     sanitize: bool = True,
                     max_cpu: int = 80,
                     max_memory: int = 6144,  # 6GB in MB
                     show_progress: bool = False,  # TODO Unused argument. Implement.
-                    options: Optional[dict[str, Any]] = None
+                    options: Optional[BaseModel | dict[str, Any]] = None
                     ) -> bool:
         """
         Process a single file.
         
         Args:
             input_path: The path to the input file.
+            options: A pydantic model of optional processing options. If None, default options are used.
+            Currently supported options:
+
+
             output_path: The path to the output file. If None, print to stdout.
             output_dir: The directory to write output files to. If None, prints content to stdout.
             format: The output format (e.g., "txt", "json", "md"). Default is "txt".
@@ -243,7 +170,7 @@ class CLI:
             continue_on_error: Whether to continue processing if an error occurs. Default is True.
             max_batch_size: The maximum number of files to process in a batch. Default is 100.
             parallel: Whether to enable parallel processing. Default is False.
-            max_workers: The maximum number of worker threads for parallel processing. Default is 4.
+            max_threads: The maximum number of worker threads for parallel processing. Default is 4.
             sanitize: Whether to sanitize the content during processing. Default is True.
             max_cpu: The maximum CPU usage percentage (0-100). Default is 80.
             max_memory: The maximum memory usage in MB. Default is 6144 (6GB).
@@ -253,22 +180,21 @@ class CLI:
         Returns:
             True if successful, False otherwise.
         """
+        # Get defaults options if not provided
+        options = self._options if options is None else options
+
         try:
             # Get output format from args, config, or default to txt
             output_format = output_path.split('.')[-1] if output_path and '.' in output_path else None
             if not output_format:
                 output_format = self.configs.get_config_value('output.default_format', 'txt')
-            
-            # Set processing options
-            if options is None:
-                options = {}
-            
+
             # Set default options if not provided
             if 'format' not in options:
                 options['format'] = output_format
             if 'verbose' not in options:
                 options['verbose'] = self.configs.get_config_value('output.verbose', False)
-            
+
             # Process the file using the processing pipeline
             result = None
             try:
@@ -325,7 +251,7 @@ class CLI:
         self,
         dir_path: str, 
         output_dir: Optional[str] = None, 
-        options: Optional[dict[str, Any]] = None,
+        options: Optional[BaseModel | dict[str, Any]] = None,
         show_progress: bool = True,
         recursive: bool = False
     ) -> 'BatchResult':
@@ -345,7 +271,7 @@ class CLI:
         # Configure batch processor
         self._batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
         self._batch_processor.set_continue_on_error(options.get('continue_on_error', True))
-        self._batch_processor.set_max_workers(options.get('max_workers', 4) if options.get('parallel', False) else 1)
+        self._batch_processor.set_max_workers(options.get('max_threads', 4) if options.get('parallel', False) else 1)
         
         # Create progress callback
         pbar = None
@@ -389,11 +315,11 @@ class CLI:
             Exit code. 0 for success, 1 for failure.
         """
         # Parse arguments
-        args = self.parse_arguments()
+        _args: argparse.Namespace = self.make_parser_from_options_basemodel()
 
         # Validate arguments.
         try:
-            args: Options = Options(**vars(args))  # Convert Namespace to Options instance
+            args: Options = Options(**vars(_args))  # Convert Namespace to Options instance
         except Exception as e:
             print(f"Error parsing arguments: {e}", file=sys.stderr)
             return 1
@@ -408,17 +334,17 @@ class CLI:
             return 0
 
         if args.show_options:
-            self._options.print_options()
+            self._options.print_options(type_='defaults')
             return 0
 
         if args.list_formats:
             self._list_supported_formats()
             return 0
-        
+
         if args.list_normalizers:
             self._list_normalizers()
             return 0
-        
+
         if args.list_output_formats:
             self._list_output_formats()
             return 0
@@ -431,7 +357,7 @@ class CLI:
         # Set configuration based on command-line arguments
         if args.format:
             self.configs.set_config_value('output.default_format', args.format)
-        
+
         if args.verbose:
             self.configs.set_config_value('output.verbose', True)
 
@@ -448,9 +374,9 @@ class CLI:
             'sanitize': args.sanitize,
             'max_batch_size': args.max_batch_size,
             'continue_on_error': args.continue_on_error,
-            'max_workers': args.max_workers,
+            'max_threads': args.max_threads,
             'parallel': args.parallel,
-            'skip_security': args.skip_security,
+            'security_checks': args.security_checks,
         }
         
         # Handle normalizers

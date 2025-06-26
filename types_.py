@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, Mock
+from threading import Thread
 from types import ModuleType
 from typing import (
     Any, Callable, Generator,

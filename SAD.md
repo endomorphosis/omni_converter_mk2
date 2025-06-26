@@ -288,7 +288,7 @@ classDiagram
         +start_monitoring() void
         +stop_monitoring() void
         +current_usage dict
-        +is_resource_available bool
+        +are_resources_available bool
         +set_resource_limits(cpu, memory) void
     }
 

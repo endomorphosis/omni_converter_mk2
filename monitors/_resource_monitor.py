@@ -6,8 +6,8 @@ This module provides the ResourceMonitor class for monitoring and managing syste
 import time
 import threading
 
-from types_ import Any, Callable, Optional, Configs, Logger
-from utils.common.try_except_decorator import try_except
+
+from types_ import Any, Callable, Optional, Configs, Logger, Thread
 
 
 class ResourceMonitor:
@@ -59,7 +59,8 @@ class ResourceMonitor:
         self._logger:                        Logger   = self.resources['logger']
 
         self.active_monitoring: bool = False
-        self.monitoring_thread: threading.Thread = None
+        self.monitoring_thread: Thread = None
+        self._monitor_thread_timeout: float = 2.0  # Timeout for monitoring thread join
         self._current_usage: dict[str, Any] = {"cpu": 0.0, "memory": 0}
         self._LIMIT: float = 0.9
 
@@ -85,7 +86,7 @@ class ResourceMonitor:
         """Stop active resource monitoring."""
         self.active_monitoring = False
         if self.monitoring_thread and self.monitoring_thread.is_alive():
-            self.monitoring_thread.join(timeout=2.0)
+            self.monitoring_thread.join(timeout=self._monitor_thread_timeout)
             self._logger.info("Resource monitoring stopped")
 
     def _monitoring_loop(self) -> None:
@@ -94,10 +95,10 @@ class ResourceMonitor:
             try:
                 self.current_usage = self._get_resource_usage()
                 # Log if approaching limits
-                cpu_usage = self.current_usage.get("cpu", 0)
-                memory_usage = self.current_usage.get("memory", 0)
+                cpu_usage = self.current_usage["cpu"]
+                memory_usage = self.current_usage["rss_memory"]
 
-                if cpu_usage > (self.cpu_limit_percent * self._LIMIT): # TODO Verify why 0.9
+                if cpu_usage > (self.cpu_limit_percent * self._LIMIT):
                     self._logger.warning(f"High CPU usage: {cpu_usage:.1f}%")
 
                 if memory_usage > (self.memory_limit * self._LIMIT):
@@ -126,8 +127,7 @@ class ResourceMonitor:
 
     @property
     def current_usage(self) -> dict[str, float]:
-        """
-        Get current resource usage.
+        """Get current resource usage.
 
         Returns:
             A dictionary with current resource usage.
@@ -138,28 +138,50 @@ class ResourceMonitor:
 
         return self._current_usage
 
-    @try_except(raise_=False,msg='Error getting detailed memory information')
     def _log_detailed_memory_information_for_debug_purposes(self):
-        # Log detailed memory usage
-        self._logger.debug(
-            f"Memory usage details"
-            f"RSS={self._get_memory_rss_usage_in_mb():.1f}MB, "
-            f"VMS={self._get_memory_vms_usage_in_mb():.1f}MB, "
-            f"Shared={self._get_shared_memory_usage_in_mb():.1f}MB, "
-            f"System={self._get_memory_percent():.1f}%, "
-            f"Limit={self.memory_limit}MB"
-        )
-
-        usage = self.current_usage
-        # Check for memory leak indicators
-        if usage.get("memory", 0) > (self.memory_limit * 0.8):
-            self._logger.warning(
-                f"Memory usage approaching limit: {usage.get('memory', 0):.1f}MB/{self.memory_limit}MB "
-                f"({100 * usage.get('memory', 0)/self.memory_limit:.1f}%)"
+        """Log detailed memory usage information for debugging purposes.
+        
+        This method logs comprehensive memory statistics including RSS (Resident Set Size),
+        VMS (Virtual Memory Size), shared memory usage, system memory percentage, and
+        the configured memory limit. It also checks for potential memory leak indicators
+        by warning when memory usage approaches 80% of the configured limit.
+        
+        The method handles exceptions gracefully and logs any errors that occur during
+        the memory information gathering process.
+        
+        Logs:
+            DEBUG: Detailed memory usage statistics with RSS, VMS, shared memory,
+                   system percentage, and memory limit information
+            WARNING: When memory usage exceeds 80% of the configured limit
+            ERROR: If any exception occurs during memory information logging
+        
+        Raises:
+            None: All exceptions are caught and logged as errors
+        """
+        try:
+            # Log detailed memory usage
+            self._logger.debug(
+                f"Memory usage details"
+                f"RSS={self._get_memory_rss_usage_in_mb():.1f}MB, "
+                f"VMS={self._get_memory_vms_usage_in_mb():.1f}MB, "
+                f"Shared={self._get_shared_memory_usage_in_mb():.1f}MB, "
+                f"System={self._get_memory_percent():.1f}%, "
+                f"Limit={self.memory_limit}MB"
             )
 
+            usage = self.current_usage
+            # Check for system memory leak indicators
+            if usage["rss_memory"] > (self.memory_limit * 0.8):
+                self._logger.warning(
+                    f"Memory usage approaching limit: {usage['memory']:.1f}MB/{self.memory_limit}MB "
+                    f"({100 * usage['memory']/self.memory_limit:.1f}%)"
+                )
+            # Check for VRAM memory leak indicators
+        except Exception as e:
+            self._logger.error(f"Error logging detailed memory information: {e}")
+
     @property # NOTE We purposefully don't cache this property, as we always want the latest usage
-    def is_resource_available(self) -> tuple[bool, Optional[str]]:
+    def are_resources_available(self) -> tuple[bool, Optional[str]]:
         """
         Check if resources are available for processing.
 
@@ -173,12 +195,14 @@ class ResourceMonitor:
         self._log_detailed_memory_information_for_debug_purposes()
 
         # Check CPU usage
-        if usage.get("cpu", 0) > self.cpu_limit_percent:
-            return False, f"CPU usage too high: {usage.get('cpu', 0):.1f}% > {self.cpu_limit_percent:.1f}%"
+        cpu =  usage["cpu"]
+        if cpu > self.cpu_limit_percent:
+            return False, f"CPU usage too high: {cpu:.1f}% > {self.cpu_limit_percent:.1f}%"
 
         # Check memory usage
-        if usage.get("memory", 0) > self.memory_limit:
-            return False, f"Memory usage too high: {usage.get('memory', 0):.1f}MB > {self.memory_limit}MB"
+        memory = usage["memory"]
+        if memory > self.memory_limit:
+            return False, f"Memory usage too high: {memory:.1f}MB > {self.memory_limit}MB"
         
         return True, None
 
@@ -212,19 +236,19 @@ class ResourceMonitor:
 
         return {
             "current": {
-                "cpu_percent": usage.get("cpu", 0),
-                "memory_mb": usage.get("memory", 0),
-                "memory_percent": usage.get("memory_percent", 0),
-                "disk_usage_percent": usage.get("disk_usage", 0),
-                "open_files": usage.get("open_files", 0)
+                "cpu_percent": usage["cpu"],
+                "memory_mb": usage["memory"],
+                "memory_percent": usage["memory_percent"],
+                "disk_usage_percent": usage["disk_usage"],
+                "open_files": usage["open_files"]
             },
             "limits": {
                 "cpu_percent": self.cpu_limit_percent,
                 "memory_mb": self.memory_limit
             },
             "utilization": {
-                "cpu_percent": (usage.get("cpu", 0) / self.cpu_limit_percent) * 100 if self.cpu_limit_percent > 0 else 0,
-                "memory_percent": (usage.get("memory", 0) / self.memory_limit) * 100 if self.memory_limit > 0 else 0
+                "cpu_percent": (usage["cpu"] / self.cpu_limit_percent) * 100 if self.cpu_limit_percent > 0 else 0,
+                "memory_percent": (usage["memory"] / self.memory_limit) * 100 if self.memory_limit > 0 else 0
             },
             "monitoring_active": self.active_monitoring
         }
