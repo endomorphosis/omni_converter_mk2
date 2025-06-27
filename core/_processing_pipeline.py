@@ -22,6 +22,7 @@ from types_ import (
     TextNormalizer,
     OutputFormatter,
     FileValidator,
+    ContentSanitizer,
 )
 
 
@@ -53,7 +54,7 @@ class ProcessingPipeline:
         self,
         resources: dict[str, Callable] = None,
         configs: Configs = None,
-    ):
+    ) -> None:
         """
         Initialize a processing pipeline.
         
@@ -69,6 +70,7 @@ class ProcessingPipeline:
         self._content_extractor: 'ContentExtractor'   = self.resources['content_extractor']
         self._text_normalizer:   'TextNormalizer'     = self.resources['text_normalizer']
         self._output_formatter:  'OutputFormatter'    = self.resources['output_formatter']
+        self._content_sanitizer: 'ContentSanitizer'   = self.resources['content_sanitizer']
 
         self._processing_result: ProcessingResult = self.resources['processing_result']
         self._logger:            Logger           = self.resources['logger']
@@ -131,74 +133,67 @@ class ProcessingPipeline:
         self._status.current_file = file_path
         self._status.total_files += 1
         self._notify_listeners("processing_started", {'file_path': file_path})
-        errors = None
+        errors: list[str] = []
 
         try:
             # Detect format
             self._logger.debug(f"Detecting format for '{file_path}'")
             format_name, category = self._format_detector.detect_format(file_path)
             if not format_name:
-                errors =  ValueError(f"Unable to detect format for '{file_path}'")
+                errors.append(f"Unable to detect format for '{file_path}'")
+            if category is None:
+                errors.append(f"Format '{format_name}' is not in any supported category for file: {file_path}")
+
 
             self._logger.info(f"Detected format: {format_name} ({category})", {'file_path': file_path})
 
             # Validate file
+            # NOTE This is NOT a security check. It's meant to ensure the file doesn't immediately crash the pipeline
+            # Or cause the program to halt.
             self._logger.debug(f"Validating file '{file_path}'")
             validation_result = self._file_validator.validate_file(file_path, format_name)
             if not validation_result.is_valid:
-                error_message = f"Validation failed: {', '.join(validation_result.errors)}"
-                self._logger.error(error_message, {'file_path': file_path})
-                
-                # Create failure result
-                if isinstance(errors, str):
-                    errors = [errors]
-
-                result = self._processing_result(
-                    success=False,
+                errors.extend(validation_result.errors)
+                return self._make_failure_result(
                     file_path=file_path,
                     output_path=output_path,
-                    format=format_name,
+                    format_name=format_name,
                     errors=errors
                 )
-                self._status.failed_files += 1
 
-                self._notify_listeners("processing_failed", {
-                    'file_path': file_path,
-                    'errors': validation_result.errors
-                })
-                
-                return result
-            
             # Extract content
             self._logger.debug(f"File is valid. Extracting content from '{file_path}' with format '{format_name}'")
             content = self._content_extractor.extract_content(file_path, format_name, options)
-            
-            # Normalize text
+
+            # Normalize text in content
             self._logger.debug(f"Normalizing text from '{file_path}'")
             normalized_content = self._text_normalizer.normalize_text(content, normalizers)
-            
+
+            # Sanitize content (after it's been converted to text).
+            sanitized_content = self._content_sanitizer.sanitize(normalized_content.content)
+
             # Format output
             self._logger.debug(f"Formatting output for '{file_path}'")
             try:
                 formatted_output = self._output_formatter.format_output(
-                    normalized_content.content,
+                    sanitized_content.content,
                     output_format,
                     options,
                     output_path
                 )
-            except ValueError as e:
+            except Exception as e:
+                # TODO this should default to exception when in debug mode.
                 self._logger.warning(f"Format error: {e}, falling back to txt format")
-                # Fall back to txt format if the specified format fails
                 formatted_output = self._output_formatter.format_output(
                     normalized_content.content,
                     'txt',
                     options,
                     output_path
                 )
-            
+
             # Calculate content hash for verification # TODO Change to Ipfs CID
             content_hash = self._hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
-            
+
             # Write output to file if output_path is provided
             if output_path:
                 self._logger.debug(f"Writing output to {output_path}")
@@ -221,7 +216,6 @@ class ProcessingPipeline:
                 },
                 content_hash=content_hash
             )
-            
             self._status.successful_files += 1
             self._notify_listeners("processing_succeeded", {
                 'file_path': file_path,
@@ -234,28 +228,41 @@ class ProcessingPipeline:
             
         except Exception as e:
             self._logger.exception(f"Error processing '{file_path}': {e}")
-            
-            # Create failure result
-            result = self._processing_result(
-                success=False,
+            errors.append(str(e))
+            return self._make_failure_result(
                 file_path=file_path,
                 output_path=output_path,
-                format=format_name if 'format_name' in locals() else None,
-                errors=[str(e)]
+                format_name=format_name if 'format_name' in locals() else None,
+                errors=errors
             )
-            
-            self._status.failed_files += 1
-            self._notify_listeners("processing_failed", {
-                'file_path': file_path,
-                'error': str(e)
-            })
-            
-            return result
-        
         finally:
             # Reset status
             self._status.reset()
             self._notify_listeners("processing_completed", {'file_path': file_path})
+
+
+    def _make_failure_result(self, 
+                               file_path: str, 
+                               output_path: str, 
+                               format_name: str, 
+                               errors: list[Any]
+                               ) -> ProcessingResult:
+            str_errors = [str(e) for e in errors if isinstance(e, Exception)]
+
+            self._logger.error(f"Validation failed: {','.join(str_errors)}", {'file_path': file_path})
+            result = self._processing_result(
+                success=False,
+                file_path=file_path,
+                output_path=output_path,
+                format=format_name,
+                errors=errors
+            )
+            self._status.failed_files += 1
+            self._notify_listeners("processing_failed", {
+                'file_path': file_path,
+                'error': ','.join(str_errors)
+            })
+            return result
 
     @property
     def status(self) -> dict[str, Any]:

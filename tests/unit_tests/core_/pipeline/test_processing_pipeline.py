@@ -29,11 +29,13 @@ from core.file_validator import make_file_validator
 from core.text_normalizer import make_text_normalizer
 from core.output_formatter import make_output_formatter
 from core.content_extractor import make_content_extractor
+from core.content_sanitizer import make_content_sanitizer
 from core.file_validator._file_validator import FileValidator
 from file_format_detector._file_format_detector import FileFormatDetector
 from core.content_extractor._content_extractor import ContentExtractor
 from core.text_normalizer._text_normalizer import TextNormalizer
 from core.output_formatter._output_formatter import OutputFormatter
+from core.content_sanitizer import ContentSanitizer
 
 class _ProcessingPipelineResources(TypedDict):
     file_format_detector: Callable
@@ -50,6 +52,7 @@ real_resources: _ProcessingPipelineResources = {
     "file_format_detector": make_file_format_detector(),
     "file_validator": make_file_validator(),
     "content_extractor": make_content_extractor(),
+    "content_sanitizer": make_content_sanitizer(),
     "text_normalizer": make_text_normalizer(),
     "output_formatter": make_output_formatter(),
     "processing_result": ProcessingResult,
@@ -64,6 +67,7 @@ def make_mock_resources():
         'file_format_detector': MagicMock(spec=FileFormatDetector),
         'file_validator': MagicMock(spec=FileValidator),
         'content_extractor': MagicMock(spec=ContentExtractor),
+        'content_sanitizer': MagicMock(spec=ContentSanitizer),
         'text_normalizer': MagicMock(spec=TextNormalizer),
         'output_formatter': MagicMock(spec=OutputFormatter),
         'processing_result': MagicMock(spec=ProcessingResult),
@@ -151,6 +155,7 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
             'file_format_detector': MagicMock(),
             'file_validator': MagicMock(),
             'content_extractor': MagicMock(),
+            'content_sanitizer': MagicMock(),
             'text_normalizer': MagicMock(),
             'output_formatter': MagicMock(),
             'processing_result': MagicMock(),
@@ -187,9 +192,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - content_hash is generated
         - timestamp is set to processing completion time
         """
-
-
-        
         # Mock processing result
         mock_result = ProcessingResult(
             success=True,
@@ -237,9 +239,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Output is formatted as plain text
         - ProcessingResult.output_path has .txt extension
         """
-
-
-        
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
@@ -267,9 +266,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Output is formatted as markdown
         - ProcessingResult.output_path has .md extension
         """
-
-
-        
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
@@ -297,9 +293,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Output is written to specified file path
         - ProcessingResult.output_path matches provided path
         """
-
-
-        
         custom_output_path = '/path/to/output.txt'
         mock_result = ProcessingResult(
             success=True,
@@ -329,9 +322,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Output filename based on input filename
         - Extension replaced with output_format extension
         """
-
-
-        
         output_dir = '/path/to/dir/'
         expected_output = '/path/to/dir/test_file.txt'
         mock_result = ProcessingResult(
@@ -363,9 +353,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Normalizers applied in order
         - ProcessingResult reflects normalized content
         """
-
-
-        
         normalizers = ['normalizer1', 'normalizer2']
         mock_result = ProcessingResult(
             success=True,
@@ -386,7 +373,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         # Verify normalizers were passed and applied
         pipeline.process_file.assert_called_with(self.test_file_path, normalizers=normalizers)
         self.assertIn('normalizers_applied', result.metadata)
-    
 
     def test_process_file_without_normalizers(self):
         """
@@ -396,9 +382,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Extracted text returned as-is
         - No normalization applied
         """
-
-
-        
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
@@ -427,8 +410,6 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - FileNotFoundError raised
         - Error message indicates file not found
         """
-
-        
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(side_effect=FileNotFoundError("File not found"))
         
@@ -957,6 +938,7 @@ class TestProcessingPipelineIntegration(unittest.TestCase):
             'file_format_detector': MagicMock(),
             'file_validator': MagicMock(),
             'content_extractor': MagicMock(),
+            'content_sanitizer': MagicMock(),
             'text_normalizer': MagicMock(),
             'output_formatter': MagicMock(),
             'processing_result': MagicMock(),
@@ -982,9 +964,6 @@ class TestProcessingPipelineIntegration(unittest.TestCase):
         - Output formatted as specified
         - ProcessingResult contains all expected data
         """
-
-
-        
         # Mock component responses
         self.mock_resources['file_format_detector'].detect.return_value = 'txt'
         self.mock_resources['file_validator'].validate.return_value = True

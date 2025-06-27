@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, MagicMock, patch, PropertyMock
 import threading
 import time
 import os
@@ -7,16 +7,19 @@ from concurrent.futures import Future, TimeoutError
 
 from batch_processor._batch_processor import BatchProcessor
 
+import concurrent.futures
 import datetime
 import glob
 import os
 import time
 from typing import Any, Callable, Optional, Union
 import tempfile
+from pathlib import Path
+import gc
 
 
 from logger import logger
-from configs import configs
+from configs import configs, Configs, _Resources, _Formats, _Output, _Processing, _Security, _PathsBaseModel
 from core import make_processing_pipeline
 from monitors import make_error_monitor, make_resource_monitor, make_security_monitor
 from monitors._error_monitor import ErrorMonitor
@@ -27,10 +30,63 @@ from core._processing_result import ProcessingResult
 
 
 from batch_processor._batch_result import BatchResult
+from batch_processor._get_output_path import get_output_path
+from batch_processor._resolve_paths import resolve_paths
 
 
 from types_ import Logger, TypedDict
 
+
+import copy
+
+def make_mock_resources() -> dict[str, Any]:
+    resources = {
+        'processing_pipeline': MagicMock(spec=ProcessingPipeline),
+        'error_monitor': MagicMock(spec=ErrorMonitor),
+        'resource_monitor': MagicMock(spec=ResourceMonitor),
+        'security_monitor': MagicMock(spec=SecurityMonitor),
+        'logger': MagicMock(spec=Logger),
+        'processing_result': MagicMock(spec=ProcessingResult),
+        'batch_result': MagicMock(spec=BatchResult),
+        "get_output_path": MagicMock(spec=get_output_path),
+        "resolve_paths": MagicMock(spec=resolve_paths),
+        "gc_collect": MagicMock(spec=gc.collect),
+        'concurrent_futures_ThreadPoolExecutor': MagicMock(spec=concurrent.futures.ThreadPoolExecutor),
+        'concurrent_futures_ProcessPoolExecutor': MagicMock(spec=concurrent.futures.ProcessPoolExecutor),
+        'concurrent_futures_as_completed': MagicMock(spec=concurrent.futures.as_completed),
+        'time_time': MagicMock(spec=time.time),
+        'cf': MagicMock(spec=concurrent.futures),
+        'glob_glob': MagicMock(spec=glob.glob),
+        'os': MagicMock(spec=os),
+        'os_path_exists': MagicMock(spec=os.path.exists),
+        'os_makedirs': MagicMock(spec=os.makedirs),
+        'os_path_join': MagicMock(spec=os.path.join),
+        'os_path_isfile': MagicMock(spec=os.path.isfile),
+        'os_path_isdir': MagicMock(spec=os.path.isdir),
+        'os_path_abspath': MagicMock(spec=os.path.abspath),
+        'os_path_realpath': MagicMock(spec=os.path.realpath),
+        'os_path_split': MagicMock(spec=os.path.split),
+        'os_walk': MagicMock(spec=os.walk),
+        'os_path_islink': MagicMock(spec=os.path.islink),
+        'os_path_getsize': MagicMock(spec=os.path.getsize),
+        'os_path_basename': MagicMock(spec=os.path.basename),
+        'os_path_dirname': MagicMock(spec=os.path.dirname),
+        'threading_RLock': MagicMock(spec=threading.RLock),
+    }
+    return resources
+
+def make_mock_configs() -> Any:
+    mock_configs = MagicMock(spec=Configs)
+    mock_configs.resources = MagicMock(spec=_Resources)
+    mock_configs.processing = MagicMock(spec=_Processing)
+    mock_configs.security = MagicMock(spec=_Security)
+    mock_configs.paths = MagicMock(spec=_PathsBaseModel)
+    mock_configs.formats = MagicMock(spec=_Formats)
+    mock_configs.output = MagicMock(spec=_Output)
+    mock_configs.resources.max_batch_size = 100
+    mock_configs.resources.max_threads = 4
+    mock_configs.processing.continue_on_error = True
+    return mock_configs
 
 
 class TestBatchProcessorInitialization(unittest.TestCase):
@@ -52,16 +108,6 @@ class TestBatchProcessorInitialization(unittest.TestCase):
         mock_configs.resources.max_batch_size = 100
         mock_configs.resources.max_threads = 4
         mock_configs.processing.continue_on_error = True
-        
-        resources = {
-            'processing_pipeline': MagicMock(spec=ProcessingPipeline),
-            'error_monitor': MagicMock(spec=ErrorMonitor),
-            'resource_monitor': MagicMock(spec=ResourceMonitor),
-            'security_monitor': MagicMock(spec=SecurityMonitor),
-            'logger': MagicMock(spec=Logger),
-            'processing_result': MagicMock(spec=ProcessingResult),
-            'batch_result': MagicMock(spec=BatchResult),
-        }
 
         mock_pipeline = MagicMock(spec=ProcessingPipeline)
         mock_error_monitor = MagicMock(spec=ErrorMonitor)
@@ -70,7 +116,32 @@ class TestBatchProcessorInitialization(unittest.TestCase):
         mock_logger = MagicMock(spec=Logger)
         mock_processing_result = MagicMock(spec=ProcessingResult)
         mock_batch_result = MagicMock(spec=BatchResult)
-        
+        mock_get_output_path = MagicMock(spec=get_output_path)
+        mock_resolve_paths = MagicMock(spec=resolve_paths)
+
+        mock_gc_collect = MagicMock(spec=gc.collect)
+        mock_concurrent_futures_ThreadPoolExecutor = MagicMock(spec=concurrent.futures.ThreadPoolExecutor)
+        mock_concurrent_futures_ProcessPoolExecutor = MagicMock(spec=concurrent.futures.ProcessPoolExecutor)
+        mock_concurrent_futures_as_completed = MagicMock(spec=concurrent.futures.as_completed)
+        mock_time_time = MagicMock(spec=time.time)
+        mock_cf = MagicMock(spec=concurrent.futures)
+        mock_glob_glob = MagicMock(spec=glob.glob)
+        mock_os = MagicMock(spec=os)
+        mock_os_path_exists = MagicMock(spec=os.path.exists)
+        mock_os_makedirs = MagicMock(spec=os.makedirs)
+        mock_os_path_join = MagicMock(spec=os.path.join)
+        mock_os_path_isfile = MagicMock(spec=os.path.isfile)
+        mock_os_path_isdir = MagicMock(spec=os.path.isdir)
+        mock_os_path_abspath = MagicMock(spec=os.path.abspath)
+        mock_os_path_realpath = MagicMock(spec=os.path.realpath)
+        mock_os_path_split = MagicMock(spec=os.path.split)
+        mock_os_walk = MagicMock(spec=os.walk)
+        mock_os_path_islink = MagicMock(spec=os.path.islink)
+        mock_os_path_getsize = MagicMock(spec=os.path.getsize)
+        mock_os_path_basename = MagicMock(spec=os.path.basename)
+        mock_os_path_dirname = MagicMock(spec=os.path.dirname)
+        mock_threading_RLock = MagicMock(spec=threading.RLock)
+
         resources = {
             'processing_pipeline': mock_pipeline,
             'error_monitor': mock_error_monitor,
@@ -79,25 +150,51 @@ class TestBatchProcessorInitialization(unittest.TestCase):
             'logger': mock_logger,
             'processing_result': mock_processing_result,
             'batch_result': mock_batch_result,
+            'get_output_path': mock_get_output_path,
+            'resolve_paths': mock_resolve_paths,
+            'gc_collect': mock_gc_collect,
+            'concurrent_futures_ThreadPoolExecutor': mock_concurrent_futures_ThreadPoolExecutor,
+            'concurrent_futures_ProcessPoolExecutor': mock_concurrent_futures_ProcessPoolExecutor,
+            'concurrent_futures_as_completed': mock_concurrent_futures_as_completed,
+            'time_time': mock_time_time,
+            'cf': mock_cf,
+            'glob_glob': mock_glob_glob,
+            'os': mock_os,
+            'os_path_exists': mock_os_path_exists,
+            'os_makedirs': mock_os_makedirs,
+            'os_path_join': mock_os_path_join,
+            'os_path_isfile': mock_os_path_isfile,
+            'os_path_isdir': mock_os_path_isdir,
+            'os_path_abspath': mock_os_path_abspath,
+            'os_path_realpath': mock_os_path_realpath,
+            'os_path_split': mock_os_path_split,
+            'os_walk': mock_os_walk,
+            'os_path_islink': mock_os_path_islink,
+            'os_path_getsize': mock_os_path_getsize,
+            'os_path_basename': mock_os_path_basename,
+            'os_path_dirname': mock_os_path_dirname,
+            'threading_RLock': mock_threading_RLock,
         }
-        
+
         # Act
         processor = BatchProcessor(configs=mock_configs, resources=resources)
-        
+
         # Assert
         self.assertEqual(processor.configs, mock_configs)
         self.assertEqual(processor.resources, resources)
-        self.assertEqual(processor.pipeline, mock_pipeline)
-        self.assertEqual(processor.error_monitor, mock_error_monitor)
-        self.assertEqual(processor.resource_monitor, mock_resource_monitor)
-        self.assertEqual(processor.security_monitor, mock_security_monitor)
+        self.assertEqual(processor._pipeline, mock_pipeline)
+        self.assertEqual(processor._error_monitor, mock_error_monitor)
+        self.assertEqual(processor._resource_monitor, mock_resource_monitor)
+        self.assertEqual(processor._security_monitor, mock_security_monitor)
         self.assertEqual(processor._logger, mock_logger)
         self.assertEqual(processor._processing_result, mock_processing_result)
+        self.assertEqual(processor._get_output_path, mock_get_output_path)
         self.assertEqual(processor.max_batch_size, 100)
         self.assertEqual(processor.max_threads, 4)
         self.assertTrue(processor.continue_on_error)
         self.assertFalse(processor.cancel_requested)
-        self.assertIsInstance(processor._lock, type(threading.RLock()))
+        self.assertTrue(hasattr(processor, '_lock')) # We can't type-check an Rlock directly, but we can check if it has RLock attributes
+
 
     def test_init_with_none_configs(self):
         """
@@ -172,7 +269,7 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         self.mock_configs.resources.max_batch_size = 10
         self.mock_configs.resources.max_threads = 2
         self.mock_configs.processing.continue_on_error = True
-        
+
         self.resources = {
             'processing_pipeline': MagicMock(spec=ProcessingPipeline),
             'error_monitor': MagicMock(spec=ErrorMonitor),
@@ -184,6 +281,12 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         }
         
         self.processor = BatchProcessor(configs=self.mock_configs, resources=self.resources)
+
+    def _setup_resource_monitor_property(self, available=True, reason="Resources available"):
+        """Helper to setup resource monitor property mock."""
+        type(self.resources['resource_monitor']).are_resources_available = PropertyMock(
+            return_value=(available, reason)
+        )
 
     def test_process_batch_with_file_list(self):
         """
@@ -198,22 +301,24 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         # Arrange
         file_paths = ['/path/file1.txt', '/path/file2.txt', '/path/file3.txt']
         progress_callback = MagicMock()
+
+        self._setup_resource_monitor_property(available=True)
         
-        with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
-            with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
-                mock_results = [MagicMock(), MagicMock(), MagicMock()]
-                mock_process_chunk.return_value = mock_results
-                
-                # Act
-                result = self.processor.process_batch(
-                    file_paths=file_paths,
-                    progress_callback=progress_callback
-                )
-                
-                # Assert
-                self.assertIsNotNone(result)
-                mock_process_chunk.assert_called_once()
-                self.processor._resolve_paths.assert_called_once_with(file_paths)
+        with patch.object(self.processor, '_resolve_paths', return_value=file_paths), \
+            patch.object(self.processor, '_process_chunk') as mock_process_chunk:
+            mock_results = [MagicMock(), MagicMock(), MagicMock()]
+            mock_process_chunk.return_value = mock_results
+            
+            # Act
+            result = self.processor.process_batch(
+                file_paths=file_paths,
+                progress_callback=progress_callback
+            )
+            
+            # Assert
+            self.assertIsNotNone(result)
+            mock_process_chunk.assert_called_once()
+            self.processor._resolve_paths.assert_called_once_with(file_paths)
 
     def test_process_batch_with_directory_path(self):
         """
@@ -228,6 +333,8 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         directory_path = '/path/to/directory'
         discovered_files = ['/path/to/directory/file1.txt', '/path/to/directory/file2.txt']
         
+        self._setup_resource_monitor_property(available=True)
+
         with patch.object(self.processor, '_resolve_paths', return_value=discovered_files):
             with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
                 mock_results = [MagicMock(), MagicMock()]
@@ -253,6 +360,8 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         # Arrange
         file_paths = []
         progress_callback = MagicMock()
+
+        self._setup_resource_monitor_property(available=True)
         
         with patch.object(self.processor, '_resolve_paths', return_value=[]):
             # Act
@@ -276,7 +385,8 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         """
         # Arrange
         invalid_path = '/nonexistent/directory'
-        
+        self._setup_resource_monitor_property(available=True)
+
         with patch.object(self.processor, '_resolve_paths', side_effect=FileNotFoundError("Directory not found")):
             # Act
             result = self.processor.process_batch(file_paths=invalid_path)
@@ -297,6 +407,7 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         # Arrange
         file_paths = ['/path/file1.txt']
         output_dir = '/output/directory'
+        self._setup_resource_monitor_property(available=True)
         
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
@@ -324,7 +435,8 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
             - No file I/O operations performed
         """
         # Arrange
-        file_paths = ['/path/file1.txt']
+        file_paths = ['/path/file1.pdf']
+        self._setup_resource_monitor_property(available=True)
         
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
@@ -352,9 +464,10 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
             - Results reflect applied options
         """
         # Arrange
-        file_paths = ['/path/file1.txt']
-        custom_options = {'format': 'pdf', 'quality': 'high'}
-        
+        file_paths = ['/path/file1.pdf']
+        custom_options = {'format': 'txt', 'quality': 'high'}
+        self._setup_resource_monitor_property(available=True)
+
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
                 mock_results = [MagicMock()]
@@ -383,7 +496,8 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         # Arrange
         file_paths = ['/path/file1.txt', '/path/file2.txt']
         progress_callback = MagicMock()
-        
+        self._setup_resource_monitor_property(available=True)
+
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
                 mock_results = [MagicMock(), MagicMock()]
@@ -412,7 +526,9 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         # Arrange
         self.processor.max_batch_size = 2
         file_paths = ['/path/file1.txt', '/path/file2.txt', '/path/file3.txt', '/path/file4.txt', '/path/file5.txt']
-        
+
+        self._setup_resource_monitor_property(available=True)
+
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_process_chunk') as mock_process_chunk:
                 mock_process_chunk.return_value = [MagicMock(), MagicMock()]
@@ -436,7 +552,8 @@ class TestBatchProcessorProcessBatch(unittest.TestCase):
         """
         # Arrange
         file_paths = ['/path/file1.txt', '/path/file2.txt', '/path/file3.txt']
-        
+        self._setup_resource_monitor_property(available=True)
+
         def side_effect(*args, **kwargs):
             self.processor.cancel_requested = True
             return [MagicMock()]
@@ -462,17 +579,12 @@ class TestBatchProcessorChunkProcessing(unittest.TestCase):
         self.mock_configs.resources.max_batch_size = 10
         self.mock_configs.resources.max_threads = 2
         self.mock_configs.processing.continue_on_error = True
-        
+
+        self.mock_configs = copy.deepcopy(make_mock_configs())
         self.resources = {
-            'processing_pipeline': MagicMock(spec=ProcessingPipeline),
-            'error_monitor': MagicMock(spec=ErrorMonitor),
-            'resource_monitor': MagicMock(spec=ResourceMonitor),
-            'security_monitor': MagicMock(spec=SecurityMonitor),
-            'logger': MagicMock(spec=Logger),
-            'processing_result': MagicMock(spec=ProcessingResult),
-            'batch_result': MagicMock(spec=BatchResult),
+            **copy.deepcopy(make_mock_resources())
         }
-        
+
         self.processor = BatchProcessor(configs=self.mock_configs, resources=self.resources)
 
     def test_process_chunk_sequential(self):
@@ -559,7 +671,7 @@ class TestBatchProcessorChunkProcessing(unittest.TestCase):
         current_index = 0
         
         # Mock resource monitor to indicate high usage
-        self.resources['resource_monitor'].get_resource_usage.return_value = {
+        self.resources['resource_monitor']._get_resource_usage.return_value = {
             'memory_percent': 95,
             'cpu_percent': 90
         }
@@ -980,28 +1092,28 @@ class TestBatchProcessorSequentialProcessing(unittest.TestCase):
         total_count = 3
         current_index = 0
         
-        with patch.object(self.processor, '_process_single_file') as mock_process_single:
-            with patch.object(self.processor, '_get_output_path') as mock_get_output:
-                mock_result1 = MagicMock()
-                
-                # Second file fails
-                mock_process_single.side_effect = [
-                    mock_result1,
-                    Exception("Processing failed")
-                ]
-                mock_get_output.side_effect = ['/output/file1.txt', '/output/file2.txt']
-                
-                # Act
-                result = self.processor._process_files_sequential(
-                    file_paths, output_dir, options, progress_callback, total_count, current_index
-                )
-                
-                # Assert
-                # Should stop processing after error
-                self.assertEqual(mock_process_single.call_count, 2)
-                self.resources['error_monitor'].handle_error.assert_called()
-                # Should only have processed first file successfully
-                self.assertEqual(len([r for r in result if r == mock_result1]), 1)
+        with patch.object(self.processor, '_process_single_file') as mock_process_single, \
+        patch.object(self.processor, '_get_output_path') as mock_get_output:
+            mock_result1 = MagicMock()
+            
+            # Second file fails
+            mock_process_single.side_effect = [
+                mock_result1,
+                Exception("Processing failed")
+            ]
+            mock_get_output.side_effect = ['/output/file1.txt', '/output/file2.txt']
+            
+            # Act
+            result = self.processor._process_files_sequential(
+                file_paths, output_dir, options, progress_callback, total_count, current_index
+            )
+            
+            # Assert
+            # Should stop processing after error
+            self.assertEqual(mock_process_single.call_count, 2)
+            self.resources['error_monitor'].handle_error.assert_called()
+            # Should only have processed first file successfully
+            self.assertEqual(len([r for r in result if r == mock_result1]), 1)
 
     def test_process_files_sequential_with_cancellation_check(self):
         """
@@ -1025,20 +1137,20 @@ class TestBatchProcessorSequentialProcessing(unittest.TestCase):
                 self.processor.cancel_requested = True
             return MagicMock()
         
-        with patch.object(self.processor, '_process_single_file', side_effect=cancel_after_first) as mock_process_single:
-            with patch.object(self.processor, '_get_output_path') as mock_get_output:
-                mock_get_output.side_effect = ['/output/file1.txt', '/output/file2.txt', '/output/file3.txt']
-                
-                # Act
-                result = self.processor._process_files_sequential(
-                    file_paths, output_dir, options, progress_callback, total_count, current_index
-                )
-                
-                # Assert
-                # Should stop processing after cancellation
-                self.assertTrue(self.processor.cancel_requested)
-                # Should only process first file
-                self.assertEqual(mock_process_single.call_count, 1)
+        with patch.object(self.processor, '_process_single_file', side_effect=cancel_after_first) as mock_process_single, \
+        patch.object(self.processor, '_get_output_path') as mock_get_output:
+            mock_get_output.side_effect = ['/output/file1.txt', '/output/file2.txt', '/output/file3.txt']
+            
+            # Act
+            result = self.processor._process_files_sequential(
+                file_paths, output_dir, options, progress_callback, total_count, current_index
+            )
+            
+            # Assert
+            # Should stop processing after cancellation
+            self.assertTrue(self.processor.cancel_requested)
+            # Should only process first file
+            self.assertEqual(mock_process_single.call_count, 1)
 
 
 class TestBatchProcessorSingleFileProcessing(unittest.TestCase):
@@ -1063,6 +1175,15 @@ class TestBatchProcessorSingleFileProcessing(unittest.TestCase):
         
         self.processor = BatchProcessor(configs=self.mock_configs, resources=self.resources)
 
+        # Create a temporary directory for testing
+        self.test_dir = tempfile.TemporaryDirectory()
+        self.test_dir_path = Path(self.test_dir.name)
+
+    def tearDown(self):
+        """Clean up test fixtures."""
+        self.test_dir.cleanup()
+
+
     def test_process_single_file_success(self):
         """
         GIVEN a valid file path and output path
@@ -1073,9 +1194,9 @@ class TestBatchProcessorSingleFileProcessing(unittest.TestCase):
             - Output written to specified path
         """
         # Arrange
-        file_path = '/path/input/file.txt'
-        output_path = '/path/output/file.txt'
-        options = {'format': 'pdf'}
+        file_path = self.test_dir_path / '/path/input/file.pdf'
+        output_path = self.test_dir_path / '/path/output/file.txt'
+        options = {'format': 'txt'}
         
         mock_result = MagicMock()
         mock_result.success = True
@@ -1339,7 +1460,7 @@ class TestBatchProcessorPathHandling(unittest.TestCase):
             - No matches returns empty or logs warning
         """
         # Arrange
-        file_paths = ['/path/*.txt', '/path/*.pdf']
+        file_paths = ['/path/*.xlsx', '/path/*.pdf']
         
         mock_glob.side_effect = [
             ['/path/file1.txt', '/path/file2.txt'],
@@ -1372,7 +1493,7 @@ class TestBatchProcessorPathHandling(unittest.TestCase):
         # Arrange
         input_path = '/input/document.docx'
         output_dir = '/output'
-        options = {'format': 'pdf'}
+        options = {'format': 'txt'}
         
         mock_basename.return_value = 'document.docx'
         mock_splitext.return_value = ('document', '.docx')
@@ -1403,7 +1524,7 @@ class TestBatchProcessorPathHandling(unittest.TestCase):
         # Arrange
         input_path = '/input/document.txt'
         output_dir = '/output'
-        options = {'format': 'pdf', 'collision_strategy': 'rename'}
+        options = {'format': 'txt', 'collision_strategy': 'rename'}
         
         mock_basename.return_value = 'document.txt'
         mock_splitext.return_value = ('document', '.txt')
@@ -1436,7 +1557,7 @@ class TestBatchProcessorPathHandling(unittest.TestCase):
         input_path = '/input/document.txt'
         output_dir = '/output'
         options = {
-            'format': 'pdf',
+            'format': 'txt',
             'naming_pattern': '{name}_{date}_{index}.{ext}',
             'index': 1
         }
@@ -1913,7 +2034,7 @@ class TestBatchProcessorEdgeCases(unittest.TestCase):
         file_paths = ['/path/file1.txt']
         
         # Mock resource monitor failure
-        self.resources['resource_monitor'].check_resources.side_effect = Exception("Monitor unavailable")
+        self.resources['resource_monitor'].are_resources_available.side_effect = Exception("Monitor unavailable")
         
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_process_single_file') as mock_process_single:
@@ -1972,15 +2093,15 @@ class TestBatchProcessorIntegration(unittest.TestCase):
         """
         # Arrange
         file_paths = ['/path/document.docx', '/path/image.jpg', '/path/spreadsheet.xlsx']
-        options = {'format': 'pdf', 'quality': 'high'}
+        options = {'format': 'txt', 'quality_threshold': '0.9'}
         
         # Mock pipeline responses for different file types
         mock_results = []
         for i, path in enumerate(file_paths):
             result = MagicMock()
             result.success = True
-            result.input_path = path
-            result.output_format = 'pdf'
+            result.input_path = os.path.join(self.test_dir, path)
+            result.output_format = 'txt'
             result.converter_used = f'converter_{i}'
             mock_results.append(result)
         
@@ -1989,7 +2110,7 @@ class TestBatchProcessorIntegration(unittest.TestCase):
         
         with patch.object(self.processor, '_resolve_paths', return_value=file_paths):
             with patch.object(self.processor, '_get_output_path', side_effect=[
-                '/output/document.pdf', '/output/image.pdf', '/output/spreadsheet.pdf'
+                '/output/document.txt', '/output/image.txt', '/output/spreadsheet.txt'
             ]):
                 # Act
                 result = self.processor.process_batch(file_paths, '/output', options)
@@ -2013,7 +2134,7 @@ class TestBatchProcessorIntegration(unittest.TestCase):
             - Error reports generated correctly
         """
         # Arrange
-        file_paths = ['/path/good_file.txt', '/path/bad_file.txt', '/path/another_good_file.txt']
+        file_paths = ['/path/good_file.pdf', '/path/bad_file.pdf', '/path/another_good_file.pdf']
         
         def mock_process_file(file_path, output_path, options):
             if 'bad_file' in file_path:
@@ -2134,7 +2255,7 @@ class TestBatchProcessorIntegration(unittest.TestCase):
             '/input/presentation.pptx'
         ]
         output_dir = '/output'
-        options = {'format': 'pdf', 'quality': 'high'}
+        options = {'format': 'txt', 'quality': 'high'}
         
         # Mock all components to simulate realistic behavior
         self.resources['security_monitor'].validate_security.return_value = True

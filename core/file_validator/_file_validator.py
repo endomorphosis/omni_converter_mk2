@@ -83,7 +83,10 @@ class FileValidator:
                     f"({max_size_bytes} bytes): {file_path}"
                 )
                 return result
-            
+            elif file_info.size == 0:
+                result.add_error(f"File is empty: {file_path}")
+                return result
+
             # Detect format if not provided
             if not format_name:
                 format_name, category = self._format_detector.detect_format(file_path)
@@ -100,38 +103,56 @@ class FileValidator:
                 if not category:
                     result.add_error(f"Format '{format_name}' is not supported")
                     return result
-                
+
                 result.add_context('format', format_name)
                 result.add_context('category', category)
-            
+
             # Check if format is allowed
             if self.allowed_formats and format_name not in self.allowed_formats:
                 result.add_error(f"Format '{format_name}' is not allowed")
                 return result
-            
-            # Check for file corruption (basic check only)
-            # In a real implementation, this would do more thorough checks
-            if file_info.size == 0:
-                result.add_error(f"File is empty: {file_path}")
-                return result
-            
+
             # Add file metadata to result
             result.add_context('file_size', file_info.size)
             result.add_context('mime_type', file_info.mime_type)
             result.add_context('extension', file_info.extension)
-            
+
             # All checks passed
             result.is_valid = True
-            
+
         except Exception as e:
             result.add_error(f"Validation error: {e}")
             self._logger.error(f"Validation error for file: {file_path}", {'error': str(e)})
-        
+
         return result
-    
-    def is_valid_for_processing(self, file_path: str, format_name: Optional[str] = None) -> bool:
+
+    @staticmethod
+    def _check_for_null_bytes_and_permissions(file_path:str, format_name:str, result: list[str]) -> bool:
+        """Check for null bytes and permission issues that could cause hangs
+        
+        Args:
+            file_path: The path to the file.
+            format_name: The format of the file
+            
+        Returns:
+            True if the file is corrupt, False otherwise.
         """
-        Check if a file is valid for processing.
+        try:
+            with open(file_path, 'rb') as f:
+                # Read first 1KB to check for null bytes
+                chunk = f.read(1024)
+                if b'\x00' in chunk and format_name not in ['pdf', 'docx', 'xlsx', 'pptx']: # TODO This needs to be more generic.
+                    result.add_error(f"File contains null bytes and may be corrupted: {file_path}")
+                    return result
+        except PermissionError:
+            result.add_error(f"Insufficient permissions to read file: {file_path}")
+            return result
+        except (OSError, IOError) as e:
+            result.add_error(f"File access error: {file_path} - {str(e)}")
+            return result
+
+    def is_valid_for_processing(self, file_path: str, format_name: Optional[str] = None) -> bool:
+        """Check if a file is valid for processing.
         
         Args:
             file_path: The path to the file.
@@ -142,7 +163,7 @@ class FileValidator:
         """
         result = self.validate_file(file_path, format_name)
         return result.is_valid
-    
+
     def get_validation_errors(self, file_path: str, format_name: Optional[str] = None) -> list[str]:
         """
         Get validation errors for a file.
@@ -157,6 +178,3 @@ class FileValidator:
         result = self.validate_file(file_path, format_name)
         return result.errors
 
-# Factory function is now in core/factory.py to maintain separation of concerns
-
-def make_file_validator() -> FileValidator:... # TODO

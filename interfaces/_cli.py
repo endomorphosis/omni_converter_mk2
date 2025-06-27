@@ -181,7 +181,7 @@ class CLI:
             True if successful, False otherwise.
         """
         # Get defaults options if not provided
-        options = self._options if options is None else options
+        options = self._options(input=input_path) if options is None else options
 
         try:
             # Get output format from args, config, or default to txt
@@ -190,9 +190,9 @@ class CLI:
                 output_format = self.configs.get_config_value('output.default_format', 'txt')
 
             # Set default options if not provided
-            if 'format' not in options:
+            if 'format' not in options.keys():
                 options['format'] = output_format
-            if 'verbose' not in options:
+            if 'verbose' not in options.keys():
                 options['verbose'] = self.configs.get_config_value('output.verbose', False)
 
             # Process the file using the processing pipeline
@@ -268,6 +268,9 @@ class CLI:
         Returns:
             BatchResult object with processing results.
         """
+        # Get defaults options if not provided
+        options = self._options(input=dir_path) if options is None else options
+
         # Configure batch processor
         self._batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
         self._batch_processor.set_continue_on_error(options.get('continue_on_error', True))

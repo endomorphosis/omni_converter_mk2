@@ -18,8 +18,23 @@ class OutputFormatter:
     This class formats extracted content into different output formats.
     
     Attributes:
+        resources (dict[str, Callable]): Dictionary of callable objects and dependencies.
+        configs (Configs): Configuration settings.
         output_formats (dict[str, FormatterFunc]): Dictionary of formatter functions.
         default_format (str): The default output format.
+    
+    Properties:
+        available_formats (list[str]): List of available output formats.
+    
+    Public Methods:
+        format_output: Format content for output in specified format.
+        register_format: Register a new output format with formatter function.
+    
+    Private Methods:
+        _register_default_formatters: Register the default output formatters.
+        _format_as_txt: Format content as plain text.
+        _format_as_json: Format content as JSON.
+        _format_as_markdown: Format content as Markdown.
     """
     
     def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:

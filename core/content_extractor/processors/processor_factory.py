@@ -658,76 +658,111 @@ def _make_processor(resources: _ProcessorResources) -> Any:
     return processor
 
 
-def make_processors() -> dict[str, Any]:
+class _MakeProcessorCache:
+    """Cache for processors to avoid recreating them on every call."""
+
+    def __init__(self):
+        self._processor_cache = None
+
+    def __call__(self) -> dict[str, Any]:
+        """Get processors, creating them if not already cached."""
+        if self._processor_cache is None:
+            self._processor_cache = self.make_processors()
+        return self._processor_cache
+
+    def clear_cache(self):
+        """Clear the processor cache, forcing recreation on next call."""
+        self._processor_cache = None
+
+    def is_cached(self) -> bool:
+        """Check if processors are currently cached."""
+        return self._processor_cache is not None
+
+    @staticmethod
+    def make_processors() -> dict[str, Any]:
+        """Create all processor instances.
+
+        Returns:
+            dict mapping processor names to processor instances
+        """
+        from configs import configs
+        from logger import logger
+        from __version__ import __version__
+        from utils.handlers._can_handle import can_handle
+        from dependencies import dependencies as dependency_cache
+
+        processors = {}
+        frozenset_dict = {}
+
+        # Create processors from get_processor_resource_configs
+        for resource_config in get_processor_resource_configs():
+            # Add logger and configs to resources
+            resource_config["supported_formats"] = _get_supported_formats_from_resource_config(resource_config)
+            proc_name = resource_config["processor_name"]
+            if proc_name in processors.keys():
+                logger.warning(f"Processor {proc_name} already exists, skipping duplicate.")
+                continue
+
+            frozenset_dict.update({
+                proc_name: resource_config["supported_formats"]
+            })
+
+            resources = {
+                **resource_config,
+                "logger": logger,
+                "configs": configs,
+                "get_version": lambda: __version__,
+                "can_handle": can_handle, 
+                "dependencies": dependency_cache,  # Use the global dependencies cache
+                "processor_available": True,  # Assume all processors are available by default
+            }
+            try:
+                #logger.debug(f"Creating processor {resource_config['processor_name']} with resources: {resources}")
+                processor = _make_processor(resources)
+                processors[proc_name] = processor
+            except Exception as e:
+                logger.exception(f"Failed to create processor {resource_config['processor_name']}: {e}")
+                continue # Skip processors that fail to initialize. NOTE This should be logged, but only when in production mode.
+
+        # Add cross-processor dependencies
+        processors: dict[str, Any] = _apply_cross_processor_dependencies(
+            processors=processors, 
+            dependencies=[ # TODO This really should be dynamic based on what's in the processors dictionary.
+                ("xlsx_processor", "extract_images", "image_processor", "process"),
+                ("pdf_processor", "extract_images", "image_processor", "process"),
+                ("docx_processor", "extract_images", "image_processor", "process"),
+            ])
+
+        # Make the keys of frozenset_dict into the keys of processors
+        temp_dict = {}
+        for proc_name, set_ in frozenset_dict.items():
+            #logger.debug(f"Adding supported formats to processor {proc_name}: {set_}")
+            processor = processors[proc_name]
+            assert processor is not None, f"Processor {proc_name} is None, cannot add supported formats."
+            proc_tuple = (proc_name, processor, set_)
+            # if proc_name == "text_processor":
+            #     logger.debug(f"{(proc_name, processor, set_)}")
+            temp_dict[proc_name] = proc_tuple
+
+        processors = temp_dict
+
+        for proc in processors.values():
+            assert isinstance(proc, tuple), f"Processor {proc} is not a tuple, but a {type(proc)}."
+
+        #print(processors)
+
+        return processors
+
+# Create a singleton instance
+_processor_cache = _MakeProcessorCache()
+import threading
+_processor_cache_lock = threading.RLock()
+
+def make_processors():
     """Create all processor instances.
 
     Returns:
         dict mapping processor names to processor instances
     """
-    from configs import configs
-    from logger import logger
-    from __version__ import __version__
-    from utils.handlers._can_handle import can_handle
-    from dependencies import dependencies as dependency_cache
-
-    processors = {}
-    frozenset_dict = {}
-
-    # Create processors from get_processor_resource_configs
-    for resource_config in get_processor_resource_configs():
-        # Add logger and configs to resources
-        resource_config["supported_formats"] = _get_supported_formats_from_resource_config(resource_config)
-        proc_name = resource_config["processor_name"]
-        if proc_name in processors.keys():
-            logger.warning(f"Processor {proc_name} already exists, skipping duplicate.")
-            continue
-
-        frozenset_dict.update({
-            proc_name: resource_config["supported_formats"]
-        })
-
-        resources = {
-            **resource_config,
-            "logger": logger,
-            "configs": configs,
-            "get_version": lambda: __version__,
-            "can_handle": can_handle, 
-            "dependencies": dependency_cache,  # Use the global dependencies cache
-            "processor_available": True,  # Assume all processors are available by default
-        }
-        try:
-            #logger.debug(f"Creating processor {resource_config['processor_name']} with resources: {resources}")
-            processor = _make_processor(resources)
-            processors[proc_name] = processor
-        except Exception as e:
-            logger.exception(f"Failed to create processor {resource_config['processor_name']}: {e}")
-            continue # Skip processors that fail to initialize. NOTE This should be logged, but only when in production mode.
-
-    # Add cross-processor dependencies
-    processors: dict[str, Any] = _apply_cross_processor_dependencies(
-        processors=processors, 
-        dependencies=[ # TODO This really should be dynamic based on what's in the processors dictionary.
-            ("xlsx_processor", "extract_images", "image_processor", "process"),
-            ("pdf_processor", "extract_images", "image_processor", "process"),
-            ("docx_processor", "extract_images", "image_processor", "process"),
-        ])
-
-    # Make the keys of frozenset_dict into the keys of processors
-    temp_dict = {}
-    for proc_name, set_ in frozenset_dict.items():
-        #logger.debug(f"Adding supported formats to processor {proc_name}: {set_}")
-        processor = processors[proc_name]
-        assert processor is not None, f"Processor {proc_name} is None, cannot add supported formats."
-        proc_tuple = (proc_name, processor, set_)
-        # if proc_name == "text_processor":
-        #     logger.debug(f"{(proc_name, processor, set_)}")
-        temp_dict[proc_name] = proc_tuple
-
-    processors = temp_dict
-
-    for proc in processors.values():
-        assert isinstance(proc, tuple), f"Processor {proc} is not a tuple, but a {type(proc)}."
-
-    #print(processors)
-
-    return processors
+    with _processor_cache_lock:
+        return _processor_cache()

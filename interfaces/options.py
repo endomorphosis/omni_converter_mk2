@@ -14,6 +14,7 @@ try:
         FilePath,
         PositiveFloat,
         NonNegativeFloat,
+        ValidationError
     )
 except ImportError:
     raise ImportError("Pydantic is required for the Python API.")
@@ -92,6 +93,29 @@ def _validate_max_vram(max_vram: PositiveInt) -> PositiveInt:
     return max_vram
 
 
+def name(e: Exception) -> str:
+    """Get the string name of the error."""
+    return type(e).__name__
+
+def getitem(self, key: str) -> str | int | float:
+    try:
+        return getattr(self, key)
+    except AttributeError as e:
+        raise KeyError(f"Key '{key}' not found in configuration: {e}") from e
+
+def setitem(self, key: str, value: Any) -> None:
+    try:
+        setattr(self, key, value)
+        self.model_validate()
+    except ValidationError as e:
+        raise ValueError(f"Invalid value for key '{key}': {value}") from e
+    except TypeError as e:
+        raise TypeError(f"Invalid type for key '{key}': {type(value)}") from e
+    except AttributeError as e:
+        raise KeyError(f"Key '{key}' not found in configuration") from e
+
+
+
 class OutputFormat(StrEnum):
     """Enumeration for supported output file formats."""
     TXT = "txt"
@@ -132,9 +156,11 @@ class Options(BaseModel):
         show_progress: Show progress bar during batch operations.
         verbose: Log detailed information during processing.
         list_formats: List supported input formats and exit.
+        list_normalizers: List supported text normalizers and exit.
+        list_output_formats: List supported output formats and exit.
         version: Show version information and exit.
-        batch_size: Number of files to process in a single batch.
-        retries: Number of retries for failed conversions.
+        max_batch_size: Maximum number of files to process in a single batch.
+        retries: Maximum number of retries for failed conversions.
     """
     # TODO Figure out why adding aliases overrides the field names.
     input:             DirectoryPath | FilePath | list[FilePath] = Field(..., description="The input file(s) or directory to convert")
@@ -142,7 +168,12 @@ class Options(BaseModel):
     walk:              bool = Field(default=False, description="If input is a directory, process it recursively, including all subdirectories")
     normalize:         bool = Field(default=True, description="Normalize text before saving (e.g., remove extra whitespace, convert to lowercase, etc.)")
     security_checks:   bool = Field(default=True, description="Check the input files for malicious aspects. Ex: malware, zip bombs, etc. Disable at your own risk")
-    metadata:          bool = Field(default=True, description="Extract metadata from input files and append it to the converted text. Ex: author, title, etc.")
+    metadata:          bool = Field(default=True, description="""
+        Whether to extract metadata from input files and append it to the converted text. 
+        The exact metadata extracted depends on the input file format. 
+        For example, Excel metadata includes computed field formulas, while PDF metadata includes booleans for whether the pd is flattened or not.
+        See the documentation for more details on the metadata extracted for each format.
+    """)
     structure:         bool = Field(default=True, description="Extract structural elements from the input files and append it to the converted text. Ex: headings, lists, etc.")
     format:            OutputFormat = Field(default=OutputFormat.TXT, description="Output format for the converted text. Options are: 'txt', 'md', 'json'")
     max_threads:       Ann[PositiveInt, AV(_validate_max_workers)] = Field(default=4, description="Maximum number of threads to use during parallel processing")  # At least one worker thread
@@ -166,7 +197,7 @@ class Options(BaseModel):
     list_normalizers:  bool = Field(default=False, description="List supported text normalizers and exit")
     list_output_formats: bool = Field(default=False, description="List supported output formats and exit")
     version:           bool = Field(default=False, description="Show version information and exit")
-    max_batch_size:        PositiveInt = Field(default=100, description="Maximum number of files to process in a single batch.")  # TODO Make this dynamic somehow?
+    max_batch_size:    PositiveInt = Field(default=100, description="Maximum number of files to process in a single batch.")  # TODO Make this dynamic somehow?
     retries:           PositiveInt = Field(default=0, description="Maximum number of retries for failed conversions")
 
 
@@ -274,3 +305,42 @@ class Options(BaseModel):
             parser.add_argument(*flags, **arg_kwargs)
 
         return parser
+
+    def keys(self) -> list[str]:
+        """Get the keys of the options."""
+        return list(self.model_fields.keys())
+
+    def values(self) -> list[str | int | float]:
+        """Get the values of the options."""
+        return [getattr(self, key) for key in self.keys()]
+
+    def items(self) -> list[tuple[str, str | int | float]]:
+        """Get the items of the options as (key, value) pairs."""
+        return [(key, getattr(self, key)) for key in self.keys()]
+    
+    def get(self, key: str, default: Optional[Any] = None) -> str | int | float | None:
+        """Get an item by key, returning a default value if the key does not exist."""
+        try:
+            return self.__getitem__(key)
+        except (KeyError, AttributeError):
+            return default
+
+    def __getitem__(self, key: str) -> str | int | float:
+        """Get an item by key."""
+        return getitem(self, key)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set an item by key."""
+        setitem(self, key, value)
+
+    def __contains__(self, key: str) -> bool:
+        """Check if a key exists in the options."""
+        return key in self.keys()
+    
+    def __iter__(self):
+        """Make the options iterable."""
+        return iter(self.keys())
+
+    def __len__(self) -> int:
+        """Get the number of options."""
+        return len(self.keys())

@@ -109,7 +109,7 @@ class FileFormatDetector:
         if category is None:
             self._logger.warning(f"Format '{format_name}' is not in any supported category for file: {file_path}")
             return format_name, None
-        
+
         self._logger.debug(f"Detected format '{format_name}' in category '{category}' for file: {file_path}")
         return format_name, category
 

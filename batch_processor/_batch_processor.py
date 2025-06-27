@@ -3,14 +3,17 @@ Batch processor module for the Omni-Converter.
 
 This module provides the BatchProcessor class for processing multiple files in batches.
 """
-import concurrent.futures as cf
-import glob
-import os
-import threading
-import time
 
 
-from types_ import Any, Callable, Optional, Union, Configs, BatchResult, Logger, ProgressCallback, ProcessingResult
+from types_ import (
+    Any, Callable, Optional, Union, 
+    Configs, BatchResult, Logger, 
+    Thread,
+    ProcessingResult,
+    ProcessingPipeline, ErrorMonitor,
+    ResourceMonitor, SecurityMonitor,
+    RLock
+)
 
 
 class BatchProcessor:
@@ -46,27 +49,45 @@ class BatchProcessor:
         self.configs = configs
         self.resources = resources
 
-        self.pipeline = self.resources['processing_pipeline']
-        self.error_monitor = self.resources['error_monitor']
-        self.resource_monitor = self.resources['resource_monitor']
-        self.security_monitor = self.resources['security_monitor']
+        self.max_batch_size: int = self.configs.resources.max_batch_size
+        self.max_threads: int = self.configs.resources.max_threads
+        self.continue_on_error: bool = self.configs.processing.continue_on_error
+
+
+        self._pipeline: ProcessingPipeline = self.resources['processing_pipeline']
+        self._error_monitor: ErrorMonitor = self.resources['error_monitor']
+        self._resource_monitor: ResourceMonitor = self.resources['resource_monitor']
+        self._security_monitor: SecurityMonitor = self.resources['security_monitor']
         self._logger: Logger = self.resources['logger']
         self._processing_result: ProcessingResult = self.resources['processing_result']
         self._batch_result: BatchResult = self.resources['batch_result']
 
-        self.max_batch_size = self.configs.resources.max_batch_size
-        self.max_threads = self.configs.resources.max_threads
-        self.continue_on_error = self.configs.processing.continue_on_error
+
+        self._get_output_path : Callable = self.resources['get_output_path']
+        self._resolve_paths: Callable = self.resources['resolve_paths']
+
+
+        # Builtins.
+        # Because screw having a million patches fo testing.
+        self._exists: Callable = self.resources['os_path_exists']
+        self._makedirs: Callable = self.resources['os_makedirs']
+        self._time: Callable = self.resources['time_time']
+        self._collect: Callable = self.resources['gc_collect']
+        self._as_completed: Callable = self.resources['concurrent_futures_as_completed']
+        self._ThreadPoolExecutor: Callable = self.resources['concurrent_futures_ThreadPoolExecutor']
+        self._ProcessPoolExecutor: Callable = self.resources['concurrent_futures_ProcessPoolExecutor']
+
+
 
         self.cancel_requested = False
-        self._lock = threading.RLock()  # For thread safety
+        self._lock: RLock = self.resources['threading_RLock']()  # For thread safety
 
     def process_batch(
         self,
-        file_paths: Union[list[str], str],
+        file_paths: list[str] | str,
         output_dir: Optional[str] = None,
         options: Optional[dict[str, Any]] = None,
-        progress_callback: Optional[ProgressCallback] = None
+        progress_callback: Optional[Callable] = None
     ) -> BatchResult:
         """
         Process a batch of files.
@@ -85,26 +106,26 @@ class BatchProcessor:
         """
         # Reset cancel flag
         self.cancel_requested = False
-        
+
         # Resolve and validate input
         resolved_paths = self._resolve_paths(file_paths)
         self._logger.info(f"Processing batch of {len(resolved_paths)} files")
-        
+
         # Verify output directory if provided
-        if output_dir and not os.path.exists(output_dir):
+        if output_dir and not self._exists(output_dir):
             try:
-                os.makedirs(output_dir, exist_ok=True)
+                self._makedirs(output_dir, exist_ok=True)
                 self._logger.info(f"Created output directory: {output_dir}")
             except Exception as e:
                 error_message = f"Failed to create output directory {output_dir}: {e}"
                 self._logger.error(error_message)
                 raise ValueError(error_message)
-        
+
         # Initialize batch result
-        batch_result = self._batch_result(start_time=time.time())
+        batch_result = self._batch_result(start_time=self._time())
         
         # Start resource monitoring
-        self.resource_monitor.start_monitoring()
+        self._resource_monitor.start_monitoring()
         
         try:
             # Process files in chunks to manage memory usage
@@ -117,19 +138,18 @@ class BatchProcessor:
                 chunk = resolved_paths[i:i + self.max_batch_size]
                 
                 # Check resource availability
-                self._logger.debug(f"self.resource_monitor.are_resources_available: {self.resource_monitor.are_resources_available}")
-                resources_available, reason = self.resource_monitor.are_resources_available
+                self._logger.debug(f"self._resource_monitor.are_resources_available: {self._resource_monitor.are_resources_available}")
+                resources_available, reason = self._resource_monitor.are_resources_available
                 if not resources_available:
                     self._logger.warning(f"Insufficient resources: {reason}")
                     
                     # Force memory cleanup before continuing
                     try:
-                        import gc
                         # Force a full collection cycle
-                        gc.collect(2)
+                        self._collect(2)
                         
                         # Check if resources are now available
-                        resources_available, reason = self.resource_monitor.are_resources_available
+                        resources_available, reason = self._resource_monitor.are_resources_available
                         if resources_available:
                             self._logger.info("Resource constraints resolved after garbage collection")
                         else:
@@ -151,12 +171,11 @@ class BatchProcessor:
                 # Add results to batch result
                 for result in chunk_results:
                     batch_result.add_result(result)
-                
+
                 # Perform explicit garbage collection after processing chunk
                 try:
-                    import gc
                     # Force collection to clean up memory
-                    gc.collect()
+                    self._collect(2)
                     self._logger.debug(f"Garbage collection performed after processing chunk of {len(chunk)} files")
                 except ImportError:
                     self._logger.debug("gc module not available, skipping explicit garbage collection")
@@ -165,7 +184,7 @@ class BatchProcessor:
                 if not self.continue_on_error and batch_result.failed_files > 0:
                     self._logger.warning("Stopping batch processing due to errors")
                     break
-            
+
             # Mark batch as complete
             batch_result.complete()
             
@@ -179,14 +198,14 @@ class BatchProcessor:
             
         finally:
             # Stop resource monitoring
-            self.resource_monitor.stop_monitoring()
+            self._resource_monitor.stop_monitoring()
     
     def _process_chunk(
         self,
         file_paths: list[str],
         output_dir: Optional[str],
         options: Optional[dict[str, Any]],
-        progress_callback: Optional[ProgressCallback],
+        progress_callback: Optional[Callable],
         total_count: int,
         current_index: int
     ) -> list['ProcessingResult']:
@@ -230,7 +249,7 @@ class BatchProcessor:
         file_paths: list[str],
         output_dir: Optional[str],
         options: dict[str, Any],
-        progress_callback: Optional[ProgressCallback],
+        progress_callback: Optional[Callable],
         total_count: int,
         current_index: int
     ) -> list['ProcessingResult']:
@@ -252,7 +271,8 @@ class BatchProcessor:
         progress_counter = 0
         
         # Use cf.ThreadPoolExecutor for parallel processing
-        with cf.ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+        # TODO Parallel processor should be dynamic. Needs to handle ProcessPoolExecutor for CPU-bound tasks, and Asyncio for IO-bound tasks.
+        with self._ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             # Submit all tasks
             future_to_path = {}
             for path in file_paths:
@@ -261,15 +281,15 @@ class BatchProcessor:
                 
                 # Determine output path
                 output_path = self._get_output_path(path, output_dir, options)
-                
+
                 # Submit task
                 future = executor.submit(
                     self._process_single_file, path, output_path, options
                 )
                 future_to_path[future] = path
-            
+
             # Process results as they complete
-            for future in cf.as_completed(future_to_path):
+            for future in self._as_completed(future_to_path):
                 if self.cancel_requested:
                     break
                 
@@ -293,7 +313,7 @@ class BatchProcessor:
                 except Exception as e:
                     # Handle errors
                     self._logger.error(f"Error processing {file_path}: {e}")
-                    error_result = ProcessingResult(
+                    error_result = self._processing_result(
                         success=False,
                         file_path=file_path,
                         errors=[str(e)]
@@ -308,7 +328,7 @@ class BatchProcessor:
                             total_count, 
                             file_path
                         )
-        
+
         return results
     
     def _process_files_sequential(
@@ -316,7 +336,7 @@ class BatchProcessor:
         file_paths: list[str],
         output_dir: Optional[str],
         options: dict[str, Any],
-        progress_callback: Optional[ProgressCallback],
+        progress_callback: Optional[Callable],
         total_count: int,
         current_index: int
     ) -> list[ProcessingResult]:
@@ -336,7 +356,7 @@ class BatchProcessor:
         """
         results = []
         
-        for i, path in enumerate(file_paths):
+        for idx, path in enumerate(file_paths, start=1):
             if self.cancel_requested:
                 break
             
@@ -347,24 +367,24 @@ class BatchProcessor:
                 # Process file
                 result = self._process_single_file(path, output_path, options)
                 results.append(result)
-                
+
                 # Update progress
                 if progress_callback:
-                    progress_callback(current_index + i + 1, total_count, path)
-                    
+                    progress_callback(current_index + idx, total_count, path)
+
             except Exception as e:
                 # Handle errors
                 self._logger.error(f"Error processing {path}: {e}")
-                error_result = ProcessingResult(
+                error_result = self._processing_result(
                     success=False,
                     file_path=path,
                     errors=[str(e)]
                 )
                 results.append(error_result)
-                
+
                 # Update progress
                 if progress_callback:
-                    progress_callback(current_index + i + 1, total_count, path)
+                    progress_callback(current_index + idx, total_count, path)
                 
                 # Check if we should continue
                 if not self.continue_on_error:
@@ -390,8 +410,20 @@ class BatchProcessor:
             ProcessingResult object for the processed file.
         """
         try:
+            # Check if resources are available
+            resources_available, reason = self._resource_monitor.are_resources_available
+            if not resources_available:
+                error_message = f"Insufficient system resources: {reason}"
+                self._logger.warning(error_message, {'file_path': file_path})
+                return self._processing_result(
+                    success=False,
+                    file_path=file_path,
+                    output_path=output_path,
+                    errors=[error_message]
+                )
+            
             # Perform security validation
-            security_result = self.security_monitor.validate_security(file_path)
+            security_result = self._security_monitor.validate_security(file_path)
             if not security_result.is_safe:
                 # Handle security issues
                 error_message = f"Security validation failed: {', '.join(security_result.issues)}"
@@ -404,11 +436,14 @@ class BatchProcessor:
                 )
             
             # Process the file
-            result = self.pipeline.process_file(file_path, output_path, options)
+            result = self._pipeline.process_file(file_path, output_path, options)
             
             # If processing succeeded and content was generated, sanitize it
-            if result.success and options.get('sanitize', True) and not output_path:
+            if result.success and options['sanitize'] is True and not output_path:
                 # Sanitize content if this is an in-memory process (no output file)
+                self._error_monitor
+
+
                 file_format = result.format
                 format_handler = None
                 
@@ -419,7 +454,7 @@ class BatchProcessor:
             
         except Exception as e:
             # Use the error handler to handle and log the error
-            self.error_monitor.handle_error(
+            self._error_monitor.handle_error(
                 e, {'file_path': file_path, 'output_path': output_path}
             )
             
@@ -430,98 +465,7 @@ class BatchProcessor:
                 output_path=output_path,
                 errors=[str(e)]
             )
-    
-    def _resolve_paths(self, file_paths: Union[list[str], str]) -> list[str]:
-        """
-        Resolve file paths, expanding directories if necessary.
-        
-        Args:
-            file_paths: list of file paths or a directory path.
-            
-        Returns:
-            List of resolved file paths.
-        """
-        resolved = []
-        
-        # Handle string input (single file or directory)
-        match file_paths:
-            case str():
-                if os.path.isdir(file_paths):
-                    # Recursively find files in directory
-                    for root, _, files in os.walk(file_paths):
-                        for f in files:
-                            resolved.append(os.path.join(root, f))
-                elif os.path.isfile(file_paths):
-                    # Add single file
-                    resolved.append(file_paths)
-                else:
-                    # Try to expand wildcards
-                    glob_matches = glob.glob(file_paths, recursive=True)
-                    if glob_matches:
-                        for match in glob_matches:
-                            if os.path.isfile(match):
-                                resolved.append(match)
-                    else:
-                        self._logger.warning(f"Path not found: {file_paths}")
 
-            # Handle list input
-            case list():
-                for path in file_paths:
-                    if os.path.isdir(path):
-                        # Recursively find files in directory
-                        for root, _, files in os.walk(path):
-                            for f in files:
-                                resolved.append(os.path.join(root, f))
-                    elif os.path.isfile(path):
-                        # Add single file
-                        resolved.append(path)
-                    else:
-                        # Try to expand wildcards
-                        glob_matches = glob.glob(path, recursive=True)
-                        if glob_matches:
-                            for match in glob_matches:
-                                if os.path.isfile(match):
-                                    resolved.append(match)
-                        else:
-                            self._logger.warning(f"Path not found: {path}")
-            case _:
-                raise ValueError("Invalid input type for file_paths. Must be a string or list of strings.")
-
-        return resolved
-
-    def _get_output_path(
-        self,
-        input_path: str,
-        output_dir: Optional[str],
-        options: dict[str, Any]
-    ) -> Optional[str]:
-        """
-        Get the output path for a file.
-        
-        Args:
-            input_path: Path to the input file.
-            output_dir: Directory to write output to.
-            options: Processing options.
-            
-        Returns:
-            Path to write output to, or None if output should not be written.
-        """
-        if not output_dir:
-            return None
-        
-        # Get output format
-        output_format = options.get('format', 'txt')
-        
-        # Get base filename without extension
-        base_name = os.path.basename(input_path)
-        base_name_without_ext = os.path.splitext(base_name)[0]
-        
-        # Create output path
-        output_name = f"{base_name_without_ext}.{output_format}"
-        output_path = os.path.join(output_dir, output_name)
-        
-        return output_path
-    
     def cancel_processing(self) -> None:
         """Cancel ongoing batch processing."""
         self._logger.info("Cancellation requested for batch processing")
@@ -537,9 +481,9 @@ class BatchProcessor:
             A dictionary with the current status.
         """
         return {
-            'pipeline': self.pipeline.status,
-            'resources': self.resource_monitor.current_usage,
-            'errors': self.error_monitor.error_statistics,
+            'pipeline': self._pipeline.status,
+            'resources': self._resource_monitor.current_usage,
+            'errors': self._error_monitor.error_statistics,
             'cancel_requested': self.cancel_requested
         }
 

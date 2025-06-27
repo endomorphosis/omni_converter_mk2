@@ -16,7 +16,8 @@ from typing import (
     Any, Callable, Generator,
     Optional, Protocol, TYPE_CHECKING,
     Type, TypeAlias, TypedDict, 
-    TypeVar, Union, NamedTuple
+    TypeVar, Union, NamedTuple,
+    Pattern
 )
 from protocols import Processor
 
@@ -83,6 +84,7 @@ FileValidator = TypeVar("FileValidator", bound=Callable[..., Any])
 SecurityMonitor = TypeVar("SecurityMonitor", bound=Callable[..., Any])
 OutputFormatter = TypeVar("OutputFormatter", bound=Callable[..., Any])
 AbilityProcessor = TypeVar("AbilityProcessor", bound=Callable[..., Any])
+ContentSanitizer = TypeVar("ContentSanitizer", bound=Callable[..., Any])
 
 # NOTE This is placeholder used to represent objects that are specific to a dependency
 # Ex: DataFrames from Pandas, or Numpy arrays
@@ -94,3 +96,4 @@ PythonAPI = TypeVar('PythonAPI')
 Cli = TypeVar('CLI')
 Gui = TypeVar('GUI')
 Options: TypeAlias = BaseModel
+RLock = TypeVar('RLock', bound=Callable[..., Any])

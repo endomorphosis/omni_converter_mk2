@@ -4,8 +4,7 @@ from types_ import Any, Content
 
 @dataclass
 class SanitizedContent:
-    """
-    Sanitized content from a file.
+    """Sanitized content from a file.
     
     This class extends the base Content class with sanitization information.
     
@@ -18,8 +17,7 @@ class SanitizedContent:
     removed_content: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Convert to a dictionary.
+        """Convert to a dictionary.
 
         Returns:
             A dictionary representation of the sanitized content.

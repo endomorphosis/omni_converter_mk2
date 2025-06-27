@@ -36,7 +36,7 @@ def _get_cpu_cores(minus: int) -> int:
     return psutil.cpu_count(logical=False) - minus
 
 
-class Paths(BaseModel):
+class _PathsBaseModel(BaseModel):
     """
     Paths for important files and directories.
 
@@ -181,14 +181,14 @@ class Configs(BaseModel):
     output: _Output = Field(default_factory=_Output)
 
     @property
-    def paths(self) -> Paths:
+    def paths(self) -> _PathsBaseModel:
         """
         Get the paths for important files and directories.
         
         Returns:
-            Paths object containing important file and directory paths.
+            _PathsBaseModel object containing important file and directory paths.
         """
-        return Paths()
+        return _PathsBaseModel()
     
     @property
     def version(self) -> str:
@@ -245,7 +245,7 @@ class Configs(BaseModel):
         except ValidationError as e:
             raise ValueError(f"Invalid value for key '{key}': {value}") from e
 
-_PATH = Paths()
+_PATH = _PathsBaseModel()
 
 try:
     with open(_PATH.CONFIG_PATH.resolve(), 'r') as file:

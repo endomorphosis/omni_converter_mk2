@@ -19,6 +19,7 @@ from .file_validator import make_file_validator
 from .text_normalizer import make_text_normalizer
 from .output_formatter import make_output_formatter
 from .content_extractor import make_content_extractor
+from .content_sanitizer import make_content_sanitizer, ContentSanitizer
 
 
 def make_processing_pipeline() -> ProcessingPipeline:
@@ -36,6 +37,7 @@ def make_processing_pipeline() -> ProcessingPipeline:
         output_formatter: Callable
         processing_result: ProcessingResult
         pipeline_status: PipelineStatus
+        content_sanitizer: ContentSanitizer
         logger: Logger
         hashlib: ModuleType
 
@@ -45,6 +47,7 @@ def make_processing_pipeline() -> ProcessingPipeline:
         "content_extractor": make_content_extractor(),
         "text_normalizer": make_text_normalizer(),
         "output_formatter": make_output_formatter(),
+        "content_sanitizer": make_content_sanitizer(),
         "processing_result": ProcessingResult,
         "pipeline_status": PipelineStatus(),
         "logger": logger,

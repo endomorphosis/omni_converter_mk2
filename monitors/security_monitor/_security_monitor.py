@@ -7,10 +7,9 @@ from __future__ import annotations
 from contextlib import closing
 import os
 import re
-from typing import Any, Callable, Optional
 
 
-from types_ import Configs, Logger, SecurityResult, SanitizedContent, Content
+from types_ import Any, Callable, Optional, Configs, Logger, SecurityResult
 from supported_formats import SupportedFormats
 import zipfile
 import tarfile
@@ -21,7 +20,7 @@ class SecurityMonitor:
     """
     Security manager for the Omni-Converter.
     
-    This class handles security validation and content sanitization.
+    This class handles security validation.
     
     Attributes:
         file_size_limits (dict[str, int]): Maximum file size limits by format (in bytes).
@@ -37,21 +36,14 @@ class SecurityMonitor:
         self.configs = configs
         self.resources = resources
 
-        self._dangerous_patterns:          list[re.Pattern] = self.resources['dangerous_patterns']
-        self._executable_extensions:       list[str] = self.resources['executable_extensions']
-        self._file_size_limits:            dict[str, int] = self.resources['file_size_limits_in_bytes']
-        #self._format_names:                dict[str, list[str]] = self.resources['format_names']
-        self._pii_detection:               list[tuple[re.Pattern, str]] = self.resources['pii_detection_regex']
-        self._remove_active_content_regex: list[re.Pattern] = self.resources['remove_active_content_regex']
-        self._remove_scripts_regex:        list[re.Pattern] = self.resources['remove_scripts_regex']
-        self._security_rules:              dict[str, Any] = self.resources['security_rules']
-        self._sensitive_keys:              list[str] = self.resources['sensitive_keys']
-        self._supported_formats_object:    SupportedFormats = SupportedFormats # TODO Move this into the constructor after testing.
+        self._dangerous_patterns:    list[re.Pattern] = self.resources['dangerous_patterns']
+        self._executable_extensions: list[str] = self.resources['executable_extensions']
+        self._file_size_limits:      dict[str, int] = self.resources['file_size_limits_in_bytes']
 
-        # Define pydantic classes
-        self._security_result:   SecurityResult   = self.resources['security_result']
-        self._sanitized_content: SanitizedContent = self.resources['sanitized_content']
-        self._logger:            Logger           = self.resources['logger']
+        self._security_rules:           dict[str, Any]   = self.resources['security_rules']
+        self._supported_formats_object: SupportedFormats = SupportedFormats # TODO Move this into the constructor after testing.
+        self._security_result:          SecurityResult   = self.resources['security_result']
+        self._logger:                   Logger           = self.resources['logger']
 
         # All formats are allowed by default
         self.allowed_formats: list[str] = [] # Empty means all formats are allowed
@@ -571,93 +563,6 @@ class SecurityMonitor:
 
         return is_safe, risk_level, issues
 
-
-    def sanitize_content(self, content: 'Content') -> SanitizedContent:
-        """
-        Sanitize content for security.
-        
-        Args:
-            content: The content to sanitize.
-            
-        Returns:
-            Sanitized content.
-        """
-        if not self._security_rules["sanitize_content"]:
-            # Return content as-is if sanitization is disabled
-            return self._sanitized_content(
-                content=content,
-                sanitization_applied=["none"],
-                removed_content={}
-            )
-        
-        text = content.text
-        metadata = content.metadata.copy() if content.metadata else {}
-        sections = content.sections.copy() if content.sections else []
-        applied_sanitizers = []
-        removed_content = {}
-        
-        # Apply sanitization rules
-        if self._security_rules["remove_scripts"]:
-            text, script_count = self._remove_scripts(text)
-            if script_count > 0:
-                applied_sanitizers.append("remove_scripts")
-                removed_content["scripts"] = script_count
-        
-        if self._security_rules["remove_active_content"]:
-            text, active_count = self._remove_active_content(text)
-            if active_count > 0:
-                applied_sanitizers.append("remove_active_content")
-                removed_content["active_content"] = active_count
-        
-        if self._security_rules["remove_personal_data"]:
-            text, pii_count = self._remove_personal_data(text)
-            if pii_count > 0:
-                applied_sanitizers.append("remove_personal_data")
-                removed_content["personal_data"] = pii_count
-        
-        if self._security_rules["remove_metadata"]:
-            metadata, removed_keys = self._sanitize_metadata(metadata)
-            if removed_keys:
-                applied_sanitizers.append("remove_metadata")
-                removed_content["metadata_keys"] = removed_keys
-        
-        # Apply the sanitized content back to the content object
-        content.metadata = metadata
-        content.sections = sections
-        content.text = text
-
-        return self._sanitized_content(
-            content=content,
-            sanitization_applied=applied_sanitizers,
-            removed_content=removed_content
-        )
-
-    def set_security_rules(self, rules: dict[str, Any]) -> None:
-        """Set the dictionary of security rules."""
-        for key, value in rules.items():
-            if key in self._security_rules:
-                self._security_rules[key] = value
-            else:
-                self._logger.warning(f"Unknown security rule: {key}")
-        
-        self._logger.info("Security rules updated", {"rules": self._security_rules})
-    
-    def set_allowed_formats(self, formats: list[str]) -> None:
-        """Set the list of allowed formats."""
-        self.allowed_formats = formats
-        self._logger.info(f"Allowed formats updated '{self.allowed_formats}'")
-    
-    def set_file_size_limits(self, limits: dict[str, int]) -> None:
-        """Set file size limits.
-        
-        Args:
-            limits: Dictionary of file size limits by format (in bytes).
-        """
-        for key, value in limits.items(): # TODO Add pydantic validation here.
-            self._file_size_limits[key] = value
-        
-        self._logger.info(f"File size limits updated to '{self._file_size_limits}'")
-    
     def _is_executable(self, file_path: str) -> bool:
         """
         Check if a file is executable.
@@ -681,93 +586,31 @@ class SecurityMonitor:
             return os.access(file_path, os.X_OK)
         except Exception:
             return False
-    
-    def _remove_scripts(self, text: str) -> tuple[str, int]:
-        """
-        Remove script content from text.
-        
-        Args:
-            text: The text to sanitize.
-            
-        Returns:
-            Tuple of (sanitized text, count of items removed).
-        """
-        # Remove the following: script tags, javascript: URLs, VBScript, eval() and similar
-        count = 0
-        new_text = text
-        for regex in self._remove_scripts_regex:
-            flags = re.IGNORECASE | re.DOTALL
-            new_text, removal_count = re.subn(regex, "", new_text, flags=flags)
-            count += removal_count
-        return new_text, count
-    
-    def _remove_active_content(self, text: str) -> tuple[str, int]:
-        """
-        Remove active content from text.
-        
-        Args:
-            text: The text to sanitize.
-            
-        Returns:
-            Tuple of (sanitized text, count of items removed).
-        """
-        # Remove active content like iframes, objects, embeds, applets, forms
-        count = 0
-        new_text = text
-        for regex in self._remove_active_content_regex:
-            flags = re.IGNORECASE | re.DOTALL
-            new_text, removal_count = re.subn(regex, "", new_text, flags=flags)
-            count += removal_count
 
-        return new_text, count
+    def set_security_rules(self, rules: dict[str, Any]) -> None:
+        """Set the dictionary of security rules."""
+        for key, value in rules.items():
+            if key in self._security_rules:
+                self._security_rules[key] = value
+            else:
+                self._logger.warning(f"Unknown security rule: {key}")
+        
+        self._logger.info("Security rules updated", {"rules": self._security_rules})
+
+    def set_allowed_formats(self, formats: list[str]) -> None:
+        """Set the list of allowed formats."""
+        self.allowed_formats = formats
+        self._logger.info(f"Allowed formats updated '{self.allowed_formats}'")
     
-    def _remove_personal_data(self, text: str) -> tuple[str, int]:
-        """
-        Remove personal data from text.
+    def set_file_size_limits(self, limits: dict[str, int]) -> None:
+        """Set file size limits.
         
         Args:
-            text: The text to sanitize.
-            
-        Returns:
-            Tuple of (sanitized text, count of items removed).
+            limits: Dictionary of file size limits by format (in bytes).
         """
-        count = 0
-        new_text = text
-        # Very basic PII detection and removal (not comprehensive) TODO see constants.py
-        for pattern, replacement in self._pii_detection:
-            new_text, replacements = re.subn(pattern, replacement, new_text)
-            count += replacements
+        for key, value in limits.items(): # TODO Add pydantic validation here.
+            self._file_size_limits[key] = value
         
-        return new_text, count
+        self._logger.info(f"File size limits updated to '{self._file_size_limits}'")
     
-    def _sanitize_metadata(self, metadata: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-        """
-        Sanitize metadata.
-        
-        Args:
-            metadata: The metadata to sanitize.
-            
-        Returns:
-            Tuple of (sanitized metadata, list of removed keys).
-        """
-        if not metadata:
-            return metadata, []
-
-        removed_keys = []
-        sanitized_metadata = {}
-        
-        for key, value in metadata.items():
-            # Check if key contains sensitive information
-            should_remove = False
-            for sensitive in self._sensitive_keys:
-                if sensitive.lower() in key.lower():
-                    removed_keys.append(key)
-                    should_remove = True
-                    break
-            
-            if not should_remove:
-                sanitized_metadata[key] = value
-        
-        return sanitized_metadata, removed_keys
-
 

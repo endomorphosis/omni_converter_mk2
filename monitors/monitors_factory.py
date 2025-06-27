@@ -5,7 +5,7 @@ from utils.hardware import Hardware
 
 
 from ._resource_monitor import ResourceMonitor
-from .security_monitor import SecurityMonitor, SecurityResult, SanitizedContent
+from .security_monitor import SecurityMonitor, SecurityResult
 from ._error_monitor import ErrorMonitor
 
 from ._constants import Constants
@@ -61,7 +61,6 @@ def make_security_monitor() -> SecurityMonitor:
         "security_rules": Constants.SecurityMonitor.SECURITY_RULES,
         "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS,
         "security_result": SecurityResult,
-        "sanitized_content": SanitizedContent,
         "logger": logger,
     }
 

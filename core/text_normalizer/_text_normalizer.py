@@ -14,9 +14,24 @@ class TextNormalizer:
     This class normalizes text content by applying various normalization functions.
     
     Attributes:
+        resources (dict[str, Any]): Dictionary of callable objects and dependencies.
+        configs (Configs): Configuration settings.
         normalizers (dict[str, NormalizerFunc]): Dictionary of normalizer functions.
-    """
 
+    Properties:
+        applied_normalizers (list[str]): List of registered normalizer names.
+
+    Public Methods:
+        normalize_text: Normalize text content using specified normalizers.
+        register_normalizer: Register a new normalizer function.
+
+    Private Methods:
+        _register_default_normalizers: Register the default text normalizers.
+        _normalize_whitespace: Normalize whitespace in text.
+        _normalize_line_endings: Normalize line endings in text.
+        _normalize_empty_lines: Normalize empty lines in text.
+        _normalize_unicode: Normalize Unicode characters in text.
+    """
     def __init__(self, 
                  resources: dict[str, Any] = None, 
                  configs: 'Configs' = None
