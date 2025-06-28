@@ -23,9 +23,16 @@ from .monitors_factory import (
     make_error_monitor, 
     make_security_monitor
 )
+from ._resource_monitor import ResourceMonitor
+from ._error_monitor import ErrorMonitor
+from .security_monitor import SecurityMonitor, SecurityResult
 
 __all__ = [
     "make_resource_monitor",
     "make_error_monitor",
     "make_security_monitor",
+    "ResourceMonitor",
+    "ErrorMonitor",
+    "SecurityMonitor",
+    "SecurityResult",
 ]

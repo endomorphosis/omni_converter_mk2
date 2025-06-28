@@ -18,7 +18,7 @@ class BatchProcessor:
         max_batch_size (int): Maximum number of files to process in a single batch.
         continue_on_error (bool): Whether to continue processing if errors occur.
         max_threads (int): Maximum number of worker threads for parallel processing.
-        cancel_requested (bool): Whether processing cancellation has been requested.
+        cancellation_requested (bool): Whether processing cancellation has been requested.
     """
     
     def __init__(
@@ -47,7 +47,7 @@ class BatchProcessor:
         self.max_threads = self.configs.resources.max_threads
         self.continue_on_error = self.configs.processing.continue_on_error
 
-        self.cancel_requested = False
+        self.cancellation_requested = False
         self._lock = threading.RLock()  # For thread safety
 ```
 
@@ -276,10 +276,10 @@ Args:
 * **Method:** True
 * **Class:** BatchProcessor
 
-## set_max_workers
+## set_max_threads
 
 ```python
-def set_max_workers(self, count: int) -> None:
+def set_max_threads(self, count: int) -> None:
     """
     Set the maximum number of worker threads for parallel processing.
 

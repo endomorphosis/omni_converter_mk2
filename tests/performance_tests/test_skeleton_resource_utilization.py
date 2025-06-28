@@ -217,7 +217,7 @@ class ResourceUtilizationTest(unittest.TestCase):
                     continue
                 
                 # Reset the resource monitor's statistics
-                initial_usage = self.resource_monitor.current_usage
+                initial_usage = self.resource_monitor.current_resource_usage
                 
                 # If we have real files, process them with the batch processor
                 if not batch.get('synthetic', False) and not batch['files'][0].get('synthetic', False):
@@ -239,9 +239,9 @@ class ResourceUtilizationTest(unittest.TestCase):
                     self._simulate_batch_processing(batch)
                 
                 # Get resource usage after processing
-                current_usage = self.resource_monitor.current_usage
-                peak_memory_gb = current_usage.get('memory', 0) / 1024  # Convert MB to GB
-                peak_cpu_percent = current_usage.get('cpu', 0)
+                current_resource_usage = self.resource_monitor.current_resource_usage
+                peak_memory_gb = current_resource_usage.get('memory', 0) / 1024  # Convert MB to GB
+                peak_cpu_percent = current_resource_usage.get('cpu', 0)
                 
                 # For more accurate memory measurement, also check process directly
                 try:
@@ -360,9 +360,9 @@ class ResourceUtilizationTest(unittest.TestCase):
                     _ = 3.1415 ** 2.7182
             
             # Check current usage
-            current_usage = self.resource_monitor.current_usage
-            memory_mb = current_usage.get('memory', 0)
-            cpu_percent = current_usage.get('cpu', 0)
+            current_resource_usage = self.resource_monitor.current_resource_usage
+            memory_mb = current_resource_usage.get('memory', 0)
+            cpu_percent = current_resource_usage.get('cpu', 0)
             
             print(f"Current usage - Memory: {memory_mb:.2f} MB, CPU: {cpu_percent:.2f}%")
             

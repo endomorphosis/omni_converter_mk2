@@ -283,11 +283,11 @@ classDiagram
     class ResourceMonitor {
         -float cpu_limit_percent
         -int memory_limit
-        -dict current_usage
+        -dict current_resource_usage
         -bool active_monitoring
         +start_monitoring() void
         +stop_monitoring() void
-        +current_usage dict
+        +current_resource_usage dict
         +are_resources_available bool
         +set_resource_limits(cpu, memory) void
     }

@@ -20,6 +20,7 @@ from .text_normalizer import make_text_normalizer
 from .output_formatter import make_output_formatter
 from .content_extractor import make_content_extractor
 from .content_sanitizer import make_content_sanitizer, ContentSanitizer
+from monitors import make_security_monitor, SecurityMonitor
 
 
 def make_processing_pipeline() -> ProcessingPipeline:
@@ -38,6 +39,7 @@ def make_processing_pipeline() -> ProcessingPipeline:
         processing_result: ProcessingResult
         pipeline_status: PipelineStatus
         content_sanitizer: ContentSanitizer
+        security_monitor: SecurityMonitor
         logger: Logger
         hashlib: ModuleType
 
@@ -48,6 +50,7 @@ def make_processing_pipeline() -> ProcessingPipeline:
         "text_normalizer": make_text_normalizer(),
         "output_formatter": make_output_formatter(),
         "content_sanitizer": make_content_sanitizer(),
+        "security_monitor": make_security_monitor(),
         "processing_result": ProcessingResult,
         "pipeline_status": PipelineStatus(),
         "logger": logger,

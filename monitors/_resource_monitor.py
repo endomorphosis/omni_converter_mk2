@@ -20,7 +20,7 @@ class ResourceMonitor:
     Attributes:
         cpu_limit_percent (float): Maximum CPU usage percentage (0-100).
         memory_limit (int): Maximum memory usage in MB.
-        current_usage (dict[str, float]): Current resource usage.
+        current_resource_usage (dict[str, float]): Current resource usage.
         active_monitoring (bool): Whether active monitoring is enabled.
         monitoring_thread: Thread for active monitoring.
         monitoring_interval (float): Interval for active monitoring in seconds.
@@ -56,12 +56,13 @@ class ResourceMonitor:
         self._get_num_open_files:            Callable = self.resources['get_open_files']
         self._get_shared_memory_usage_in_mb: Callable = self.resources['get_shared_memory_usage_in_mb']
         self._get_memory_percent:            Callable = self.resources['get_virtual_memory_in_percent']
+        self._get_num_cpu_cores :            Callable = self.resources['get_num_cpu_cores']
         self._logger:                        Logger   = self.resources['logger']
 
         self.active_monitoring: bool = False
         self.monitoring_thread: Thread = None
         self._monitor_thread_timeout: float = 2.0  # Timeout for monitoring thread join
-        self._current_usage: dict[str, Any] = {"cpu": 0.0, "memory": 0}
+        self._current_resource_usage: dict[str, Any] = {"cpu": 0.0, "memory": 0}
         self._LIMIT: float = 0.9
 
     def start_monitoring(self) -> bool:
@@ -93,10 +94,10 @@ class ResourceMonitor:
         """Internal monitoring loop."""
         while self.active_monitoring:
             try:
-                self.current_usage = self._get_resource_usage()
+                self.current_resource_usage = self._get_resource_usage()
                 # Log if approaching limits
-                cpu_usage = self.current_usage["cpu"]
-                memory_usage = self.current_usage["rss_memory"]
+                cpu_usage = self.current_resource_usage["cpu"]
+                memory_usage = self.current_resource_usage["rss_memory"]
 
                 if cpu_usage > (self.cpu_limit_percent * self._LIMIT):
                     self._logger.warning(f"High CPU usage: {cpu_usage:.1f}%")
@@ -110,7 +111,7 @@ class ResourceMonitor:
                 time.sleep(self.monitoring_interval * 2)  # Back off on error
 
     def _get_resource_usage(self) -> dict[str, float]:
-        """Get current resource usage.
+        """Get current resource usage for the entire program.
 
         Returns:
             A dictionary with current CPU and memory usage.
@@ -122,11 +123,12 @@ class ResourceMonitor:
             "disk_usage": self._get_disk_usage_in_percent(),
             "open_files": self._get_num_open_files(),
             "shared_memory": self._get_shared_memory_usage_in_mb(),
+            "cpu_count": self._get_num_cpu_cores()
             # "vram": self._get_memory_vms_usage_in_mb() # TODO Add VRAM support.
         }
 
     @property
-    def current_usage(self) -> dict[str, float]:
+    def current_resource_usage(self) -> dict[str, float]:
         """Get current resource usage.
 
         Returns:
@@ -134,9 +136,9 @@ class ResourceMonitor:
         """
         # If not actively monitoring, get current usage
         if not self.active_monitoring:
-            self._current_usage = self._get_resource_usage()
+            self._current_resource_usage = self._get_resource_usage()
 
-        return self._current_usage
+        return self._current_resource_usage
 
     def _log_detailed_memory_information_for_debug_purposes(self):
         """Log detailed memory usage information for debugging purposes.
@@ -169,7 +171,7 @@ class ResourceMonitor:
                 f"Limit={self.memory_limit}MB"
             )
 
-            usage = self.current_usage
+            usage = self.current_resource_usage
             # Check for system memory leak indicators
             if usage["rss_memory"] > (self.memory_limit * 0.8):
                 self._logger.warning(
@@ -189,7 +191,7 @@ class ResourceMonitor:
             A tuple of (is_available, reason), where reason is None if resources are available.
         """
         # Get current usage
-        usage = self.current_usage
+        usage = self.current_resource_usage
 
         # Log detailed memory information for debugging purposes
         self._log_detailed_memory_information_for_debug_purposes()
@@ -232,7 +234,7 @@ class ResourceMonitor:
         Returns:
             A dictionary with resource usage summary.
         """
-        usage = self.current_usage
+        usage = self.current_resource_usage
 
         return {
             "current": {

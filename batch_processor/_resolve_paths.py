@@ -46,13 +46,16 @@ def resolve_paths(file_paths: list[str] | str, logger: Logger) -> list[str]:
         List of resolved file paths.
     """
     resolved = []
-    # Handle string input (single file or directory)
-    match file_paths:
-        case str():
-            resolved = [_resolve_path(file_paths, resolved, logger)]
-        case list():
-            resolved = [_resolve_path(path, resolved, logger) for path in file_paths]
-        case _:
-            raise ValueError("Invalid input type for file_paths. Must be a string or list of strings.")
+    
+    # Handle input based on type
+    if isinstance(file_paths, str):
+        # Single path - consume the generator and extend the resolved list
+        resolved.extend(_resolve_path(file_paths, logger))
+    elif isinstance(file_paths, list):
+        # Process each path in the list
+        for path in file_paths:
+            resolved.extend(_resolve_path(path, logger))
+    else:
+        raise ValueError("Invalid input type for file_paths. Must be a string or list of strings.")
 
     return resolved

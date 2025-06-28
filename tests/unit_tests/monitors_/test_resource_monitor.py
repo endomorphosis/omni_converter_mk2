@@ -80,8 +80,8 @@ class TestResourceMonitor(unittest.TestCase):
         self.assertEqual(self.resource_monitor.monitoring_interval, 0.1)
         self.assertFalse(self.resource_monitor.active_monitoring)
         self.assertIsNone(self.resource_monitor.monitoring_thread)
-        self.assertIn("cpu", self.resource_monitor.current_usage)
-        self.assertIn("memory", self.resource_monitor.current_usage)
+        self.assertIn("cpu", self.resource_monitor.current_resource_usage)
+        self.assertIn("memory", self.resource_monitor.current_resource_usage)
 
     @patch('utils.hardware.psutil')
     def test_start_monitoring(self, mock_psutil):
@@ -167,7 +167,7 @@ class TestResourceMonitor(unittest.TestCase):
         process_mock.open_files.return_value = ["file1"]
         
         # Get current usage without active monitoring
-        usage = self.resource_monitor.current_usage
+        usage = self.resource_monitor.current_resource_usage
         
         # Check usage values
         self.assertEqual(usage["cpu"], 20.0)

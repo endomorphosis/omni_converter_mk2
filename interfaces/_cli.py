@@ -274,7 +274,7 @@ class CLI:
         # Configure batch processor
         self._batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
         self._batch_processor.set_continue_on_error(options.get('continue_on_error', True))
-        self._batch_processor.set_max_workers(options.get('max_threads', 4) if options.get('parallel', False) else 1)
+        self._batch_processor.set_max_threads(options.get('max_threads', 4) if options.get('parallel', False) else 1)
         
         # Create progress callback
         pbar = None
@@ -449,7 +449,7 @@ class CLI:
             
             # Print resource usage if verbose
             if args.verbose:
-                usage = self._resource_monitor.current_usage
+                usage = self._resource_monitor.current_resource_usage
                 print("\nResource Usage:")
                 print(f"CPU: {usage.get('cpu_percent', 'N/A')}%")
                 print(f"Memory: {usage.get('memory_mb', 'N/A')} MB")

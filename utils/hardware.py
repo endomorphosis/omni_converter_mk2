@@ -1,7 +1,7 @@
 from functools import cache
 import os
 import subprocess
-
+import platform
 
 try:
     import psutil
@@ -10,7 +10,6 @@ except ImportError:
 
 
 from types_ import Any, NamedTuple
-
 
 _PID = os.getpid()
 
@@ -27,9 +26,35 @@ _BYTE_MAPPING = {
     "bit": 1 / 8
 }
 
+
+def _get_info_from_nvidia_smi(command: list[str]) -> dict[str, Any]:
+    """Run nvidia-smi command and return parsed output."""
+    # We purposefully call nvidia-smi as a subprocess,
+    # Otherwise we'd have to load-in a specific dependency like pynvml or torch.
+    # TODO This only works with NVIDIA GPUs. Expand this to other vendors.
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        return {'error': f'nvidia-smi command failed: {str(e)}\ncmd: {command}\nresult: {result}'}
+    except FileNotFoundError:
+        return {'error': 'nvidia-smi not found. Please install NVIDIA System Management Interface program.'}
+    except Exception as e:
+        return {'error': f'Unexpected Error occurred: {str(e)}'}
+
+
 class Hardware:
     """
-    Hardware is a utility class that provides static methods to monitor system and process resource usage.
+    Hardware is a utility class that provides static methods to monitor system and process hardware resource usage.
+    This includes:
+    - CPU usage
+    - Virtual memory usage
+    - Memory information (RSS and VMS)
+    - Disk usage
+    - Number of open files
+    - Shared memory usage
+    - Number of CPU cores
+    - VRAM information (if CUDA is available)
 
     Methods:
         _get_cpu_usage() -> float:
@@ -139,25 +164,29 @@ class Hardware:
     def get_num_cpu_cores(include_logical: bool = False) -> int:
         """Get the number of logical CPUs available."""
         return psutil.cpu_count(logical=include_logical)
+    
+    @staticmethod
+    def get_cpu_info() -> dict[str, Any]:
+        """Get CPU information including model, frequency, and core count."""
+        cpu_info = {
+            'model':  platform.processor(),
+            'frequency': psutil.cpu_freq().current,
+            'cores': psutil.cpu_count(logical=False),
+            'logical_cores': psutil.cpu_count(logical=True)
+        }
+        return cpu_info
 
     @staticmethod
     def get_vram_info() -> dict[str, Any]:
         """Get CUDA GPU memory information if available."""
-        # We purposefully call nvidia-smi as a subprocess,
-        # Otherwise we'd have to load-in a specific dependency like pynvml or torch.
-        try:
-            # Run nvidia-smi command to get GPU memory info
-            result = subprocess.run([
-                'nvidia-smi', 
-                '--query-gpu=index,memory.total,memory.used,memory.free', 
-                '--format=csv,noheader,nounits'
-            ], capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError:
-            return {'error': 'nvidia-smi command failed. CUDA may not be available.'}
-        except FileNotFoundError:
-            return {'error': 'nvidia-smi not found. Please install NVIDIA drivers.'}
-        except Exception as e:
-            return {'error': f'Error occurred: {str(e)}'}
+        cmd = [
+            'nvidia-smi', 
+            '--query-gpu=index,memory.total,memory.used,memory.free', 
+            '--format=csv,noheader,nounits'
+        ]
+        result = _get_info_from_nvidia_smi(cmd)
+        if 'error' in result:
+            return result
         else:
             cuda_memory_info = {}
 
@@ -176,3 +205,32 @@ class Hardware:
                             'used_percent': (used_mb / total_mb) * 100 if total_mb > 0 else 0
                         }
             return cuda_memory_info
+
+
+    @staticmethod
+    def get_gpu_info() -> dict[str, Any]:
+        """Get GPU information including model, total physical VRAM, etc."""
+        cmd = [
+            'nvidia-smi',
+            '--query-gpu=index,name,memory.total,driver_version,temperature.gpu',
+            '--format=csv,noheader,nounits'
+        ]
+        result = _get_info_from_nvidia_smi(cmd)
+        if 'error' in result:
+            return result
+        else:
+            gpu_info = {}
+            
+            for line in result.strip().split('\n'):
+                if line:
+                    parts = [part.strip() for part in line.split(',')]
+                    if len(parts) == 5:
+                        gpu_index, name, total_memory_mb, driver_version, temperature = parts
+                        gpu_info[f'gpu_{gpu_index}'] = {
+                            'name': name,
+                            'total_memory_mb': float(total_memory_mb),
+                            'total_memory_gb': float(total_memory_mb) / _BYTE_MAPPING["MiB"],
+                            'driver_version': driver_version,
+                            'temperature_celsius': float(temperature) if temperature != '[Not Supported]' else None
+                        }
+            return gpu_info

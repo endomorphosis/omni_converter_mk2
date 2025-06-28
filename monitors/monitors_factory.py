@@ -15,6 +15,12 @@ import traceback
 
 
 def make_resource_monitor() -> ResourceMonitor:
+    """Factory function to create and configure a ResourceMonitor instance.
+
+    Returns:
+        ResourceMonitor: A configured monitor instance with hardware resource
+            tracking functions, logger, and system configurations.
+    """
     resources = {
         "get_cpu_usage_in_percent": Hardware.get_cpu_usage_in_percent,
         "get_virtual_memory_in_percent": Hardware.get_virtual_memory_in_percent,
@@ -24,11 +30,20 @@ def make_resource_monitor() -> ResourceMonitor:
         "get_disk_usage": Hardware.get_disk_usage_in_percent,
         "get_open_files": Hardware.get_num_open_files,
         "get_shared_memory_usage_in_mb": Hardware.get_shared_memory_usage_in_mb,
+        "get_num_cpu_cores": Hardware.get_num_cpu_cores,
+        "get_vram_info": Hardware.get_vram_info,
+        "get_cpu_info": Hardware.get_cpu_info,
+        "get_gpu_info": Hardware.get_gpu_info,
         "logger": logger,
     }
     return ResourceMonitor(resources=resources,configs=configs)
 
 def make_error_monitor() -> ErrorMonitor:
+    """Create an ErrorMonitor instance.
+
+    Returns:
+        ErrorMonitor: A configured ErrorMonitor instance ready for use.
+    """
     resources = {
         "logger": logger,
         "traceback": traceback,
@@ -40,13 +55,8 @@ def make_error_monitor() -> ErrorMonitor:
     return error_monitor
 
 def make_security_monitor() -> SecurityMonitor:
-    """
-    Create a security monitor instance.
-    
-    Args:
-        resources: Optional dictionary of resources for the security monitor.
-        configs: Optional configuration object.
-        
+    """Create a security monitor instance.
+
     Returns:
         An instance of SecurityMonitor.
     """

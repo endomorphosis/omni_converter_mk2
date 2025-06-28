@@ -7,13 +7,13 @@ from __future__ import annotations
 from contextlib import closing
 import os
 import re
+import zipfile
+import tarfile
+import tempfile
 
 
 from types_ import Any, Callable, Optional, Configs, Logger, SecurityResult
 from supported_formats import SupportedFormats
-import zipfile
-import tarfile
-import tempfile
 
 
 class SecurityMonitor:

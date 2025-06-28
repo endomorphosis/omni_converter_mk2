@@ -61,7 +61,7 @@
 #         else:
 #             self.failed_files += 1
     
-#     def complete(self) -> None:
+#     def mark_as_complete(self) -> None:
 #         """Mark the batch processing as complete."""
 #         # Only set end_time if it hasn't been set already
 #         if self.end_time is None:
@@ -184,7 +184,7 @@ class BatchResult:
     
     This class represents the result of processing a batch of files, including overall
     statistics and individual file results.
-    
+
     Attributes:
         total_files (int): Total number of files in the batch.
         successful_files (int): Number of files processed successfully.
@@ -193,6 +193,14 @@ class BatchResult:
         statistics (dict[str, Any]): Additional statistics about the batch processing.
         start_time (datetime): Time when the batch processing started.
         end_time (datetime): Time when the batch processing ended.
+
+    Methods:
+        add_result(result): Add a processing result to the batch.
+        mark_as_complete(): Mark the batch processing as complete.
+        get_summary(): Get a summary dictionary of the batch processing.
+        get_failed_files(): Get list of files that failed processing.
+        get_successful_files(): Get list of successfully processed files.
+        to_dict(): Convert to dictionary representation.
     """
     results: list[ProcessingResult] = field(default_factory=list)
     statistics: dict[str, Any] = field(default_factory=dict)
@@ -246,7 +254,7 @@ class BatchResult:
         else:
             self.failed_files += 1
     
-    def complete(self) -> None:
+    def mark_as_complete(self) -> None:
         """Mark the batch processing as complete."""
         # Only set end_time if it hasn't been set already
         if self.end_time is None:

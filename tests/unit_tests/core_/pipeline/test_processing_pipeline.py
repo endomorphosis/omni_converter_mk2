@@ -36,6 +36,7 @@ from core.content_extractor._content_extractor import ContentExtractor
 from core.text_normalizer._text_normalizer import TextNormalizer
 from core.output_formatter._output_formatter import OutputFormatter
 from core.content_sanitizer import ContentSanitizer
+from monitors import make_security_monitor, SecurityMonitor
 
 class _ProcessingPipelineResources(TypedDict):
     file_format_detector: Callable
@@ -45,6 +46,7 @@ class _ProcessingPipelineResources(TypedDict):
     output_formatter: Callable
     processing_result: ProcessingResult
     pipeline_status: PipelineStatus
+    security_monitor: SecurityMonitor
     logger: Logger
     hashlib: ModuleType
 
@@ -55,6 +57,7 @@ real_resources: _ProcessingPipelineResources = {
     "content_sanitizer": make_content_sanitizer(),
     "text_normalizer": make_text_normalizer(),
     "output_formatter": make_output_formatter(),
+    "security_monitor": make_security_monitor(),
     "processing_result": ProcessingResult,
     "pipeline_status": PipelineStatus(),
     "logger": logger,
@@ -72,6 +75,7 @@ def make_mock_resources():
         'output_formatter': MagicMock(spec=OutputFormatter),
         'processing_result': MagicMock(spec=ProcessingResult),
         'pipeline_status': MagicMock(spec=PipelineStatus),
+        'security_monitor': MagicMock(spec=SecurityMonitor),
         'logger': MagicMock(spec=Logger),
         'hashlib': MagicMock(spec=hashlib),
     }
@@ -140,6 +144,8 @@ class TestProcessingPipelineInit(unittest.TestCase):
         self.assertIsInstance(pipeline._text_normalizer, TextNormalizer)
         self.assertIsInstance(pipeline._output_formatter, OutputFormatter)
         self.assertIsInstance(pipeline._processing_result, ProcessingResult)
+        self.assertIsInstance(pipeline._format_detector, FileFormatDetector)
+        self.assertIsInstance(pipeline._security_monitor, SecurityMonitor)
         self.assertIsInstance(pipeline._logger, Logger)
         self.assertIsInstance(pipeline._status, PipelineStatus)
         self.assertIsInstance(pipeline._hashlib, ModuleType)
@@ -160,6 +166,7 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
             'output_formatter': MagicMock(),
             'processing_result': MagicMock(),
             'pipeline_status': MagicMock(),
+            'security_monitor': MagicMock(),
             'logger': MagicMock(),
             'hashlib': MagicMock()
         }
@@ -943,6 +950,7 @@ class TestProcessingPipelineIntegration(unittest.TestCase):
             'output_formatter': MagicMock(),
             'processing_result': MagicMock(),
             'pipeline_status': MagicMock(),
+            'security_monitor': MagicMock(),
             'logger': MagicMock(),
             'hashlib': MagicMock()
         }

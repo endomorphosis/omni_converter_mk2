@@ -11,18 +11,19 @@ from ._pipeline_status import PipelineStatus
 from ._processing_result import ProcessingResult
 from types_ import (
     Any,
-    ModuleType,
     Callable,
-    Configs, 
-    Logger, 
-    Optional,
-    StatusListenerFunc,
+    Configs,
     ContentExtractor,
-    FileFormatDetector,
-    TextNormalizer,
-    OutputFormatter,
-    FileValidator,
     ContentSanitizer,
+    FileFormatDetector,
+    FileValidator,
+    Logger,
+    ModuleType,
+    Optional,
+    OutputFormatter,
+    SecurityMonitor,
+    StatusListenerFunc,
+    TextNormalizer,
 )
 
 
@@ -71,6 +72,7 @@ class ProcessingPipeline:
         self._text_normalizer:   'TextNormalizer'     = self.resources['text_normalizer']
         self._output_formatter:  'OutputFormatter'    = self.resources['output_formatter']
         self._content_sanitizer: 'ContentSanitizer'   = self.resources['content_sanitizer']
+        self._security_monitor:  'SecurityMonitor'    = self.resources['security_monitor']
 
         self._processing_result: ProcessingResult = self.resources['processing_result']
         self._logger:            Logger           = self.resources['logger']
@@ -144,7 +146,6 @@ class ProcessingPipeline:
             if category is None:
                 errors.append(f"Format '{format_name}' is not in any supported category for file: {file_path}")
 
-
             self._logger.info(f"Detected format: {format_name} ({category})", {'file_path': file_path})
 
             # Validate file
@@ -161,11 +162,25 @@ class ProcessingPipeline:
                     errors=errors
                 )
 
+            # Perform security validation
+            security_result = self._security_monitor.validate_security(file_path)
+            if not security_result.is_safe:
+                # Handle security issues
+                error_message = f"Security validation failed: {', '.join(security_result.issues)}"
+                self._logger.warning(error_message, {'file_path': file_path})
+                return self._make_failure_result(
+                    file_path=file_path,
+                    output_path=output_path,
+                    format_name=format_name if 'format_name' in locals() else None,
+                    errors=errors
+                )
+
             # Extract content
             self._logger.debug(f"File is valid. Extracting content from '{file_path}' with format '{format_name}'")
             content = self._content_extractor.extract_content(file_path, format_name, options)
 
             # Normalize text in content
+            # TODO This needs to be skipped if it's a storage/archive format.
             self._logger.debug(f"Normalizing text from '{file_path}'")
             normalized_content = self._text_normalizer.normalize_text(content, normalizers)
 
@@ -249,7 +264,7 @@ class ProcessingPipeline:
                                ) -> ProcessingResult:
             str_errors = [str(e) for e in errors if isinstance(e, Exception)]
 
-            self._logger.error(f"Validation failed: {','.join(str_errors)}", {'file_path': file_path})
+            self._logger.error(f"Processing failed: {','.join(str_errors)}", {'file_path': file_path})
             result = self._processing_result(
                 success=False,
                 file_path=file_path,

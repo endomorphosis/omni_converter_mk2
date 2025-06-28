@@ -2,6 +2,8 @@ import threading as _threading
 import subprocess as _sub
 from logger import logger as _logger
 
+import resource
+
 class _classproperty:
     """Helper decorator to turn class methods into properties."""
     def __init__(self, func):

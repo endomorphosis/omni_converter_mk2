@@ -216,7 +216,7 @@ class TestBatchResultComplete(unittest.TestCase):
     def test_complete_sets_end_time(self):
         """
         GIVEN a BatchResult with end_time=None
-        WHEN complete() is called
+        WHEN mark_as_complete() is called
         THEN expect:
             - end_time is set to current time
             - end_time is after start_time
@@ -224,7 +224,7 @@ class TestBatchResultComplete(unittest.TestCase):
         start_time = self.batch_result.start_time
         before_complete = datetime.now()
         
-        self.batch_result.complete()
+        self.batch_result.mark_as_complete()
         
         after_complete = datetime.now()
         
@@ -236,24 +236,24 @@ class TestBatchResultComplete(unittest.TestCase):
     def test_complete_when_already_completed(self):
         """
         GIVEN a BatchResult with end_time already set
-        WHEN complete() is called again
+        WHEN mark_as_complete() is called again
         THEN expect:
             - end_time remains unchanged
             - No errors raised
         """
         # Complete once
-        self.batch_result.complete()
+        self.batch_result.mark_as_complete()
         original_end_time = self.batch_result.end_time
 
         # Complete again
-        self.batch_result.complete()
+        self.batch_result.mark_as_complete()
 
         self.assertEqual(self.batch_result.end_time, original_end_time)
     
     def test_complete_updates_statistics(self):
         """
         GIVEN a BatchResult with results
-        WHEN complete() is called
+        WHEN mark_as_complete() is called
         THEN expect:
             - statistics includes duration_seconds
             - statistics includes success_rate
@@ -266,7 +266,7 @@ class TestBatchResultComplete(unittest.TestCase):
             result.file_path = f"/path/to/file{i}.txt"
             self.batch_result.add_result(result)
         
-        self.batch_result.complete()
+        self.batch_result.mark_as_complete()
         
         # Check that statistics were updated
         self.assertIn("duration_seconds", self.batch_result.statistics)
@@ -321,7 +321,7 @@ class TestBatchResultGetSummary(unittest.TestCase):
             result.file_path = f"/path/to/file{i}.txt"
             batch_result.add_result(result)
         
-        batch_result.complete()
+        batch_result.mark_as_complete()
         summary = batch_result.get_summary()
         
         self.assertEqual(summary["total_files"], 5)
@@ -582,7 +582,7 @@ class TestBatchResultToDict(unittest.TestCase):
             - All statistics preserved
         """
         batch_result = BatchResult()
-        batch_result.complete()
+        batch_result.mark_as_complete()
         
         result_dict = batch_result.to_dict()
         
@@ -677,7 +677,7 @@ class TestBatchResultStringRepresentation(unittest.TestCase):
             result.file_path = f"/path/to/file{i}.txt"
             batch_result.add_result(result)
         
-        batch_result.complete()
+        batch_result.mark_as_complete()
         str_repr = str(batch_result)
         
         self.assertIn("4", str_repr)  # Total files
@@ -704,7 +704,7 @@ class TestBatchResultStringRepresentation(unittest.TestCase):
             result.file_path = f"/path/to/failed{i}.txt"
             batch_result.add_result(result)
         
-        batch_result.complete()
+        batch_result.mark_as_complete()
         str_repr = str(batch_result)
         
         self.assertIn("3", str_repr)  # Total files

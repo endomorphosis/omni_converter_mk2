@@ -156,9 +156,9 @@ class PythonAPI:
             self._batch_processor.set_continue_on_error(options["continue_on_error"])
         
         if "max_threads" in options and "parallel" in options and options["parallel"]:
-            self._batch_processor.set_max_workers(options["max_threads"])
+            self._batch_processor.set_max_threads(options["max_threads"])
         else:
-            self._batch_processor.set_max_workers(1)  # Sequential mode
+            self._batch_processor.set_max_threads(1)  # Sequential mode
         
         # Configure resource limits if specified
         if ("max_cpu" in options and options["max_cpu"] is not None) or \

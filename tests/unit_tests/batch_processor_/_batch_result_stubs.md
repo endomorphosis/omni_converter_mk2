@@ -56,7 +56,7 @@ Args:
 ## complete
 
 ```python
-def complete(self) -> None:
+def mark_as_complete(self) -> None:
     """
     Mark the batch processing as complete.
     """
