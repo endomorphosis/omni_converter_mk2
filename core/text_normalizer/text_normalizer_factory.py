@@ -1,8 +1,11 @@
+import importlib.util
+
 
 from ._text_normalizer import TextNormalizer
 from ._normalized_content import NormalizedContent
 from configs import configs
 from logger import logger
+
 
 def make_text_normalizer():
     """
@@ -14,5 +17,6 @@ def make_text_normalizer():
     resources = {
         "logger": logger,
         "normalized_content": NormalizedContent,
+        "importlib_util" : importlib.util,
     }
-    return TextNormalizer(resources=resources, configs=configs)  # Assuming TextNormalizer is the class to be instantiated.
+    return TextNormalizer(resources=resources, configs=configs)

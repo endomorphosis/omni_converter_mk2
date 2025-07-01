@@ -103,7 +103,7 @@ class FileFormatDetector:
 
         # Find the category for this format
         category = None
-        category = self._get_category_for_format(format_name)
+        category = self.get_format_category(format_name)
 
         # If the category is not found, this is an unsupported format
         if category is None:
@@ -158,22 +158,20 @@ class FileFormatDetector:
         else:
             return format_name
 
-
-    def _get_category_for_format(self, format_name: str) -> Optional[str]:
-        """Get the category for a format using injected format registry.
+    def get_format_category(self, format_name: str) -> Optional[str]:
+        """Get the category for a format
         
         Args:
             format_name: The format name.
             
         Returns:
-            The category if found, None otherwise.
+            str | None: The category if found, None otherwise.
         """
         for category, formats in self._format_registry.items():
             #self._logger.debug(f"Format set: {formats}")
             if format_name in formats:
                 return category
         return None
-
 
     def is_format_supported(self, format_name: str) -> bool:
         """
@@ -185,18 +183,4 @@ class FileFormatDetector:
         Returns:
             True if the format is supported, False otherwise.
         """
-        return self._get_category_for_format(format_name) is not None
-
-
-    def get_format_category(self, format_name: str) -> Optional[str]:
-        """
-        Get the category for a format.
-        
-        Args:
-            format_name: The format name.
-            
-        Returns:
-            The category if the format is supported, None otherwise.
-        """
-        return self._get_category_for_format(format_name)
-
+        return self.get_format_category(format_name) is not None

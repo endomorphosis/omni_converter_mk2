@@ -13,6 +13,50 @@ from dependencies import dependencies
 from types_ import Any, Callable, Configs, Logger, Content, Processor, Optional, DependencySpecificObject
 
 
+from pathlib import Path
+
+Path.home()
+
+path_ = Path("/home/lizardperson/")
+
+
+class SomeClass:
+
+    def __init__(self, path: Path):
+        self.path = path
+
+    def get_path(self) -> Path:
+        return self.path
+
+    async def process(self, data: bytes, options: Optional[dict[str, Any]] = None) -> Content:
+        pass
+
+from functools import wraps
+
+
+def _sample_decorator(func: Callable) -> Callable:
+    """
+    A sample decorator that can be used to modify the behavior of a function.
+    
+    Args:
+        func: The function to be decorated.
+        
+    Returns:
+        The modified function.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Add custom behavior here
+        print("Decorator applied!")
+        return func(*args, **kwargs)
+    return wrapper
+
+@_sample_decorator
+def add(x: int, y: int) -> int:
+    return x + y 
+
+
+
 # #### Pictures
 # - Image: Chart1.png
 # - Sheet Name: Charts

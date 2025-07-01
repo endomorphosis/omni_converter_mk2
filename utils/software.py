@@ -33,18 +33,18 @@ _BYTE_MAPPING = {
     "bit": 1 / 8
 }
 
-class Softwarte:
+class Software:
     """
     Software is a utility class that provides static methods to monitor system and process external software usage.
     This includes:
-    - CPU usage
-    - Virtual memory usage
-    - Memory information (RSS and VMS)
-    - Disk usage
+    - CPU usage of program's called by the Omni-Converter
+    - Virtual memory usage of program's called by the Omni-Converter
+    - Memory information (RSS and VMS) of program's called by the Omni-Converter
+    - Disk usage of program's called by the Omni-Converter
     - Number of open files
-    - Shared memory usage
+    - Shared memory usage of program's called by the Omni-Converter
     - Number of CPU cores
-    - VRAM information (if CUDA is available)
+    - VRAM usage (if CUDA is available) of program's called by the Omni-Converter
 
     Methods:
         _get_cpu_usage() -> float:

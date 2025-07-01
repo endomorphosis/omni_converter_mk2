@@ -51,6 +51,7 @@ class TestVerticalSlice(unittest.TestCase):
             pipeline = make_processing_pipeline()
             
             result: ProcessingResult = pipeline.process_file(test_file_path)
+            print(f"Processing result: {result}")
             
             # Assert
             self.assertTrue(result.success)

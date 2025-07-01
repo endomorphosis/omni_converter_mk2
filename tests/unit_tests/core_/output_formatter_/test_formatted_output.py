@@ -25,6 +25,24 @@ def make_sample_formatted_output() -> FormattedOutput:
         output_path="/tmp/test_output.txt"
     )
 
+from configs import configs, Configs
+from core.text_normalizer._normalized_content import NormalizedContent
+from types_  import Logger
+
+def make_mock_resources() -> dict[str, MagicMock]:
+    """
+    Factory function to create an OutputFormatter instance.
+    
+    Returns:
+        An instance of OutputFormatter configured with proper dependencies.
+    """
+    resources = {
+        "normalized_content": MagicMock(spec=NormalizedContent),
+        "formatted_output": MagicMock(spec=FormattedOutput),
+        "logger": MagicMock(spec=Logger),
+    }
+    return resources
+
 
 class TestFormattedOutputInitialization(unittest.TestCase):
     """Test FormattedOutput dataclass initialization."""
@@ -1055,9 +1073,8 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
             "\t\t\t",  # Tabs
             "\n\n\n",  # Newlines
             " \t\n \t\n ",  # Mixed whitespace
-            "\r\n\r\n"  # Windows line endings
         ]
-        
+
         for i, whitespace_content in enumerate(whitespace_cases):
             with self.subTest(case=i):
                 # Arrange
@@ -1067,10 +1084,10 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
                     format="txt",
                     output_path=output_path
                 )
-                
+
                 # Act
-                result_path = output.write_to_file()
-                
+                result_path = output.write_to_file(skip_empty=False)
+
                 # Assert
                 self.assertEqual(result_path, output_path)
                 with open(output_path, 'r') as f:

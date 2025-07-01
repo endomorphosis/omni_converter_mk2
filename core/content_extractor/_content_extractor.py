@@ -239,7 +239,7 @@ class ContentExtractor:
             text, metadata, sections = processor(file_content, processor_options)
 
             # Create content object
-            content = self._content(
+            content: Content = self._content(
                 text=text,
                 metadata=metadata,
                 sections=sections,

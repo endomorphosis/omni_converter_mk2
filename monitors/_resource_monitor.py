@@ -255,4 +255,3 @@ class ResourceMonitor:
             "monitoring_active": self.active_monitoring
         }
 
-

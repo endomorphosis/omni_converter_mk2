@@ -36,6 +36,21 @@ class ModuleWrapper:
 # assert isinstance(wrapped, ProcessorModuleProtocol)
 
 
+@runtime_checkable
+class NormalizerFunction(Protocol):
+    """Protocol for normalizer functions."""
+
+    def __call__(self, text: str) -> str:
+        """Normalize text.
+
+        Args:
+            text (str): The text to normalize.
+
+        Returns:
+            str: The normalized text.
+        """
+        ...
+
 
 class ProcessFunction(Protocol):
     """Protocol for processor functions."""

@@ -38,6 +38,9 @@ class ExternalPrograms: # TODO Figure out how to run the program checks in paral
         "libreoffice": False,  # LibreOffice for document processing (optional)
         "audacity": False,  # Audacity for audio processing (optional) TODO Figure out if there's a CLI for this.
         "nvidia-smi": False,  # nvidia-smi for GPU monitoring (optional)
+        "imagemagick": False,  # ImageMagick for image processing (optional)
+        "ghostscript": False,  # Ghostscript for PDF processing (optional)
+        "pandoc": False,  # Pandoc for document conversion (optional)
     }
 
     @classmethod

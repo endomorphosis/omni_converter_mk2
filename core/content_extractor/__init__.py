@@ -22,9 +22,13 @@ Implementation Status:
     - Video Handlers: ✅ Complete
 """
 from .content_extractor_factory import make_content_extractor
+from ._content_extractor import ContentExtractor
+from ._content import Content
 
 extractor = make_content_extractor()
 
 __all__ = [
     'make_content_extractor',
+    'ContentExtractor',
+    'ContentExtractor',
 ]

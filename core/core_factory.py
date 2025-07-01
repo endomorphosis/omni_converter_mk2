@@ -21,6 +21,8 @@ from .output_formatter import make_output_formatter
 from .content_extractor import make_content_extractor
 from .content_sanitizer import make_content_sanitizer, ContentSanitizer
 from monitors import make_security_monitor, SecurityMonitor
+from .output_formatter import OutputFormatter
+from .output_formatter import FormattedOutput
 
 
 def make_processing_pipeline() -> ProcessingPipeline:

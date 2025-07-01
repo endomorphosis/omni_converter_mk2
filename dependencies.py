@@ -55,6 +55,15 @@ class _Dependencies:
             "torch_directml": None,  # Optional for DirectML support on Windows.
             "intel_extension_for_pytorch": None,  # Optional for Intel hardware acceleration.
             "torch.mps": None,  # Optional for Apple Silicon support.
+            "rasterio": None,  # Optional for geospatial data processing.
+            "geopandas": None,  # Optional for geospatial data processing.
+            "requests": None,  # Optional for HTTP requests.
+            "requests_cache": None,  # Optional for caching HTTP requests.
+            "httpx": None,  # Optional for asynchronous HTTP requests.
+            "httpx_cache": None,  # Optional for caching asynchronous HTTP requests.
+            "aiohttp": None,  # Optional for asynchronous HTTP requests.
+            "aiohttp_cache": None,  # Optional for caching asynchronous HTTP requests.
+            "selenium": None,  # Optional for web scraping.
         }
 
     def check_critical_dependencies(self) -> None:
@@ -79,7 +88,6 @@ class _Dependencies:
         for module_name in self._cache.keys():
             try:
                 self._load_module(module_name)
-                print(f"✓ Dependency '{module_name}' loaded successfully.")
             except Exception as e:
                 print(f"✗ Dependency '{module_name}' is not available.")
                 pass # Ignore errors for non-critical dependencies.
@@ -90,6 +98,7 @@ class _Dependencies:
         if self._cache[module_name] is None:
             try:
                 self._cache[module_name] = _import_module(module_name)
+                print(f"✓ Dependency '{module_name}' loaded successfully.")
             except ModuleNotFoundError as e:
                 print(f"✗ Could not find dependency '{module_name}'.")
             except Exception as e:
@@ -164,7 +173,7 @@ class _Dependencies:
     @property
     def openai(self) -> _ModuleType | None:
         return self._load_module('openai')
-    
+
     @property
     def pandas(self) -> _ModuleType | None:
         return self._load_module('pandas')

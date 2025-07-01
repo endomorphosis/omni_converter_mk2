@@ -50,6 +50,9 @@ class _PathsBaseModel(BaseModel):
     THIS_DIR: DirectoryPath = THIS_FILE.parent
     ROOT_DIR: DirectoryPath = THIS_DIR
     CONFIG_PATH: FilePath = ROOT_DIR / 'configs.yaml'
+    NORMALIZER_FUNCTIONS_DIR: DirectoryPath = ROOT_DIR / 'core' / 'text_normalizer' / 'default_normalizers'
+    PLUGINS_DIR: DirectoryPath = ROOT_DIR / 'plugins'
+    PROCESSORS_DIR: DirectoryPath = ROOT_DIR / 'core' / 'content_extractor' / 'processors'
 
 
 def name(e: Exception) -> str:

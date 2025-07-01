@@ -43,7 +43,8 @@ resources = {
     "get_memory_vms_usage_in_mb": Hardware.get_memory_vms_usage_in_mb,
     "get_disk_usage": Hardware.get_disk_usage_in_percent,
     "get_open_files": Hardware.get_num_open_files,
-    "get_shared_memory_usage_in_mb": Hardware.get_shared_memory_usage_in_mb
+    "get_shared_memory_usage_in_mb": Hardware.get_shared_memory_usage_in_mb,
+    "get_num_cpu_cores": Hardware.get_num_cpu_cores,
 }
 # NOTE we convert GB to MB because 
 # the psutil library returns memory in MB

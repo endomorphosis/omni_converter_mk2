@@ -198,8 +198,8 @@ def _apply_cross_processor_dependencies(
                 logger.debug(f"Processing dependency: {dependency}")
 
             source_proc_name, source_method_name, target_proc_name, target_method_name = dependency
-            logger.debug(f"Source processor: {source_proc_name}, Source method: {source_method_name}, "
-                         f"Target processor: {target_proc_name}, Target method: {target_method_name}")
+            # logger.debug(f"Source processor: {source_proc_name}, Source method: {source_method_name}, "
+            #              f"Target processor: {target_proc_name}, Target method: {target_method_name}")
 
             # Check if processors exist
             if source_proc_name not in processors:
@@ -304,10 +304,13 @@ class _MakeProcessor:
         else:
             self._logger.setLevel(logging.INFO)
 
-        # self._logger.debug(f"_make_processor called for {self._name}")
-        # self._logger.debug(f"base_path: {self._base_path}")
-        # self._logger.debug(f"supported_formats: {self._supported_formats}")
-        # self._logger.debug(f"dependencies: {self._dependencies}")
+        self._debugging = False #self._logger.isEnabledFor(logging.DEBUG)
+
+        if self._debugging:
+            self._logger.debug(f"_make_processor called for {self._name}")
+            self._logger.debug(f"base_path: {self._base_path}")
+            self._logger.debug(f"supported_formats: {self._supported_formats}")
+            self._logger.debug(f"dependencies: {self._dependencies}")
 
     @staticmethod
     def _get_python_files_from_directory(directory: Path) -> dict[str, Path]:
@@ -326,7 +329,8 @@ class _MakeProcessor:
             raise ImportError(f"Module name '{spec_name}' does not match file name '{path.stem}'")
         spec = importlib.util.spec_from_file_location(spec_name, path)
         if spec and spec.loader:
-            self._logger.debug(f"Successfully created spec from '{path.parent.name}/{path.stem}', loading module")
+            if self._debugging:
+                self._logger.debug(f"Successfully created spec from '{path.parent.name}/{path.stem}', loading module")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return module
@@ -335,7 +339,8 @@ class _MakeProcessor:
 
     def _get_callables_from_module(self, module: ModuleType) -> Optional[dict[str, Callable]]:
         module_name = module.__name__
-        self._logger.debug(f"Module {module_name} loaded, scanning for callables")
+        if self._debugging:
+            self._logger.debug(f"Module {module_name} loaded, scanning for callables")
 
         # Get all the callables from the module
         attr_dict = {attr: getattr(module, attr) for attr in dir(module)}
@@ -349,16 +354,20 @@ class _MakeProcessor:
         return func_dict
 
     def _load_functions_from_file(self, paths: dict[str, Path], callables_dict: dict = {}):
-        #self._logger.debug(f"load_functions_from_file called with paths: {paths}")
-        #self._logger.debug(f"name: {self._name}")
-        #self._logger.debug(f"critical_resources: {self._crit_resources}")
+        if self._debugging: 
+            self._logger.debug(f"load_functions_from_file called with paths: {paths}")
+            self._logger.debug(f"name: {self._name}")
+            self._logger.debug(f"critical_resources: {self._crit_resources}")
 
         for path in paths.values():
             # Skip __init__ files and non-Python files
             if path.name.startswith("__init__") or not path.suffix == ".py":
+                if self._debugging:
+                    self._logger.debug(f"Skipping file: {path}")
                 #self._logger.debug(f"Skipping file: {path}")
                 continue
-            #self._logger.debug(f"Checking path: {path}")
+            if self._debugging:
+                self._logger.debug(f"Checking path: {path}")
             try:
                 try:
                     module = self._load_module_from_path(path)
@@ -527,9 +536,10 @@ class _MakeProcessor:
         return mock
 
     def processor(self) -> Optional[Any]:
-        #self._logger.debug(f"=== PROCESSOR CREATION DEBUG for {self._name} ===")
-        #self._logger.debug(f"ProcessorClass: {str(self._ProcessorClass)}")
-        #self._logger.debug(f"Critical resources needed: {self._crit_resources}")
+        if self._debugging:
+            self._logger.debug(f"=== PROCESSOR CREATION DEBUG for {self._name} ===")
+            self._logger.debug(f"ProcessorClass: {str(self._ProcessorClass)}")
+            self._logger.debug(f"Critical resources needed: {self._crit_resources}")
 
         # Check if there's a processor for this specific mime-type.
         self._ProcessorClass: Any | _GenericProcessor = self._get_processor_class_for_specific_mime_type()
@@ -565,12 +575,13 @@ class _MakeProcessor:
             resources["format_extensions"] = self._supported_formats
             #self._logger.debug(f"Final resources keys: {list(resources.keys())}")
 
-            # Validate critical resources
-            for crit_res in self._crit_resources:
-                if crit_res in resources:
-                    self._logger.debug(f"✓ Critical resource '{crit_res}' found.")
-                else:
-                    self._logger.error(f"✗ Critical resource '{crit_res}' MISSING!")
+            # Log critical resources when debugging.
+            if self._debugging:
+                for crit_res in self._crit_resources:
+                    if crit_res in resources:
+                        self._logger.debug(f"✓ Critical resource '{crit_res}' found.")
+                    else:
+                        self._logger.error(f"✗ Critical resource '{crit_res}' MISSING!")
 
             try:
                 #self._logger.debug(f"Attempting to create {self._ProcessorClass.__name__} instance...")

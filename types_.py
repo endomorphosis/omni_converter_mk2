@@ -92,7 +92,7 @@ ContentSanitizer = TypeVar("ContentSanitizer", bound=Callable[..., Any])
 DependencySpecificObject = TypeVar("DependencyObject", bound=Callable[..., Any])
 
 # Interfaces
-PythonAPI = TypeVar('PythonAPI')
+PythonAPI = TypeVar('PythonAPI', bound=Callable[..., Any])
 Cli = TypeVar('CLI')
 Gui = TypeVar('GUI')
 Options: TypeAlias = BaseModel
