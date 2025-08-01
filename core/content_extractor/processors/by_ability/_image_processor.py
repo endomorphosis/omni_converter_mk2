@@ -98,17 +98,6 @@ class ImageProcessor:
         Returns:
             Metadata extracted from the image.
         """
-        # Basic metadata # TODO Implement metadata extraction framework.
-        # metadata = {
-        #     "format": image.format.lower() if image.format else "unknown",
-        #     "mode": image.mode,
-        #     "width": image.width,
-        #     "height": image.height,
-        #     "size": len(data),
-        #     "aspect_ratio": image.width / image.height if image.height > 0 else 0,
-        #     "has_transparency": image.mode == 'RGBA' or 'transparency' in image.info,
-        #     "extraction_time": datetime.now().isoformat()
-        # }
 
     def extract_summary(self, data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
         """

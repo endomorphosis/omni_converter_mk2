@@ -1,5 +1,9 @@
 # Function and Class stubs from '/home/kylerose1946/omni_converter_mk2/core/content_extractor/_content_extractor.py'
 
+Files last updated: 1752613712.9993467
+
+Stub file last updated: 2025-07-17 05:42:08
+
 ## ContentExtractor
 
 ```python
@@ -39,6 +43,48 @@ Args:
 * **Method:** True
 * **Class:** ContentExtractor
 
+## _extract
+
+```python
+def _extract(self, file_path: str, options: dict[str, Any]) -> Content:
+    """
+    Perform the actual extraction of content from a file.
+
+Args:
+    file_path: The path to the file.
+    options: Extraction options. These include:
+        - format: The format of the file (if not provided, it will be detected).
+        - other options specific to the processor.
+    
+Returns:
+    The extracted content.
+    
+Raises:
+    Exception: If an error occurs during extraction.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** ContentExtractor
+
+## _validate_input
+
+```python
+def _validate_input(self, file_path: str, format_name: str, handler_name: str, format_set: set) -> bool:
+    """
+    Validate that the file can be processed by this handler.
+
+Args:
+    file_path: The path to the file.
+    
+Returns:
+    True if the file is valid for this handler, False otherwise.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** ContentExtractor
+
 ## can_handle
 
 ```python
@@ -52,6 +98,22 @@ Args:
     
 Returns:
     True if this handler can process the file, False otherwise.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** ContentExtractor
+
+## capabilities
+
+```python
+@property
+def capabilities(self) -> dict[str, Any]:
+    """
+    Get the capabilities of the available handlers.
+
+Returns:
+    A dictionary of capabilities, such as supported formats and extraction options.
     """
 ```
 * **Async:** False
@@ -76,64 +138,6 @@ Raises:
     FileNotFoundError: If the file does not exist.
     PermissionError: If the file cannot be read.
     ValueError: If the file is not valid for this handler.
-    Exception: If an error occurs during extraction.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ContentExtractor
-
-## capabilities
-
-```python
-@property
-def capabilities(self) -> dict[str, Any]:
-    """
-    Get the capabilities of this handler.
-
-Returns:
-    A dictionary of capabilities, such as supported formats and extraction options.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ContentExtractor
-
-## validate_input
-
-```python
-def validate_input(self, file_path: str, format_name: str, handler_name: str, format_set: set) -> bool:
-    """
-    Validate that the file can be processed by this handler.
-
-Args:
-    file_path: The path to the file.
-    
-Returns:
-    True if the file is valid for this handler, False otherwise.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ContentExtractor
-
-## do_extraction
-
-```python
-def do_extraction(self, file_path: str, options: dict[str, Any]) -> Content:
-    """
-    Perform the actual extraction of content from a file.
-
-Args:
-    file_path: The path to the file.
-    options: Extraction options. These include:
-        - format: The format of the file (if not provided, it will be detected).
-        - other options specific to the processor.
-    
-Returns:
-    The extracted content.
-    
-Raises:
     Exception: If an error occurs during extraction.
     """
 ```

@@ -28,15 +28,30 @@ class FileValidator:
     def __init__(self,
                  resources: dict[str, Callable] = None, 
                  configs: Configs = None
-                 ):
-        """Initialize the basic validator."""
+                 ) -> None:
+        """
+        Initialize the FileValidator with configuration and dependencies.
+
+        Args:
+            resources: Dictionary containing injected dependencies including:
+            - file_exists: Function to check if a file exists
+            - get_file_info: Function to retrieve file metadata
+            - validation_result: Factory function for ValidationResult objects
+            - file_format_detector: File format detection service
+            - logger: Logger instance for error reporting
+    
+            configs: Configuration object containing validation settings
+             - max_file_size_mb: Maximum allowed file size in MB
+             - allowed_formats: List of allowed file formats
+        """
         self.configs = configs
         self.resources = resources
 
         # Load validation rules from config
-        self.max_file_size_mb: int = self.configs.get_config_value('security.max_file_size_mb', 100)
-        self.allowed_formats: list[str] = self.configs.get_config_value('security.allowed_formats', [])
+        self.max_file_size_mb: int = self.configs.security.max_file_size_mb
+        self.allowed_formats: list[str] = self.configs.security.allowed_formats
 
+        # Injected dependencies
         self._file_exists: Callable = self.resources['file_exists']
         self._get_file_info: Callable = self.resources['get_file_info']
         self._validation_result: Callable = self.resources['validation_result']
@@ -59,8 +74,10 @@ class FileValidator:
             FileNotFoundError: If the file does not exist.
         """
         # Create validation result
-        result = self._validation_result()
+        result: ValidationResult = self._validation_result()
         
+        print(f"Validating file: {file_path} with format: {format_name}\n{result}")
+
         try:
             # Check if file exists
             if not self._file_exists(file_path):
@@ -127,7 +144,7 @@ class FileValidator:
         return result
 
     @staticmethod
-    def _check_for_null_bytes_and_permissions(file_path:str, format_name:str, result: list[str]) -> bool:
+    def _check_for_null_bytes_and_permissions(file_path:str, format_name:str, result: ValidationResult) -> bool:
         """Check for null bytes and permission issues that could cause hangs
         
         Args:

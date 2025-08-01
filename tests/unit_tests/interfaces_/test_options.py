@@ -9,7 +9,6 @@ from enum import StrEnum
 # Import the actual modules - adjust imports based on your project structure
 from logger import test_logger as logger
 from interfaces.options import (
-    _validate_format,
     _validate_max_workers,
     _validate_max_memory,
     _validate_max_vram,
@@ -22,42 +21,42 @@ try:
 except ImportError:
     raise ImportError("Required modules pydantic and psutil are not installed. Please install them using 'pip install pydantic psutil'.")
 
-class TestValidateFormat(unittest.TestCase):
-    """Test the _validate_format function."""
+# class TestValidateFormat(unittest.TestCase):
+#     """Test the _validate_format function."""
 
-    def test_validate_format_txt(self):
-        """
-        GIVEN a format string "txt"
-        WHEN _validate_format("txt") is called
-        THEN expect:
-            - Returns "txt"
-            - No ValidationError raised
-        """
-        result = _validate_format("txt")
-        self.assertEqual(result, "txt")
+#     def test_validate_format_txt(self):
+#         """
+#         GIVEN a format string "txt"
+#         WHEN _validate_format("txt") is called
+#         THEN expect:
+#             - Returns "txt"
+#             - No ValidationError raised
+#         """
+#         result = _validate_format("txt")
+#         self.assertEqual(result, "txt")
 
-    def test_validate_format_md(self):
-        """
-        GIVEN a format string "md"
-        WHEN _validate_format("md") is called
-        THEN expect:
-            - Returns "md"
-            - No ValidationError raised
-        """
-        result = _validate_format("md")
-        self.assertEqual(result, "md")
+#     def test_validate_format_md(self):
+#         """
+#         GIVEN a format string "md"
+#         WHEN _validate_format("md") is called
+#         THEN expect:
+#             - Returns "md"
+#             - No ValidationError raised
+#         """
+#         result = _validate_format("md")
+#         self.assertEqual(result, "md")
 
-    def test_validate_format_unsupported(self):
-        """
-        GIVEN an unsupported format string "pdf"
-        WHEN _validate_format("pdf") is called
-        THEN expect:
-            - Raises ValidationError
-            - Error message contains supported formats
-        """
-        with self.assertRaises(ValueError) as context:
-            _validate_format("pdf")
-        self.assertIn("supported", str(context.exception).lower())
+#     def test_validate_format_unsupported(self):
+#         """
+#         GIVEN an unsupported format string "pdf"
+#         WHEN _validate_format("pdf") is called
+#         THEN expect:
+#             - Raises ValidationError
+#             - Error message contains supported formats
+#         """
+#         with self.assertRaises(ValueError) as context:
+#             _validate_format("pdf")
+#         self.assertIn("supported", str(context.exception).lower())
 
 
 class TestValidateMaxWorkers(unittest.TestCase):

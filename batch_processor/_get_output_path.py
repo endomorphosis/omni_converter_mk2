@@ -1,7 +1,11 @@
 import os
 from typing import Any, Optional
 
-def get_output_path(input_path: str, output_dir: Optional[str], options: dict[str, Any]) -> Optional[str]:
+def get_output_path(
+        input_path: str, 
+        output_dir: Optional[str], 
+        options: dict[str, Any]
+        ) -> Optional[str]:
     """
     Get the output path for a file.
     

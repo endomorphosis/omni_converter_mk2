@@ -1,5 +1,9 @@
 # Function and Class stubs from '/home/kylerose1946/omni_converter_mk2/core/content_extractor/_map_extension_to_format.py'
 
+Files last updated: 1750034478.9829266
+
+Stub file last updated: 2025-07-17 05:42:08
+
 ## map_extension_to_format
 
 ```python

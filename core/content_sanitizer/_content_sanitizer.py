@@ -24,7 +24,7 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
         self._remove_active_content_regex: list[Pattern]             = self.resources['remove_active_content_regex']
         self._remove_scripts_regex:        list[Pattern]             = self.resources['remove_scripts_regex']
         self._sensitive_keys:              list[str]                 = self.resources['sensitive_keys']
-        self._sanitization_rules:           dict[str, bool]          = self.resources['security_rules']
+        self._sanitization_rules:          dict[str, bool]           = self.resources['security_rules']
         self._logger:                      Logger                    = self.resources['logger']
 
     def sanitize(self, content: 'Content') -> SanitizedContent:

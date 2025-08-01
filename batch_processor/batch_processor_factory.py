@@ -1,10 +1,9 @@
 import concurrent.futures
+import gc
 import glob
 import os
 import threading
 import time
-from pathlib import Path
-import gc
 
 
 from logger import logger
@@ -18,12 +17,43 @@ from core._processing_pipeline import ProcessingPipeline
 from core._processing_result import ProcessingResult
 
 
+from ._async_batch_processor import AsyncBatchProcessor
 from ._batch_processor import BatchProcessor
 from ._batch_result import BatchResult
 from ._get_output_path import get_output_path
 from ._resolve_paths import resolve_paths
 
+
 from types_ import Logger, TypedDict
+
+
+class _BatchProcessorResources(TypedDict):
+    """
+    TypedDict for BatchProcessor resources.
+    
+    Attributes:
+        processing_pipeline: Instance of ProcessingPipeline.
+        error_monitor: Instance of ErrorMonitor.
+        resource_monitor: Instance of ResourceMonitor.
+        security_monitor: Instance of SecurityMonitor.
+        logger: Logger instance.
+    """
+    processing_pipeline: ProcessingPipeline
+    error_monitor: ErrorMonitor
+    resource_monitor: ResourceMonitor
+    security_monitor: SecurityMonitor
+    logger: Logger
+    processing_result: ProcessingResult
+    batch_result: BatchResult
+    gc: gc
+    threading: threading
+    cf: concurrent.futures
+    glob: glob
+    os: os
+
+
+def make_async_batch_processor() -> AsyncBatchProcessor:
+    pass
 
 
 def make_batch_processor() -> BatchProcessor:
@@ -33,29 +63,7 @@ def make_batch_processor() -> BatchProcessor:
         An instance of BatchProcessor.
     """
 
-    class _BatchProcessorResources(TypedDict):
-        """
-        TypedDict for BatchProcessor resources.
-        
-        Attributes:
-            processing_pipeline: Instance of ProcessingPipeline.
-            error_monitor: Instance of ErrorMonitor.
-            resource_monitor: Instance of ResourceMonitor.
-            security_monitor: Instance of SecurityMonitor.
-            logger: Logger instance.
-        """
-        processing_pipeline: ProcessingPipeline
-        error_monitor: ErrorMonitor
-        resource_monitor: ResourceMonitor
-        security_monitor: SecurityMonitor
-        logger: Logger
-        processing_result: ProcessingResult
-        batch_result: BatchResult
-        gc: gc
-        threading: threading
-        cf: concurrent.futures
-        glob: glob
-        os: os
+
 
     resources: _BatchProcessorResources = {
         'processing_pipeline': make_processing_pipeline(),

@@ -66,7 +66,7 @@ class AudioHandler:
         
         return False
     
-    def extract_content(self, file_path: str, format_name: str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+    def extract_content(self, file_path: str, format_name: str, options: dict[str, Any]) -> Callable:
         """
         Extract content from an audio file using the appropriate processor.
         
@@ -84,10 +84,10 @@ class AudioHandler:
         try:
             if enable_transcription:
                 # Use transcription processor for speech-to-text
-                return self._transcription_processor(file_path, options)
+                return self._transcription_processor
             else:
                 # Use audio processor for metadata extraction
-                return self._audio_processor(file_path, options)
+                return self._audio_processor
         except Exception as e:
             self._logger.error(f"Error processing {format_name} file '{file_path}': {e}", exc_info=True)
             raise RuntimeError(f"Failed to process {format_name} file: {file_path}") from e

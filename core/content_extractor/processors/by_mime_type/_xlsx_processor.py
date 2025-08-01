@@ -4,7 +4,7 @@ from types_ import Any, Callable, Configs, Logger, TypeVar, Union, MagicMock, Ab
 class XlsxProcessor:
     """
     XLSX processor framework.
-    
+
     This class provides functionality to extract text, metadata, and structure from XLSX files.
 
     Attributes:

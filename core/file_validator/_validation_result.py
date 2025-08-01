@@ -3,12 +3,15 @@ Validation result module for the Omni-Converter.
 
 This module provides the ValidationResult class for tracking the result of validation operations.
 """
-from typing import Any, Callable
+from typing import Any
 
 
-from dependencies import dependencies
-BaseModel: Callable = dependencies.pydantic.BaseModel
-Field: Callable = dependencies.pydantic.Field
+try:
+    from pydantic import BaseModel, Field
+except ImportError:
+    raise ImportError(
+        "Pydantic is required for ValidationResult. Please install it with 'pip install pydantic'."
+    )
 
 
 class ValidationResult(BaseModel):
@@ -30,8 +33,7 @@ class ValidationResult(BaseModel):
     validation_context: dict[str, Any] = Field(default_factory=dict)
     
     def add_error(self, error: str) -> None:
-        """
-        Add an error to the result.
+        """Add an error to the result.
         
         Args:
             error: The error message to add.
@@ -40,8 +42,7 @@ class ValidationResult(BaseModel):
         self.is_valid = False
     
     def add_warning(self, warning: str) -> None:
-        """
-        Add a warning to the result.
+        """Add a warning to the result.
         
         Args:
             warning: The warning message to add.
@@ -49,8 +50,7 @@ class ValidationResult(BaseModel):
         self.warnings.append(warning)
     
     def add_context(self, key: str, value: Any) -> None:
-        """
-        Add validation context to the result.
+        """Add validation context to the result.
         
         Args:
             key: The context key.
@@ -59,8 +59,7 @@ class ValidationResult(BaseModel):
         self.validation_context[key] = value
     
     def to_dict(self) -> dict[str, Any]:
-        """
-        Convert to a dictionary.
+        """Convert to a dictionary.
         
         Returns:
             A dictionary representation of the validation result.

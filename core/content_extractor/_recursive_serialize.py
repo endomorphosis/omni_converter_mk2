@@ -1,4 +1,12 @@
 from typing import Any
+import base64
+import math
+from datetime import datetime, date
+from decimal import Decimal
+from pathlib import Path
+from enum import Enum
+from uuid import UUID
+from types import GeneratorType, ModuleType
 
 
 def _recursive_serialize(obj: Any, _seen: set = None) -> Any:
@@ -14,15 +22,6 @@ def _recursive_serialize(obj: Any, _seen: set = None) -> Any:
     Raises:
         ValueError: If circular reference is detected.
     """
-    import base64
-    import math
-    from datetime import datetime, date
-    from decimal import Decimal
-    from pathlib import Path
-    from enum import Enum
-    from uuid import UUID
-    from types import GeneratorType, ModuleType
-    
     # Initialize seen set for circular reference detection
     if _seen is None:
         _seen = set()

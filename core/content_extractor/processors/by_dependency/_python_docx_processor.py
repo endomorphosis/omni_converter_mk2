@@ -29,7 +29,7 @@ def _set_metadata(props: object, metadata: dict[str, Any]) -> None:
                     metadata[key] = str(value)
 
 
-def open_docx_file(data: bytes) -> Document:
+def _open_docx_file(data: bytes) -> Document:
     """
     Open a DOCX file from binary data.
 
@@ -65,7 +65,7 @@ def extract_text(data: bytes, options: dict[str, Any]) -> str:
     Raises:
         ValueError: If python-docx is not available or the data cannot be processed as a DOCX.
     """
-    doc = open_docx_file(data)
+    doc = _open_docx_file(data)
 
     # Extract text from each paragraph
     paragraphs = []
@@ -107,7 +107,7 @@ def extract_metadata(data: bytes, options: dict[str, Any]) -> dict[str, Any]:
     Raises:
         ValueError: If python-docx is not available or the data cannot be processed as a DOCX.
     """
-    doc = open_docx_file(data)
+    doc = _open_docx_file(data)
     
     # Extract document info
     metadata = {
@@ -164,7 +164,7 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
     Raises:
         ValueError: If python-docx is not available or the data cannot be processed as a DOCX.
     """
-    doc = open_docx_file(data)
+    doc = _open_docx_file(data)
 
     # Extract structure
     structure = []
@@ -209,27 +209,32 @@ def extract_structure(data: bytes, options: dict[str, Any]) -> list[dict[str, An
         })
     
     # Extract tables
-    for i, table in enumerate(doc.tables):
+    for idx, table in enumerate(doc.tables):
         table_data = []
         for row in table.rows:
-            row_data = []
-            for cell in row.cells:
-                row_data.append(cell.text)
-            table_data.append(row_data)
+            table_data.append([cell.text for cell in row.cells])
         
         structure.append({
             "type": "table",
-            "table_number": i + 1,
+            "table_number": idx + 1,
             "rows": len(table.rows),
             "columns": len(table.rows[0].cells) if table.rows else 0,
             "content": table_data
         })
     
-    # Extract images (limited info since we can't get image content easily)
-    image_count = 0
-    for rel in doc.part.rels.values():
-        if "image" in rel.reltype:
-            image_count += 1
+    images_data: list[dict[str, Any]] = extract_images(data, options)
+    image_count = len(images_data)
+    
+    # Add image information for OCR processing later in pipeline
+    for idx, image_info in enumerate(images_data):
+        structure.append({
+            "type": "image",
+            "image_number": idx + 1,
+            "content_type": image_info.get("content_type", "unknown"),
+            "target": image_info.get("target", ""),
+            "image_data": image_info.get("image_data"),  # Binary data for OCR processor
+            "content": f"Image {idx + 1} extracted for OCR processing"
+        })
     
     if image_count > 0:
         structure.append({
@@ -273,7 +278,7 @@ def extract_images(data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]
     Raises:
         ValueError: If python-docx is not available or the data cannot be processed as a DOCX.
     """
-    doc = open_docx_file(data)
+    doc = _open_docx_file(data)
 
     images = []
 

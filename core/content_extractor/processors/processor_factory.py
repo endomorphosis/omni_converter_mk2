@@ -498,10 +498,7 @@ class _MakeProcessor:
         
         # Mark all capabilities as mocked
         for method_spec in methods:
-            if isinstance(method_spec, tuple):
-                method_name = method_spec[0]
-            else:
-                method_name = method_spec
+            method_name = method_spec[0] if isinstance(method_spec, tuple) else method_spec
             mock.processor_info["capabilities"][method_name] = {
                 "available": False,
                 "implementation": "mock"

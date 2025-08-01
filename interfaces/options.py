@@ -23,22 +23,22 @@ except ImportError:
 from utils.hardware import Hardware
 
 
-def _validate_format(format: str) -> str:
-    """Validate the output format option.
+# def _validate_format(format: str) -> str:
+#     """Validate the output format option.
 
-    Args:
-        format: The output format string.
+#     Args:
+#         format: The output format string.
 
-    Returns:
-        The validated output format string.
+#     Returns:
+#         The validated output format string.
 
-    Raises:
-        ValueError: If the format is not supported.
-    """
-    supported_formats = ["txt", "md"]
-    if format not in supported_formats:
-        raise ValueError(f"Unsupported output format: {format}. Supported formats are: {supported_formats}")
-    return format
+#     Raises:
+#         ValueError: If the format is not supported.
+#     """
+#     supported_formats = ["txt", "md"]
+#     if format not in supported_formats:
+#         raise ValueError(f"Unsupported output format: {format}. Supported formats are: {supported_formats}")
+#     return format
 
 def _validate_max_workers(max_threads: PositiveInt) -> PositiveInt:
     """Validate the maximum number of worker threads.

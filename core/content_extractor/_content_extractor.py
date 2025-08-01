@@ -68,8 +68,14 @@ class ContentExtractor:
         Returns:
             True if this handler can process the file, False otherwise.
         """
-        for handler_name in self._capabilities.keys():
+        for handler_name, handler in self._capabilities.items():
             self._logger.debug(f"Checking if handler '{handler_name}' can handle file: {file_path}\nformat_name: {format_name}")
+            if handler.can_handle(file_path, format_name):
+                self._logger.debug(f"Handler '{handler_name}' can handle file: {file_path}")
+                return True
+            else:
+                self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {handler.supported_formats}")
+
 
             if format_name:
                 # If format is provided, check against supported formats
@@ -82,7 +88,7 @@ class ContentExtractor:
             else:
                 # Otherwise, validate input and try to determine format
                 self._logger.debug(f"Format name not provided. Validating input for handler '{handler_name}'")
-                return self.validate_input(file_path, handler_name)
+                return self._validate_input(file_path, handler_name)
         else:
             self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {self.supported_formats}")
             return False
@@ -115,7 +121,7 @@ class ContentExtractor:
         # Validate input
         for handler_name in self._capabilities.keys():
             format_set = handler_format_mapping[handler_name]
-            if not self.validate_input(file_path, format_name, handler_name, format_set):
+            if not self._validate_input(file_path, format_name, handler_name, format_set):
                 continue
             else:
                 break
@@ -123,12 +129,12 @@ class ContentExtractor:
             raise ValueError(f"File is not valid for handler: {handler_name}")
 
         # Extract content
-        return self.do_extraction(file_path, options or {})
+        return self._extract(file_path, options or {})
 
     @property
     def capabilities(self) -> dict[str, Any]:
         """
-        Get the capabilities of this handler.
+        Get the capabilities of the available handlers.
         
         Returns:
             A dictionary of capabilities, such as supported formats and extraction options.
@@ -141,7 +147,7 @@ class ContentExtractor:
             **self._capabilities
         }
 
-    def validate_input(self, file_path: str, format_name: str, handler_name: str, format_set: set) -> bool:
+    def _validate_input(self, file_path: str, format_name: str, handler_name: str, format_set: set) -> bool:
         """
         Validate that the file can be processed by this handler.
         
@@ -166,7 +172,7 @@ class ContentExtractor:
             self._logger.exception(f"Error detecting format for file '{file_path}': {e}")
             return False
 
-    def do_extraction(self, file_path: str, options: dict[str, Any]) -> Content:
+    def _extract(self, file_path: str, options: dict[str, Any]) -> Content:
         """
         Perform the actual extraction of content from a file.
         
@@ -187,7 +193,7 @@ class ContentExtractor:
         if not format_name:
             format_name, _ = self._format_detector.detect_format(file_path)
             
-            # Override format detection based on file extension if needed
+            # Detect format based on file extension if needed
             if not format_name:
                 _, ext = self._splitext(file_path)
                 # Map extension to format
@@ -196,11 +202,10 @@ class ContentExtractor:
         # Verify format is supported
         if not format_name: #or format_name not in self._supported_formats:
             raise ValueError(f"Unsupported format: {format_name}")
-        else:
-            self._logger.debug(f"Extracting content from file: {file_path} with format: {format_name}")
+        self._logger.debug(f"Extracting content from file: {file_path} with format: {format_name}")
 
         # Get parser for this format
-        processor = None
+        processor: Callable = None
         #self._logger.debug(f"Getting processor for format: {format_name}\nprocessors: {self._processors.items()}")
         for proc_name, values in self._processors.items():
             self._logger.debug(values)
@@ -210,7 +215,6 @@ class ContentExtractor:
                 processor = available_processor
                 break
 
-        # processor = self._processors.get(format_name)
         self._logger.debug(f"Processor for format '{format_name}': {processor}")
         if not processor:
             raise ValueError(f"No processor available for format: {format_name}")

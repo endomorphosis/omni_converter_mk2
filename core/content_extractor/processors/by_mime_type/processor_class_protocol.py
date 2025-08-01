@@ -1,5 +1,8 @@
-from types_ import Any, Callable, Configs, Logger, Protocol
+# from types_ import Any, Callable, Configs, Logger, Protocol
+import logging
+from typing import Protocol, Callable, Any, Dict, TypeVar
 
+Configs = TypeVar('Configs')
 
 
 class Processor(Protocol):
@@ -22,7 +25,7 @@ class Processor(Protocol):
         self._open_file: Callable = self.resources["open_file"]
         self._process: Callable = self.resources["process"]
 
-        self._logger: Logger = self.resources["logger"]
+        self._logger: logging.Logger = self.resources["logger"]
 
 
     def __call__(self, data: bytes | str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
@@ -86,3 +89,7 @@ def apply_processor_protocol_to_files_in_this_dir():
                 continue
             else:
                 assert isinstance(module, Processor), f"Mime-type processor '{module_name}' does not implement Processor protocol"
+
+if __name__ == "__main__":
+    apply_processor_protocol_to_files_in_this_dir()
+    print("All mime-type processors in this directory implement the Processor protocol.")

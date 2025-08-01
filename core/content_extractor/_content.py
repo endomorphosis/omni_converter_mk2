@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 from typing import Any
 
 
@@ -8,7 +7,7 @@ try:
 except ImportError:
     raise ImportError("Pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
-from ._recursive_serialize import _recursive_serialize
+
 
 
 class Content(BaseModel):
@@ -37,7 +36,7 @@ class Content(BaseModel):
         Returns:
             A dictionary representation of the content.
         """
-        # We intentionally don't used model_dump() in json mode
+        # NOTE We intentionally don't used model_dump() in json mode
         # Because it excludes non-serializable types instead of converting them
         data = self.model_dump()
         data['extraction_time'] = self.extraction_time.isoformat()

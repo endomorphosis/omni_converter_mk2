@@ -1,12 +1,15 @@
 # CLAUDE.md
 
 ## Jobs Available
-- [ ] 1: Unit Tests for `core/content_extractor/handlers/`
-- [ ] 2: Unit Tests for `/home/kylerose1946/omni_converter_mk2/core/content_extractor/processors/factory.py`
-- [ ] 3: `/`
-- [ ] 4: Tests for ``
-- [ ] 5: Tests for ``
-- [ ] 6: Tests for ``
+- [ ] 1: Fallback processors for `core/content_extractor/processors/fallbacks`
+- [ ] 2: Unit Tests for functions in `core/content_extractor/processors/fallbacks`
+- [ ] 3: Mime-type specific processors for `core/content_extractor/processors/by_mime_type`
+- [ ] 4: Unit Tests for functions in `core/content_extractor/processors/by_mime_type`
+- [ ] 5: Dependency-specific functions in `core/content_extractor/processors/by_dependency`
+- [ ] 6: Unit Tests for functions in `core/content_extractor/processors/by_dependency`
+- [ ] 7: Ability-specific processors for `core/content_extractor/processors/by_ability`
+- [ ] 8: Unit Tests for processors in `core/content_extractor/processors/by_ability`
+
 
 ## Project Rules
 - You will be assigned a designation number and the directory it is assigned to.

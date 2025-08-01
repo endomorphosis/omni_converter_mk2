@@ -1,5 +1,9 @@
 # Function and Class stubs from '/home/kylerose1946/omni_converter_mk2/core/content_extractor/_content.py'
 
+Files last updated: 1752613982.7608109
+
+Stub file last updated: 2025-07-17 05:42:08
+
 ## Content
 
 ```python
