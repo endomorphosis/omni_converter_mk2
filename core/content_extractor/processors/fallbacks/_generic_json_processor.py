@@ -27,6 +27,7 @@ def extract_text(data: str | bytes, options: dict[str, Any]) -> str:
             except json.JSONDecodeError:
                 return data
         case bytes():
+            decoded = ""
             try:
                 decoded = data.decode('utf-8', errors='ignore')
                 parsed = json.loads(decoded)

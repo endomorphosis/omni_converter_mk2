@@ -4,7 +4,8 @@ Format detection module for the Omni-Converter.
 This module provides functionality for detecting the format of files using dependency injection
 and following the IoC pattern established in CLAUDE.md.
 """
-from types_ import Any, Callable, Configs, Logger, Optional
+from __future__ import annotations
+from types_ import Any, Callable, Configs, Logger, Optional, FileInfo
 
 
 class FileFormatDetector:
@@ -92,8 +93,8 @@ class FileFormatDetector:
             PermissionError: If the file cannot be read.
         """
         # Get file information using absolute path
-        file_path = self._abspath(file_path)
-        file_info = self._get_file_info(file_path)
+        file_path: str = self._abspath(file_path)
+        file_info: FileInfo = self._get_file_info(file_path)
 
         format_name = None
         format_name = self._get_format_signatures(file_info, file_path)
@@ -113,22 +114,22 @@ class FileFormatDetector:
         self._logger.debug(f"Detected format '{format_name}' in category '{category}' for file: {file_path}")
         return format_name, category
 
-    @staticmethod
-    def _concatenate_frozensets_into_list(formats: list[frozenset[str]]) -> set[str]:
-        """
-        Convert a list of frozensets into a single set.
+    # @staticmethod
+    # def _concatenate_frozensets_into_list(formats: list[frozenset[str]]) -> set[str]:
+    #     """
+    #     Convert a list of frozensets into a single set.
         
-        Args:
-            list_of_frozen_sets: List of frozensets to convert.
+    #     Args:
+    #         list_of_frozen_sets: List of frozensets to convert.
             
-        Returns:
-            A single set containing all elements from the frozensets.
-        """
-        format_set = []
-        list_of_lists = [list(x) for x in formats]
-        for format_list in list_of_lists:
-            format_set.extend(format_list)
-        return set(format_set)
+    #     Returns:
+    #         A single set containing all elements from the frozensets.
+    #     """
+    #     format_set = []
+    #     list_of_lists = [list(x) for x in formats]
+    #     for format_list in list_of_lists:
+    #         format_set.extend(format_list)
+    #     return set(format_set)
 
     @property
     def supported_formats(self) -> dict[str, set[str]]:
@@ -141,15 +142,14 @@ class FileFormatDetector:
         return self._format_registry
 
 
-    def _get_format_signatures(self, file_info, file_path) -> Optional[dict[str, str]]:
+    def _get_format_signatures(self, file_info: FileInfo, file_path: str) -> Optional[dict[str, str]]:
         # Try to detect format based on MIME type
         format_name = self._format_signatures.get(file_info.mime_type)
 
         # If MIME type detection failed, try extension
         if format_name is None:
             self._logger.debug(f"Format detection by MIME type failed for file: {file_path} - MIME: {file_info.mime_type}")
-            extension = file_info.extension.lower()
-            format_name = self._format_extensions.get(extension)
+            format_name = self._format_extensions.get(file_info.extension.lower())
 
         # If format detection failed entirely, return None
         if format_name is None:

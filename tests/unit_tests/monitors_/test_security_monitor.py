@@ -104,6 +104,11 @@ class TestSecurityManager(unittest.TestCase):
             **copy.deepcopy(resources),
             "logger": MagicMock(spec=Logger),
             "security_result": SecurityResult,
+            "check_archive_security": MagicMock(return_value=[]),
+            "check_document_security": MagicMock(return_value=[]),
+            "check_image_security": MagicMock(return_value=[]),
+            "check_video_security": MagicMock(return_value=[]),
+            "check_audio_security": MagicMock(return_value=[]),
         }
 
         # Create a security manager

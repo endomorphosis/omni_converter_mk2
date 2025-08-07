@@ -206,7 +206,7 @@ class ProcessingPipeline:
                     output_path
                 )
 
-            # Calculate content hash for verification # TODO Change to Ipfs CID
+            # Calculate content hash for verification # TODO Change to IPFS CID
             content_hash = self._hashlib.md5(formatted_output.content.encode('utf-8')).hexdigest()
 
             # Write output to file if output_path is provided
@@ -238,9 +238,9 @@ class ProcessingPipeline:
                 'format': format_name
             })
             self._logger.debug(f"result: {result.to_dict()}")
-            
+
             return result
-            
+
         except Exception as e:
             self._logger.exception(f"Error processing '{file_path}': {e}")
             errors.append(str(e))

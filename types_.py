@@ -66,6 +66,7 @@ Logger: TypeAlias = logging.Logger
 Dependency: TypeAlias = ModuleType
 BuiltinModule: TypeAlias = ModuleType
 Configs: TypeAlias = BaseModel
+FileInfo: TypeAlias = BaseModel
 
 
 NormalizerFunc: TypeAlias = Callable[[str], str]

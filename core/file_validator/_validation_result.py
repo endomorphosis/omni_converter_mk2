@@ -14,6 +14,13 @@ except ImportError:
     )
 
 
+def _check_non_empty_string(value: str, name: str) -> None:
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be a string, got {type(value).__name__}.")
+    if not value.strip():
+        raise ValueError(f"{name} cannot be an empty string.")
+
+
 class ValidationResult(BaseModel):
     """
     Result of validation operations.
@@ -31,13 +38,14 @@ class ValidationResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     validation_context: dict[str, Any] = Field(default_factory=dict)
-    
+
     def add_error(self, error: str) -> None:
         """Add an error to the result.
-        
+
         Args:
             error: The error message to add.
         """
+        _check_non_empty_string(error, "Error")
         self.errors.append(error)
         self.is_valid = False
     
@@ -47,6 +55,7 @@ class ValidationResult(BaseModel):
         Args:
             warning: The warning message to add.
         """
+        _check_non_empty_string(warning, "Warning")
         self.warnings.append(warning)
     
     def add_context(self, key: str, value: Any) -> None:
@@ -56,6 +65,7 @@ class ValidationResult(BaseModel):
             key: The context key.
             value: The context value.
         """
+        _check_non_empty_string(key, "Context key")
         self.validation_context[key] = value
     
     def to_dict(self) -> dict[str, Any]:

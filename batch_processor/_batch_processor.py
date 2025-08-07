@@ -234,11 +234,12 @@ class BatchProcessor:
             print(f"DEBUG: Output directory {output_dir} doesn't exist, creating it")
             try:
                 self._makedirs(output_dir, exist_ok=True)
-                self._logger.debug(f"Created output directory: {output_dir}")
-                print(f"DEBUG: Successfully created output directory: {output_dir}")
+                msg = f"Output directory {output_dir} created successfully"
+                self._logger.debug(msg)
+                print(f"DEBUG: {msg}")
             except Exception as e:
                 error_message = f"Failed to create output directory {output_dir}: {e}"
-                print(f"DEBUG: Failed to create output directory: {error_message}")
+                print(f"DEBUG: {error_message}")
                 self._logger.error(error_message)
                 self._error_monitor.handle_error(
                     error_message, {'output_dir': output_dir, 'resolve_paths_list': resolve_paths_list}

@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional
 
 
 from logger import logger
-from monitors.batch_processor import batch_processor, BatchResult
+from batch_processor import BatchResult, make_batch_processor
 from utils.common.dependencies.tqdm import Tqdm
 from utils.main_.progress_callback import progress_callback
 
@@ -38,6 +38,8 @@ def process_directory(
     Returns:
         BatchResult object with processing results.
     """
+    batch_processor = make_batch_processor()
+
     # Configure batch processor
     batch_processor.set_max_batch_size(options.get('max_batch_size', 100))
     batch_processor.set_continue_on_error(options.get('continue_on_error', True))

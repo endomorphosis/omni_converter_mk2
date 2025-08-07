@@ -76,7 +76,7 @@ class _Dependencies:
         for dep in self._CRITICAL_DEPENDENCIES:
             try:
                 self._load_module(dep)
-            except ImportError as e:
+            except Exception as e:
                 raise ImportError(f"Critical dependency '{dep}' is not available. Please install it to run the application.") from e
 
     def load_all_modules(self) -> None:

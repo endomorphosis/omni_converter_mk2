@@ -3,10 +3,19 @@ from configs import configs
 from logger import logger
 from utils.hardware import Hardware
 
+from typing import Any, Callable, Optional
 
 from ._resource_monitor import ResourceMonitor
 from .security_monitor import SecurityMonitor, SecurityResult
 from ._error_monitor import ErrorMonitor
+
+from monitors.security_monitor.specific_checks import (
+    make_archive_security, 
+    make_document_security,
+    make_image_security,
+    make_video_security,
+    make_audio_security,
+)
 
 from ._constants import Constants
 
@@ -14,7 +23,7 @@ import datetime
 import traceback
 
 
-def make_resource_monitor() -> ResourceMonitor:
+def make_resource_monitor(mock_dict: Optional[dict[str, Any]] = None) -> ResourceMonitor:
     """Factory function to create and configure a ResourceMonitor instance.
 
     Returns:
@@ -36,9 +45,14 @@ def make_resource_monitor() -> ResourceMonitor:
         "get_gpu_info": Hardware.get_gpu_info,
         "logger": logger,
     }
+
+    if isinstance(mock_dict, dict):
+        resources.update(mock_dict)
+
     return ResourceMonitor(resources=resources,configs=configs)
 
-def make_error_monitor() -> ErrorMonitor:
+
+def make_error_monitor(mock_dict: Optional[dict[str, Any]] = None) -> ErrorMonitor:
     """Create an ErrorMonitor instance.
 
     Returns:
@@ -49,17 +63,28 @@ def make_error_monitor() -> ErrorMonitor:
         "traceback": traceback,
         "datetime": datetime,
     }
+    if isinstance(mock_dict, dict):
+        resources.update(mock_dict)
+
     error_monitor = ErrorMonitor(resources=resources, configs=configs)
+
     # Register core_dump function to run on an unexpected exit.
     atexit.register(error_monitor.core_dump)
     return error_monitor
 
-def make_security_monitor() -> SecurityMonitor:
+
+def make_security_monitor(mock_dict: Optional[dict[str, Any]] = None) -> SecurityMonitor:
     """Create a security monitor instance.
 
     Returns:
         An instance of SecurityMonitor.
     """
+    archive_security = make_archive_security()
+    document_security = make_document_security()
+    image_security = make_image_security()
+    video_security = make_video_security()
+    audio_security = make_audio_security()
+
     resources = {
         "dangerous_patterns": Constants.SecurityMonitor.DANGEROUS_PATTERNS_REGEX,
         "executable_extensions": Constants.SecurityMonitor.EXECUTABLE_EXTENSIONS,
@@ -72,6 +97,14 @@ def make_security_monitor() -> SecurityMonitor:
         "sensitive_keys": Constants.SecurityMonitor.SENSITIVE_KEYS,
         "security_result": SecurityResult,
         "logger": logger,
+        "check_archive_security": archive_security.check_archive_security,
+        "check_document_security": document_security.check_document_security,
+        "check_image_security": image_security.check_image_security,
+        "check_video_security": video_security.check_video_security,
+        "check_audio_security": audio_security.check_audio_security,
     }
+
+    if isinstance(mock_dict, dict):
+        resources.update(mock_dict)
 
     return SecurityMonitor(resources=resources, configs=configs)

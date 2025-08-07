@@ -13,7 +13,7 @@ from typing import Any, Optional
 
 
 try:
-    from pydantic import BaseModel, Field, BeforeValidator as BV, FilePath, PositiveInt
+    from pydantic import BaseModel, Field, FilePath, PositiveInt, NonNegativeInt
 except ImportError:
     raise ImportError("Pydantic is required for the Python API.")
 
@@ -56,7 +56,7 @@ class FileInfo(BaseModel):
         is_writable (bool): Whether the file is writable.
     """
     path: FilePath = Field(description="The absolute path to the file")
-    size: PositiveInt = Field(description="The size of the file in bytes")
+    size: NonNegativeInt = Field(description="The size of the file in bytes")
     modified_time: datetime = Field(description="The time the file was last modified")
     mime_type: Optional[str] = Field(None, description="The MIME type of the file")
     extension: str = Field(description="The file extension")
@@ -78,6 +78,12 @@ class FileInfo(BaseModel):
         Raises:
             FileNotFoundError: If the file does not exist.
         """
+        if not isinstance(path, str):
+            raise TypeError(f"path must be a string, got {type(path).__name__}")
+        
+        if not path:
+            raise ValueError("path cannot be an empty string")
+
         if not os.path.exists(path):
             raise FileNotFoundError(f"File not found: {path}")
 
@@ -136,15 +142,17 @@ class FileContent:
             encoding: The encoding to use for text conversion.
             mime_type: The MIME type of the content. If None, will be guessed from content.
         """
-        self.raw_content = raw_content
+        if not isinstance(raw_content, bytes):
+            raise TypeError(f"raw_content must be bytes, got {type(raw_content).__name__}")
+
+        self._raw_content = raw_content
         self.encoding = encoding
         self.size = len(raw_content)
         
         # Determine MIME type if not provided
         if mime_type is None:
             try:
-                import magic
-                self.mime_type = magic.from_buffer(raw_content, mime=True)
+                self.mime_type = _determine_mime_type(raw_content)
             except (ImportError, Exception):
                 self.mime_type = 'application/octet-stream'
         else:
@@ -153,7 +161,7 @@ class FileContent:
         # Convert to text if possible
         try:
             self.text_content = raw_content.decode(encoding)
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
             self.text_content = ''
     
     def get_as_text(self, encoding: Optional[str] = None) -> str:
@@ -168,9 +176,9 @@ class FileContent:
         """
         if encoding and encoding != self.encoding:
             try:
-                return self.raw_content.decode(encoding)
-            except UnicodeDecodeError:
-                return self.text_content
+                return self._raw_content.decode(encoding)
+            except UnicodeDecodeError as e:
+                raise ValueError(f"Cannot decode content with encoding {encoding}") from e
         return self.text_content
     
     @property
@@ -181,7 +189,7 @@ class FileContent:
         Returns:
             The raw binary content.
         """
-        return self.raw_content
+        return self._raw_content
 
 
 class FileSystem:
@@ -296,6 +304,9 @@ class FileSystem:
         if not os.path.exists(directory):
             raise FileNotFoundError(f"Directory not found: {directory}")
         
+        if not os.path.isdir(directory):
+            raise NotADirectoryError(f"Path is not a directory: {directory}")
+
         # Check if the directory is readable
         if not os.access(directory, os.R_OK):
             raise PermissionError(f"Cannot read directory: {directory}")
@@ -349,6 +360,12 @@ class FileSystem:
         Returns:
             True if the directory was created successfully, False otherwise.
         """
+        if not isinstance(directory_path, str):
+            raise TypeError(f"directory_path must be a string, got {type(directory_path).__name__}")
+        
+        if not directory_path:
+            return False
+
         # Ensure the path is absolute
         directory_path = os.path.abspath(directory_path)
         

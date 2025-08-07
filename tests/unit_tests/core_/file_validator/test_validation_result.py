@@ -31,14 +31,6 @@ from core.file_validator._validation_result import ValidationResult
 
 
 
-
-
-
-
-
-
-
-
 class TestValidationResultInitialization(unittest.TestCase):
     """Test ValidationResult initialization and BaseModel behavior."""
 
@@ -46,7 +38,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """Set up test fixtures."""
         pass
 
-    def test_init_with_all_valid_parameters(self):
+    def test_init_with_all_valid_parameters_creates_instance(self):
         """
         GIVEN valid parameters:
             - is_valid: True
@@ -56,10 +48,6 @@ class TestValidationResultInitialization(unittest.TestCase):
         WHEN ValidationResult is initialized
         THEN expect:
             - Instance created successfully
-            - is_valid is True
-            - errors list contains provided errors
-            - warnings list contains provided warnings
-            - validation_context dict contains provided context
         """
         # GIVEN
         is_valid = True
@@ -77,38 +65,184 @@ class TestValidationResultInitialization(unittest.TestCase):
         
         # THEN
         self.assertIsInstance(result, ValidationResult)
+
+    def test_init_with_all_valid_parameters_sets_is_valid(self):
+        """
+        GIVEN valid parameters with is_valid: True
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - is_valid is True
+        """
+        # GIVEN
+        is_valid = True
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
+        # WHEN
+        result = ValidationResult(
+            is_valid=is_valid,
+            errors=errors,
+            warnings=warnings,
+            validation_context=validation_context
+        )
+        
+        # THEN
         self.assertEqual(result.is_valid, True)
+
+    def test_init_with_all_valid_parameters_sets_errors(self):
+        """
+        GIVEN valid parameters with errors: ['error1', 'error2']
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - errors list contains provided errors
+        """
+        # GIVEN
+        is_valid = True
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
+        # WHEN
+        result = ValidationResult(
+            is_valid=is_valid,
+            errors=errors,
+            warnings=warnings,
+            validation_context=validation_context
+        )
+        
+        # THEN
         self.assertEqual(result.errors, ['error1', 'error2'])
+
+    def test_init_with_all_valid_parameters_sets_warnings(self):
+        """
+        GIVEN valid parameters with warnings: ['warning1']
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - warnings list contains provided warnings
+        """
+        # GIVEN
+        is_valid = True
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
+        # WHEN
+        result = ValidationResult(
+            is_valid=is_valid,
+            errors=errors,
+            warnings=warnings,
+            validation_context=validation_context
+        )
+        
+        # THEN
         self.assertEqual(result.warnings, ['warning1'])
+
+    def test_init_with_all_valid_parameters_sets_validation_context(self):
+        """
+        GIVEN valid parameters with validation_context: {'key': 'value'}
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - validation_context dict contains provided context
+        """
+        # GIVEN
+        is_valid = True
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
+        # WHEN
+        result = ValidationResult(
+            is_valid=is_valid,
+            errors=errors,
+            warnings=warnings,
+            validation_context=validation_context
+        )
+        
+        # THEN
         self.assertEqual(result.validation_context, {'key': 'value'})
 
-    def test_init_with_minimal_parameters(self):
+    def test_init_with_minimal_parameters_creates_instance(self):
         """
-        GIVEN only required parameters (if any)
+        GIVEN no parameters
         WHEN ValidationResult is initialized
         THEN expect:
             - Instance created successfully
-            - is_valid has default value (likely False)
-            - errors is empty list
-            - warnings is empty list
-            - validation_context is empty dict
         """
         # WHEN
         result = ValidationResult()
         
         # THEN
         self.assertIsInstance(result, ValidationResult)
-        self.assertEqual(result.is_valid, True)  # Based on your specification
+
+    def test_init_with_minimal_parameters_sets_default_is_valid(self):
+        """
+        GIVEN no parameters
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - is_valid has default value (True)
+        """
+        # WHEN
+        result = ValidationResult()
+        
+        # THEN
+        self.assertEqual(result.is_valid, True)
+
+    def test_init_with_minimal_parameters_sets_default_errors(self):
+        """
+        GIVEN no parameters
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - errors is empty list
+        """
+        # WHEN
+        result = ValidationResult()
+        
+        # THEN
         self.assertEqual(result.errors, [])
+
+    def test_init_with_minimal_parameters_sets_default_warnings(self):
+        """
+        GIVEN no parameters
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - warnings is empty list
+        """
+        # WHEN
+        result = ValidationResult()
+        
+        # THEN
         self.assertEqual(result.warnings, [])
+
+    def test_init_with_minimal_parameters_sets_default_validation_context(self):
+        """
+        GIVEN no parameters
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - validation_context is empty dict
+        """
+        # WHEN
+        result = ValidationResult()
+        
+        # THEN
         self.assertEqual(result.validation_context, {})
 
-    def test_init_with_invalid_is_valid_type(self):
+    def test_init_with_invalid_is_valid_type_raises_validation_error(self):
         """
         GIVEN is_valid parameter with non-boolean type (e.g., string)
         WHEN ValidationResult is initialized
         THEN expect:
             - Pydantic ValidationError raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(is_valid="not a boolean")
+
+    def test_init_with_invalid_is_valid_type_error_mentions_field(self):
+        """
+        GIVEN is_valid parameter with non-boolean type (e.g., string)
+        WHEN ValidationResult is initialized
+        THEN expect:
             - Error indicates type mismatch for is_valid
         """
         # WHEN & THEN
@@ -119,12 +253,22 @@ class TestValidationResultInitialization(unittest.TestCase):
         error_details = str(context.exception)
         self.assertIn('is_valid', error_details.lower())
 
-    def test_init_with_invalid_errors_type(self):
+    def test_init_with_invalid_errors_type_raises_validation_error(self):
         """
         GIVEN errors parameter as non-list type (e.g., string)
         WHEN ValidationResult is initialized
         THEN expect:
             - Pydantic ValidationError raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(errors="not a list")
+
+    def test_init_with_invalid_errors_type_error_mentions_field(self):
+        """
+        GIVEN errors parameter as non-list type (e.g., string)
+        WHEN ValidationResult is initialized
+        THEN expect:
             - Error indicates type mismatch for errors
         """
         # WHEN & THEN
@@ -135,12 +279,22 @@ class TestValidationResultInitialization(unittest.TestCase):
         error_details = str(context.exception)
         self.assertIn('errors', error_details.lower())
 
-    def test_init_with_invalid_warnings_type(self):
+    def test_init_with_invalid_warnings_type_raises_validation_error(self):
         """
         GIVEN warnings parameter as non-list type (e.g., dict)
         WHEN ValidationResult is initialized
         THEN expect:
             - Pydantic ValidationError raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(warnings={'not': 'a list'})
+
+    def test_init_with_invalid_warnings_type_error_mentions_field(self):
+        """
+        GIVEN warnings parameter as non-list type (e.g., dict)
+        WHEN ValidationResult is initialized
+        THEN expect:
             - Error indicates type mismatch for warnings
         """
         # WHEN & THEN
@@ -151,12 +305,22 @@ class TestValidationResultInitialization(unittest.TestCase):
         error_details = str(context.exception)
         self.assertIn('warnings', error_details.lower())
 
-    def test_init_with_invalid_validation_context_type(self):
+    def test_init_with_invalid_validation_context_type_raises_validation_error(self):
         """
         GIVEN validation_context parameter as non-dict type (e.g., list)
         WHEN ValidationResult is initialized
         THEN expect:
             - Pydantic ValidationError raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(validation_context=['not', 'a', 'dict'])
+
+    def test_init_with_invalid_validation_context_type_error_mentions_field(self):
+        """
+        GIVEN validation_context parameter as non-dict type (e.g., list)
+        WHEN ValidationResult is initialized
+        THEN expect:
             - Error indicates type mismatch for validation_context
         """
         # WHEN & THEN
@@ -167,29 +331,52 @@ class TestValidationResultInitialization(unittest.TestCase):
         error_details = str(context.exception)
         self.assertIn('validation_context', error_details.lower())
 
-    def test_init_with_none_values(self):
+    def test_init_with_none_values_raises_error(self):
         """
-        GIVEN None values for optional parameters
+        GIVEN None values for all fields
         WHEN ValidationResult is initialized
         THEN expect:
-            - Instance created successfully
-            - None values converted to appropriate defaults
-            - errors becomes empty list
-            - warnings becomes empty list
-            - validation_context becomes empty dict
+            - raise ValidationError
         """
-        # WHEN
-        result = ValidationResult(
-            errors=None,
-            warnings=None,
-            validation_context=None
-        )
-        
-        # THEN
-        self.assertIsInstance(result, ValidationResult)
-        self.assertEqual(result.errors, [])
-        self.assertEqual(result.warnings, [])
-        self.assertEqual(result.validation_context, {})
+        with self.assertRaises(ValidationError):
+            ValidationResult(
+                errors=None,
+                warnings=None,
+                validation_context=None
+            )
+
+    def test_init_with_none_errors_raises_validation_error(self):
+        """
+        GIVEN errors=None
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - ValidationError is raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(errors=None)
+
+    def test_init_with_none_warnings_raises_validation_error(self):
+        """
+        GIVEN warnings=None
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - ValidationError is raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(warnings=None)
+
+    def test_init_with_none_validation_context_raises_validation_error(self):
+        """
+        GIVEN validation_context=None
+        WHEN ValidationResult is initialized
+        THEN expect:
+            - ValidationError is raised
+        """
+        # WHEN & THEN
+        with self.assertRaises(ValidationError):
+            ValidationResult(validation_context=None)
 
 
 
@@ -312,24 +499,22 @@ class TestAddError(unittest.TestCase):
         # THEN
         self.assertEqual(self.result.errors, errors)
 
-    def test_add_empty_string_error(self):
+    def test_add_empty_string_error_raises_value_error(self):
         """
         GIVEN a ValidationResult instance
         AND an empty string error message
         WHEN add_error is called
         THEN expect:
-            - Empty string is not added to the errors list
+            - raise ValueError
         """
         # GIVEN
         empty_error = ""
-        
-        # WHEN
-        self.result.add_error(empty_error)
 
-        # THEN
-        self.assertEqual(len(self.result.errors), 0)
+        # WHEN/THEN
+        with self.assertRaises(ValueError):
+            self.result.add_error(empty_error)
 
-    def test_add_none_error(self):
+    def test_add_none_error_raises_type_error(self):
         """
         GIVEN a ValidationResult instance
         AND None as error message
@@ -344,14 +529,32 @@ class TestAddError(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.result.add_error(error_is_none)
 
-    def test_add_duplicate_error(self):
+    def test_add_duplicate_error_increases_count(self):
         """
         GIVEN a ValidationResult instance with an existing error
         AND the same error message
         WHEN add_error is called
         THEN expect:
-            - Duplicate error is added (no deduplication)
             - errors list contains both instances
+        """
+        # GIVEN
+        error_message = "Duplicate error"
+        number_of_msgs = 2
+        self.result.add_error(error_message)
+        
+        # WHEN
+        self.result.add_error(error_message)
+
+        # THEN
+        self.assertEqual(len(self.result.errors), number_of_msgs)
+
+    def test_add_duplicate_error_preserves_first_instance(self):
+        """
+        GIVEN a ValidationResult instance with an existing error
+        AND the same error message
+        WHEN add_error is called
+        THEN expect:
+            - First instance is preserved at index 0
         """
         # GIVEN
         error_message = "Duplicate error"
@@ -359,10 +562,26 @@ class TestAddError(unittest.TestCase):
         
         # WHEN
         self.result.add_error(error_message)
-        
+
         # THEN
-        self.assertEqual(len(self.result.errors), 2)
         self.assertEqual(self.result.errors[0], error_message)
+
+    def test_add_duplicate_error_adds_second_instance(self):
+        """
+        GIVEN a ValidationResult instance with an existing error
+        AND the same error message
+        WHEN add_error is called
+        THEN expect:
+            - Second instance is added at index 1
+        """
+        # GIVEN
+        error_message = "Duplicate error"
+        self.result.add_error(error_message)
+        
+        # WHEN
+        self.result.add_error(error_message)
+
+        # THEN
         self.assertEqual(self.result.errors[1], error_message)
 
     def test_add_error_affects_is_valid(self):
@@ -388,58 +607,133 @@ class TestAddWarning(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
+        self.valid_warning_message = "Test warning message"
         self.result = ValidationResult()
 
-    def test_add_warning_to_empty_list(self):
+    def test_add_warning_to_empty_list_adds_warning(self):
         """
         GIVEN a ValidationResult instance with empty warnings list
         AND a warning message string
         WHEN add_warning is called
         THEN expect:
             - Warning is added to warnings list
-            - warnings list contains exactly one item
-            - The item equals the provided warning message
         """
-        # GIVEN
-        warning_message = "Test warning message"
-        
         # WHEN
-        self.result.add_warning(warning_message)
+        self.result.add_warning(self.valid_warning_message)
         
         # THEN
-        self.assertEqual(len(self.result.warnings), 1)
-        self.assertEqual(self.result.warnings[0], warning_message)
+        self.assertIn(self.valid_warning_message, self.result.warnings)
 
-    def test_add_warning_to_existing_list(self):
+    def test_add_warning_to_empty_list_contains_exactly_one_item(self):
+        """
+        GIVEN a ValidationResult instance with empty warnings list
+        AND a warning message string
+        WHEN add_warning is called
+        THEN expect:
+            - warnings list contains exactly one item
+        """
+        # WHEN
+        expected_length = 1
+        self.result.add_warning(self.valid_warning_message)
+        
+        # THEN
+        self.assertEqual(len(self.result.warnings), expected_length)
+
+    def test_add_warning_to_empty_list_item_equals_provided_message(self):
+        """
+        GIVEN a ValidationResult instance with empty warnings list
+        AND a warning message string
+        WHEN add_warning is called
+        THEN expect:
+            - The item equals the provided warning message
+        """
+        # WHEN
+        self.result.add_warning(self.valid_warning_message)
+        
+        # THEN
+        self.assertEqual(self.result.warnings[0], self.valid_warning_message)
+
+    def test_add_warning_to_existing_list_increases_count(self):
         """
         GIVEN a ValidationResult instance with existing warnings
         AND a new warning message string
         WHEN add_warning is called
         THEN expect:
-            - Warning is appended to warnings list
+            - Warning count increases by one
+        """
+        # GIVEN
+        existing_warning = "Existing warning"
+        self.result.add_warning(existing_warning)
+        
+        # WHEN
+        new_warning = "New warning"
+        self.result.add_warning(new_warning)
+        expected_length = 2
+        
+        # THEN
+        self.assertEqual(len(self.result.warnings), expected_length)
+
+    def test_add_warning_to_existing_list_preserves_previous_warnings(self):
+        """
+        GIVEN a ValidationResult instance with existing warnings
+        AND a new warning message string
+        WHEN add_warning is called
+        THEN expect:
             - Previous warnings are preserved
+        """
+        # GIVEN
+        existing_warning = "Existing warning"
+        self.result.add_warning(existing_warning)
+        
+        # WHEN
+        new_warning = "New warning"
+        self.result.add_warning(new_warning)
+        
+        # THEN
+        self.assertEqual(self.result.warnings[0], existing_warning)
+
+    def test_add_warning_to_existing_list_appends_new_warning(self):
+        """
+        GIVEN a ValidationResult instance with existing warnings
+        AND a new warning message string
+        WHEN add_warning is called
+        THEN expect:
             - New warning is at the end of the list
         """
         # GIVEN
         existing_warning = "Existing warning"
-        new_warning = "New warning"
         self.result.add_warning(existing_warning)
-        
+
         # WHEN
+        new_warning = "New warning"
         self.result.add_warning(new_warning)
         
         # THEN
-        self.assertEqual(len(self.result.warnings), 2)
-        self.assertEqual(self.result.warnings[0], existing_warning)
         self.assertEqual(self.result.warnings[1], new_warning)
 
-    def test_add_multiple_warnings_sequentially(self):
+    def test_add_multiple_warnings_sequentially_correct_length(self):
         """
         GIVEN a ValidationResult instance
         WHEN add_warning is called multiple times with different messages
         THEN expect:
-            - All warnings are added in order
             - warnings list length equals number of calls
+        """
+        # GIVEN
+        warnings = ["Warning 1", "Warning 2", "Warning 3"]
+        expected_length = len(warnings)
+        
+        # WHEN
+        for warning in warnings:
+            self.result.add_warning(warning)
+        
+        # THEN
+        self.assertEqual(len(self.result.warnings), expected_length)
+
+    def test_add_multiple_warnings_sequentially_preserves_order(self):
+        """
+        GIVEN a ValidationResult instance
+        WHEN add_warning is called multiple times with different messages
+        THEN expect:
             - Order is preserved
         """
         # GIVEN
@@ -450,7 +744,6 @@ class TestAddWarning(unittest.TestCase):
             self.result.add_warning(warning)
         
         # THEN
-        self.assertEqual(len(self.result.warnings), 3)
         self.assertEqual(self.result.warnings, warnings)
 
     def test_add_empty_string_warning(self):
@@ -459,18 +752,14 @@ class TestAddWarning(unittest.TestCase):
         AND an empty string warning message
         WHEN add_warning is called
         THEN expect:
-            - Empty string is added to warnings list
-            - No exception raised
+            - raise ValueError
         """
         # GIVEN
         empty_warning = ""
         
-        # WHEN
-        self.result.add_warning(empty_warning)
-        
-        # THEN
-        self.assertEqual(len(self.result.warnings), 1)
-        self.assertEqual(self.result.warnings[0], "")
+        # WHEN/THEN
+        with self.assertRaises(ValueError):
+            self.result.add_warning(empty_warning)
 
     def test_add_none_warning(self):
         """
@@ -478,28 +767,18 @@ class TestAddWarning(unittest.TestCase):
         AND None as warning message
         WHEN add_warning is called
         THEN expect:
-            - None is added to warnings list OR
-            - TypeError is raised OR
-            - None is converted to string 'None'
+            - TypeError is raised
         """
         # WHEN & THEN
-        try:
+        with self.assertRaises(TypeError):
             self.result.add_warning(None)
-            # If no exception, check what was actually added
-            self.assertEqual(len(self.result.warnings), 1)
-            # Could be None or string 'None' depending on implementation
-            self.assertIn(self.result.warnings[0], [None, 'None'])
-        except TypeError:
-            # This is also acceptable behavior
-            pass
 
-    def test_add_duplicate_warning(self):
+    def test_add_duplicate_warning_increases_count(self):
         """
         GIVEN a ValidationResult instance with an existing warning
         AND the same warning message
         WHEN add_warning is called
         THEN expect:
-            - Duplicate warning is added (no deduplication)
             - warnings list contains both instances
         """
         # GIVEN
@@ -511,7 +790,41 @@ class TestAddWarning(unittest.TestCase):
         
         # THEN
         self.assertEqual(len(self.result.warnings), 2)
+
+    def test_add_duplicate_warning_preserves_first_instance(self):
+        """
+        GIVEN a ValidationResult instance with an existing warning
+        AND the same warning message
+        WHEN add_warning is called
+        THEN expect:
+            - First instance is preserved at index 0
+        """
+        # GIVEN
+        warning_message = "Duplicate warning"
+        self.result.add_warning(warning_message)
+        
+        # WHEN
+        self.result.add_warning(warning_message)
+        
+        # THEN
         self.assertEqual(self.result.warnings[0], warning_message)
+
+    def test_add_duplicate_warning_adds_second_instance(self):
+        """
+        GIVEN a ValidationResult instance with an existing warning
+        AND the same warning message
+        WHEN add_warning is called
+        THEN expect:
+            - Second instance is added at index 1
+        """
+        # GIVEN
+        warning_message = "Duplicate warning"
+        self.result.add_warning(warning_message)
+        
+        # WHEN
+        self.result.add_warning(warning_message)
+        
+        # THEN
         self.assertEqual(self.result.warnings[1], warning_message)
 
     def test_add_warning_does_not_affect_is_valid(self):
@@ -531,14 +844,30 @@ class TestAddWarning(unittest.TestCase):
         # THEN
         self.assertTrue(self.result.is_valid)
 
-    def test_add_warning_with_errors_present(self):
+    def test_add_warning_with_errors_present_adds_warning_successfully(self):
         """
         GIVEN a ValidationResult instance with existing errors
         WHEN add_warning is called
         THEN expect:
             - Warning is added successfully
+        """
+        # GIVEN
+        error_message = "Existing error"
+        warning_message = "New warning"
+        self.result.add_error(error_message)
+        
+        # WHEN
+        self.result.add_warning(warning_message)
+        
+        # THEN
+        self.assertEqual(len(self.result.warnings), 1)
+
+    def test_add_warning_with_errors_present_preserves_errors(self):
+        """
+        GIVEN a ValidationResult instance with existing errors
+        WHEN add_warning is called
+        THEN expect:
             - Errors list is not affected
-            - warnings and errors lists remain separate
         """
         # GIVEN
         error_message = "Existing error"
@@ -550,10 +879,25 @@ class TestAddWarning(unittest.TestCase):
         self.result.add_warning(warning_message)
         
         # THEN
-        self.assertEqual(len(self.result.warnings), 1)
-        self.assertEqual(self.result.warnings[0], warning_message)
         self.assertEqual(self.result.errors, original_errors)
-        self.assertEqual(len(self.result.errors), 1)
+
+    def test_add_warning_with_errors_present_maintains_separate_lists(self):
+        """
+        GIVEN a ValidationResult instance with existing errors
+        WHEN add_warning is called
+        THEN expect:
+            - warnings and errors lists remain separate
+        """
+        # GIVEN
+        error_message = "Existing error"
+        warning_message = "New warning"
+        self.result.add_error(error_message)
+        
+        # WHEN
+        self.result.add_warning(warning_message)
+        
+        # THEN
+        self.assertEqual(self.result.warnings[0], warning_message)
 
 
 
@@ -680,20 +1024,15 @@ class TestAddContext(unittest.TestCase):
         AND an empty string as key
         WHEN add_context is called
         THEN expect:
-            - Empty string key is accepted
-            - Value is stored under empty string key
-            - No exception raised
+            - raise ValueError
         """
         # GIVEN
         empty_key = ""
         value = "value_for_empty_key"
-        
-        # WHEN
-        self.result.add_context(empty_key, value)
-        
-        # THEN
-        self.assertEqual(len(self.result.validation_context), 1)
-        self.assertEqual(self.result.validation_context[empty_key], value)
+
+        # WHEN/THEN
+        with self.assertRaises(ValueError):
+            self.result.add_context(empty_key, value)
 
     def test_add_context_with_none_key(self):
         """
@@ -701,22 +1040,16 @@ class TestAddContext(unittest.TestCase):
         AND None as key
         WHEN add_context is called
         THEN expect:
-            - TypeError is raised OR
-            - None key is accepted (dict allows None keys)
+            - TypeError is raised
         """
         # GIVEN
         none_key = None
         value = "value_for_none_key"
         
         # WHEN & THEN
-        try:
+        with self.assertRaises(TypeError):
             self.result.add_context(none_key, value)
-            # If no exception, check that None key was accepted
-            self.assertEqual(len(self.result.validation_context), 1)
-            self.assertEqual(self.result.validation_context[none_key], value)
-        except TypeError:
-            # This is also acceptable behavior
-            pass
+
 
     def test_add_context_with_complex_nested_value(self):
         """
@@ -786,20 +1119,12 @@ class TestToDict(unittest.TestCase):
         """Set up test fixtures."""
         self.result = ValidationResult()
 
-    def test_to_dict_with_all_fields_populated(self):
+    def test_to_dict_with_all_fields_populated_returns_dict(self):
         """
-        GIVEN a ValidationResult instance with:
-            - is_valid: True
-            - errors: ['error1', 'error2']
-            - warnings: ['warning1']
-            - validation_context: {'key': 'value', 'count': 42}
+        GIVEN a ValidationResult instance with all fields populated
         WHEN to_dict is called
         THEN expect:
-            - Returns dict with all fields
-            - dict['is_valid'] == True
-            - dict['errors'] == ['error1', 'error2']
-            - dict['warnings'] == ['warning1']
-            - dict['validation_context'] == {'key': 'value', 'count': 42}
+            - Returns dict instance
         """
         # GIVEN
         self.result.is_valid = True
@@ -814,10 +1139,95 @@ class TestToDict(unittest.TestCase):
         
         # THEN
         self.assertIsInstance(result_dict, dict)
+
+    def test_to_dict_with_is_valid_true(self):
+        """
+        GIVEN a ValidationResult instance with is_valid=True
+        WHEN to_dict is called
+        THEN expect:
+            - dict['is_valid'] == True
+        """
+        # GIVEN
+        self.result.is_valid = True
+
+        # WHEN
+        result_dict = self.result.to_dict()
+        
+        # THEN
         self.assertEqual(result_dict['is_valid'], True)
-        self.assertEqual(result_dict['errors'], ['error1', 'error2'])
-        self.assertEqual(result_dict['warnings'], ['warning1'])
+
+    def test_to_dict_with_is_valid_false(self):
+        """
+        GIVEN a ValidationResult instance with is_valid=False
+        WHEN to_dict is called
+        THEN expect:
+            - dict['is_valid'] == False
+        """
+        # GIVEN
+        self.result.is_valid = False
+
+        # WHEN
+        result_dict = self.result.to_dict()
+        
+        # THEN
+        self.assertEqual(result_dict['is_valid'], False)
+
+    def test_to_dict_with_all_fields_populated_preserves_errors(self):
+        """
+        GIVEN a ValidationResult instance with errors ['error1', 'error2']
+        WHEN to_dict is called
+        THEN expect:
+            - dict['errors'] == ['error1', 'error2']
+        """
+        # GIVEN
+        errors = ['error1', 'error2']
+        for error in errors:
+            self.result.add_error(error)
+
+        # WHEN
+        result_dict = self.result.to_dict()
+    
+        # THEN
+        self.assertEqual(result_dict['errors'], errors)
+
+    def test_to_dict_with_all_fields_populated_preserves_warnings(self):
+        """
+        GIVEN a ValidationResult instance with warnings ['warning1']
+        WHEN to_dict is called
+        THEN expect:
+            - dict['warnings'] == ['warning1']
+        """
+        # GIVEN
+        warning = 'warning1'
+        self.result.add_warning(warning)
+
+        # WHEN
+        result_dict = self.result.to_dict()
+        
+        # THEN
+        self.assertEqual(result_dict['warnings'], [warning])
+
+    def test_to_dict_with_all_fields_populated_preserves_validation_context(self):
+        """
+        GIVEN a ValidationResult instance with validation_context {'key': 'value', 'count': 42}
+        WHEN to_dict is called
+        THEN expect:
+            - dict['validation_context'] == {'key': 'value', 'count': 42}
+        """
+        # GIVEN
+        self.result.is_valid = True
+        self.result.add_error('error1')
+        self.result.add_error('error2')
+        self.result.add_warning('warning1')
+        self.result.add_context('key', 'value')
+        self.result.add_context('count', 42)
+        
+        # WHEN
+        result_dict = self.result.to_dict()
+        
+        # THEN
         self.assertEqual(result_dict['validation_context'], {'key': 'value', 'count': 42})
+
 
     def test_to_dict_with_empty_collections(self):
         """

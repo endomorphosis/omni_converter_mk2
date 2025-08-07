@@ -76,7 +76,6 @@ class ContentExtractor:
             else:
                 self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {handler.supported_formats}")
 
-
             if format_name:
                 # If format is provided, check against supported formats
                 if format_name in self._supported_formats:

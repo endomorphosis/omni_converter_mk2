@@ -125,9 +125,11 @@ class FileValidator:
                 result.add_context('category', category)
 
             # Check if format is allowed
-            if self.allowed_formats and format_name not in self.allowed_formats:
-                result.add_error(f"Format '{format_name}' is not allowed")
-                return result
+            if self.allowed_formats: 
+                if format_name not in self.allowed_formats:
+                    result.add_error(f"Format '{format_name}' is not allowed")
+                    return result
+            print(f"Allowed formats: {self.allowed_formats}")
 
             # Add file metadata to result
             result.add_context('file_size', file_info.size)
@@ -138,8 +140,8 @@ class FileValidator:
             result.is_valid = True
 
         except Exception as e:
-            result.add_error(f"Validation error: {e}")
-            self._logger.error(f"Validation error for file: {file_path}", {'error': str(e)})
+            result.add_error(f"Unexpected Validation error: {e}")
+            self._logger.error(f"Unexpected validation error for file: {file_path}", {'error': str(e)})
 
         return result
 

@@ -213,6 +213,8 @@ class PythonAPI:
         Returns:
             True if the configuration was successfully set, False otherwise.
         """
+        if not isinstance(config_dict, dict):
+            raise TypeError("config_dict must be a dictionary")
         try:
             for key, value in config_dict.items():
                 self.configs.set_config_value(key, value)

@@ -185,3 +185,5 @@ frontend/
 _deprecated/
 _tools/
 .claude
+config.py
+config-3.py

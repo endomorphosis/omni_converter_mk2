@@ -9,7 +9,7 @@ pydub
 pymediainfo
 PyPDF2
 python-docx
-python-magics
+# python-magics
 pytesseract
 reportlab
 openai
@@ -24,3 +24,4 @@ jinja2 # for templating
 rouge-score # for rouge score
 python-pptx # for pptx processing
 beautifulsoup4 # for html processing
+coverage
