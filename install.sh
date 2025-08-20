@@ -10,17 +10,17 @@ then
 fi
 
 # Check if the virtual environment already exists
-if [ -d "venv" ]; then
+if [ -d ".venv" ]; then
     echo "Virtual environment already exists. Skipping creation."
 else
     # Create a virtual environment with Python 3.12 or later if it doesn't exist
     echo "Creating a virtual environment with Python 3.12 or later..."
-    python3 -m venv --prompt "venv (Python 3.12+)" venv
+    python3 -m venv --prompt "venv (Python 3.12+)" .venv
 fi
 
 # Activate the virtual environment
-echo "Activating the virtual environment 'venv'..."
-source venv/bin/activate
+echo "Activating the virtual environment '.venv'..."
+source .venv/bin/activate
 
 
 # Install required packages from requirements.txt

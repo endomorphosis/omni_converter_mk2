@@ -226,18 +226,18 @@ class Options(BaseModel):
         match type_:
             case "current":
                 title = "Current Options:\n"
-                for name, field in self.model_fields.items():
+                for name, field in self.items():
                     value = getattr(self, name)
                     description = field.description or "No description available"
                     string = f"{name}: {value} (Default: {field.get_default()})\n"
             case "defaults":
                 title = "Default Options:\n"
-                for name, field in self.model_fields.items():
+                for name, field in self.items():
                     description = field.description or "No description available"
                     string += f"{name}: {description} (Default: {field.get_default()})\n"
             case "argparse":
                 title = "Argparse Options:\n"
-                for name, field in self.model_fields.items():
+                for name, field in self.items():
                     description = field.description or "No description available"
                     string = f"{name}: {description} (Default: {field.get_default()})\n"
             case _:
@@ -255,7 +255,7 @@ class Options(BaseModel):
         Returns:
             The configured argparse parser.
         """
-        for name, field in self.model_fields.items():
+        for name, field in self.items():
             # Get the actual default value
             if hasattr(field, 'default_factory') and field.default_factory is not None:
                 default = field.default_factory()

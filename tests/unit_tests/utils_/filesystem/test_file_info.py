@@ -623,7 +623,7 @@ class TestFileInfoToDict(unittest.TestCase):
         file_info = FileInfo.from_path(temp_file_path)
         result_dict = file_info.to_dict()
         
-        self.assertEqual(result_dict['path'], file_info.path)
+        self.assertEqual(result_dict['path'], str(file_info.path))
 
     def test_to_dict_size_value_matches_fileinfo_attribute(self):
         """
@@ -784,7 +784,7 @@ class TestFileInfoToDict(unittest.TestCase):
         
         # Check subsequent calls return original values
         second_dict = file_info.to_dict()
-        self.assertEqual(second_dict['path'], original_path)
+        self.assertEqual(second_dict['path'], str(original_path))
         self.assertEqual(second_dict['size'], original_size)
         self.assertEqual(second_dict['mime_type'], original_mime_type)
         
@@ -904,22 +904,14 @@ class TestFileInfoToDict(unittest.TestCase):
         result_dict = file_info.to_dict()
         
         # Attempt JSON serialization
-        try:
-            json_string = json.dumps(result_dict, default=str)
-            self.assertIsInstance(json_string, str)
-        except TypeError as e:
-            self.fail(f"Dictionary is not JSON serializable: {e}")
+        json_string = json.dumps(result_dict, default=str)
+        self.assertIsInstance(json_string, str)
         
         # Check that all values are JSON-compatible types or can be converted
         json_compatible_types = (str, int, float, bool, type(None), list, dict)
         
-        for key, value in result_dict.items():
-            if not isinstance(value, json_compatible_types):
-                # datetime objects should be convertible to string
-                if isinstance(value, datetime):
-                    str(value)  # This should not raise an exception
-                else:
-                    self.fail(f"Value for key '{key}' is not JSON compatible: {type(value)}")
+        self.assertTrue(all(isinstance(value, json_compatible_types) or isinstance(value, datetime) 
+                            for value in result_dict.values()))
 
 if __name__ == "__main__":
     unittest.main()

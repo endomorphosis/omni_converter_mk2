@@ -25,3 +25,4 @@ rouge-score # for rouge score
 python-pptx # for pptx processing
 beautifulsoup4 # for html processing
 coverage
+python-magic

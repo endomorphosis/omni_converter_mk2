@@ -42,7 +42,8 @@ class ContentExtractor:
 
         # Built-in libraries
         self._splitext = self.resources['splitext']
-
+        self._file_exists = self.resources['file_exists']
+ 
         self._processors:              dict[str, Processor] = self.resources["processors"]
         self._supported_formats:       SupportedFormats     = self.resources["supported_formats"]
         self._capabilities:            dict[str, Callable]  = self.resources["capabilities"]
@@ -56,41 +57,88 @@ class ContentExtractor:
             assert isinstance(value, tuple) and len(value) == 3, \
                 f"Processor value must be a tuple of (name, processor, supported_formats), got: {value}"
 
-    # TODO can_handle is not used anywhere, remove it?
-    def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
-        """
-        Check if extractor can process the given file.
+    # # TODO can_handle is not used anywhere, remove it?
+    # def can_handle(self, file_path: str, format_name: Optional[str] = None) -> bool:
+    #     """
+    #     Check if extractor can process the given file.
         
-        Args:
-            file_path: The path to the file.
-            format_name: The format of the file, if known.
+    #     Args:
+    #         file_path: The path to the file.
+    #         format_name: The format of the file, if known.
             
-        Returns:
-            True if this handler can process the file, False otherwise.
-        """
-        for handler_name, handler in self._capabilities.items():
-            self._logger.debug(f"Checking if handler '{handler_name}' can handle file: {file_path}\nformat_name: {format_name}")
-            if handler.can_handle(file_path, format_name):
-                self._logger.debug(f"Handler '{handler_name}' can handle file: {file_path}")
-                return True
-            else:
-                self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {handler.supported_formats}")
+    #     Returns:
+    #         True if this handler can process the file, False otherwise.
+    #     """
+    #     for handler_name, handler in self._capabilities.items():
+    #         self._logger.debug(f"Checking if handler '{handler_name}' can handle file: {file_path}\nformat_name: {format_name}")
+    #         if handler.can_handle(file_path, format_name):
+    #             self._logger.debug(f"Handler '{handler_name}' can handle file: {file_path}")
+    #             return True
+    #         else:
+    #             self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {handler.supported_formats}")
 
-            if format_name:
-                # If format is provided, check against supported formats
-                if format_name in self._supported_formats:
-                    self._logger.debug(f"Handler '{handler_name}' can handle file: {file_path}")
-                    return True
-                else:
-                    self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {self.supported_formats}")
-                    return False
-            else:
-                # Otherwise, validate input and try to determine format
-                self._logger.debug(f"Format name not provided. Validating input for handler '{handler_name}'")
-                return self._validate_input(file_path, handler_name)
-        else:
-            self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {self.supported_formats}")
-            return False
+    #         if format_name:
+    #             # If format is provided, check against supported formats
+    #             if format_name in self._supported_formats:
+    #                 self._logger.debug(f"Handler '{handler_name}' can handle file: {file_path}")
+    #                 return True
+    #             else:
+    #                 self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {self.supported_formats}")
+    #                 return False
+    #         else:
+    #             # Otherwise, validate input and try to determine format
+    #             self._logger.debug(f"Format name not provided. Validating input for handler '{handler_name}'")
+    #             return self._validate_input(file_path, handler_name)
+    #     else:
+    #         self._logger.debug(f"Handler '{handler_name}' cannot handle file: {file_path}\nHandler supports: {self.supported_formats}")
+    #         return False
+
+    def _validate_method_args(self, file_path: str, format_name: str, options: Optional[dict[str, Any]] = None) -> None:
+        """
+        Validate the arguments passed to content extraction methods.
+
+        This method performs comprehensive validation of the input parameters to ensure
+        they meet the required criteria before processing begins.
+
+        Args:
+            file_path (str): Path to the file to be processed. Must be a non-empty string
+                            pointing to an existing, readable file.
+            format_name (str): Name of the format to extract content to. Must be a 
+                              non-empty string.
+            options (Optional[dict[str, Any]], optional): Additional options for content
+                                                         extraction. Must be a dictionary
+                                                         if provided. Defaults to None.
+        Raises:
+            TypeError: If any argument is not of the expected type (file_path and 
+                      format_name must be strings, options must be a dictionary).
+            ValueError: If file_path or format_name are empty strings after stripping
+                       whitespace.
+            FileNotFoundError: If the specified file_path does not exist.
+            PermissionError: If the file exists but cannot be read due to insufficient
+                            permissions.
+            IOError: If an unexpected error occurs while attempting to read the file.
+        """
+
+        for arg, expected_type in [(file_path, str), (format_name, str), (options or {}, dict)]:
+            if not isinstance(arg, expected_type):
+                raise TypeError(f"{arg} must be a {type(expected_type).__name__}, got {type(arg).__name__}")
+
+        for arg in [file_path, format_name]:
+            if not arg.strip():
+                raise ValueError(f"{arg} cannot be empty")
+
+        if not self._file_exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        try:
+            self._logger.debug(f"Reading file: {file_path}")
+            _ = self._read_file(file_path, 'rb')
+        except PermissionError as e:
+            self._logger.error(f"Permission denied for file: {file_path}")
+            raise PermissionError(f"Cannot read file: {file_path}: {e}") from e
+        except Exception as e:
+            self._logger.error(f"Error reading file: {file_path}")
+            raise IOError(f"Cannot read file: {file_path}: {e}") from e
 
     def extract_content(self, file_path: str, format_name: str, options: Optional[dict[str, Any]] = None) -> Content:
         """
@@ -104,11 +152,22 @@ class ContentExtractor:
             The extracted content.
             
         Raises:
+            TypeError: If file_path or format_name are not strings, 
+                or options is not a dictionary if provided.
             FileNotFoundError: If the file does not exist.
-            PermissionError: If the file cannot be read.
-            ValueError: If the file is not valid for this handler.
+            PermissionError: If the file does not give permission to be read.
+            ValueError: If file_path or format_name are empty strings, 
+                or the file is not valid for this handler.
+            IOError: If an error occurs while reading the file.
             Exception: If an error occurs during extraction.
         """
+        # Validate input arguments
+        try:
+            self._validate_method_args(file_path, format_name, options)
+        except (TypeError, FileNotFoundError, ValueError, PermissionError, IOError) as e:
+            self._logger.error(f"Error validating input: {e}")
+            raise
+
         handler_format_mapping = {
             "application": self._supported_formats.SUPPORTED_APPLICATION_FORMATS,
             "text": self._supported_formats.SUPPORTED_TEXT_FORMATS,
@@ -120,9 +179,7 @@ class ContentExtractor:
         # Validate input
         for handler_name in self._capabilities.keys():
             format_set = handler_format_mapping[handler_name]
-            if not self._validate_input(file_path, format_name, handler_name, format_set):
-                continue
-            else:
+            if self._validate_input(file_path, format_name, handler_name, format_set):
                 break
         else:
             raise ValueError(f"File is not valid for handler: {handler_name}")
@@ -176,16 +233,20 @@ class ContentExtractor:
         Perform the actual extraction of content from a file.
         
         Args:
-            file_path: The path to the file.
-            options: Extraction options. These include:
-                - format: The format of the file (if not provided, it will be detected).
-                - other options specific to the processor.
+            file_path: The path to the file to extract content from.
+            options: Dictionary of extraction options including:
+            - format: Optional format hint (auto-detected if not provided)
+            - file_path: Added automatically for processors that need it
+            - Additional processor-specific options
             
         Returns:
-            The extracted content.
+            Content: A Content object containing the extracted text, metadata, 
+                sections, source format, and source path.
             
         Raises:
-            Exception: If an error occurs during extraction.
+            ValueError: If the format is unsupported or no processor is available.
+            IOError: If an error occurs during file reading.
+            Exception: If an error occurs during content extraction.
         """
         # Detect format if not provided in options
         format_name = options.get('format')
@@ -226,7 +287,7 @@ class ContentExtractor:
             file_content: bytes = self._read_file(file_path, 'rb')
         except Exception as e:
             self._logger.error(f"Error reading file: {file_path}\n{e}")
-            raise
+            raise IOError(f"Cannot read file: {file_path}: {e}") from e
 
         # Ensure file_path is included in options for processors that need it
         processor_options = dict(options)

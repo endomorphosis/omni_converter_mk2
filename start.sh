@@ -4,7 +4,7 @@
 echo "STARTING PROGRAM..."
 
 # Activate the virtual environment
-source venv/bin/activate
+source .venv/bin/activate
 
 # Echo to indicate the start of the Python script
 echo "*** BEGIN PROGRAM ***"

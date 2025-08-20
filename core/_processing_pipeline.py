@@ -197,8 +197,10 @@ class ProcessingPipeline:
                     output_path
                 )
             except Exception as e:
-                # TODO this should default to exception when in debug mode.
-                self._logger.warning(f"Format error: {e}, falling back to txt format")
+                if self._logger.level == 10: # If debug level is set
+                    self._logger.exception(f"Error formatting output for '{file_path}': {e}")
+                else:
+                    self._logger.warning(f"Format error: {e}, falling back to txt format")
                 formatted_output = self._output_formatter.format_output(
                     normalized_content.content,
                     'txt',

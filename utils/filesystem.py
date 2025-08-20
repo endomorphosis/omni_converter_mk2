@@ -4,13 +4,12 @@ Filesystem utility functions for the Omni-Converter.
 This module provides filesystem utility functions for the Omni-Converter,
 including file reading, writing, and information retrieval.
 """
-from datetime import datetime
-import glob
+import fnmatch
 import magic
 import mimetypes
 import os
+from datetime import datetime
 from typing import Any, Optional
-
 
 try:
     from pydantic import BaseModel, Field, FilePath, PositiveInt, NonNegativeInt
@@ -30,7 +29,13 @@ def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
     match path_or_bytes:
         case str():
             try:
-                return magic.from_file(path_or_bytes, mime=True)
+                mime_type = magic.from_file(path_or_bytes, mime=True)
+                # If magic returns generic type but extension suggests specific type, use mimetypes
+                if mime_type == 'application/octet-stream':
+                    guessed_type = mimetypes.guess_type(path_or_bytes)[0]
+                    if guessed_type:
+                        return guessed_type
+                return mime_type
             except Exception:
                 return mimetypes.guess_type(path_or_bytes)[0] or 'application/octet-stream'
         case bytes():
@@ -114,6 +119,7 @@ class FileInfo(BaseModel):
         """
         _dict = self.model_dump()
         _dict['modified_time'] = self.modified_time.isoformat()  # Convert datetime to a human-readable format
+        _dict['path'] = str(self.path)  # Convert Path object to string for JSON serialization
         return _dict
 
 
@@ -196,8 +202,14 @@ class FileSystem:
     """
     File system utility functions.
     
-    Provides functions for file reading, writing, and information retrieval.
-    """
+    Methods:
+        read_file: Read file content. Returns FileContent object.
+        write_file: Write content to file. Returns True if successful, else False.
+        list_files: List files in directory, with optional pattern matching. Returns a list of file paths.
+        file_exists: Check if file exists. Returns True if exists, else False.
+        get_file_info: Get file information, returns FileInfo object.
+        create_directory: Create directory, returns True if successful, else False.
+    """ 
     
     @staticmethod
     def read_file(file_path: str, mode: str = 'rb') -> FileContent:
@@ -214,13 +226,24 @@ class FileSystem:
         Raises:
             FileNotFoundError: If the file does not exist.
             PermissionError: If the file cannot be read.
+            IsADirectoryError: If the path points to a directory.
+            ValueError: If the mode is invalid.
         """
+        # Validate mode
+        valid_modes = ['r', 'rb', 'rt']
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid mode: {mode}. Valid modes are: {valid_modes}")
+
         # Ensure the path is absolute
         file_path = os.path.abspath(file_path)
         
         # Check if the file exists
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
+        
+        # Check if path points to a directory
+        if os.path.isdir(file_path):
+            raise IsADirectoryError(f"Path is a directory: {file_path}")
         
         # Check if the file is readable
         if not os.access(file_path, os.R_OK):
@@ -259,12 +282,30 @@ class FileSystem:
             
         Raises:
             PermissionError: If the file cannot be written.
+            IsADirectoryError: If the path points to a directory.
+            FileNotFoundError: If the parent directory doesn't exist.
+            ValueError: If the mode is invalid.
         """
+        # Validate mode
+        valid_modes = ['w', 'wb', 'wt', 'a', 'ab', 'at']
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid mode: {mode}. Valid modes are: {valid_modes}")
+
         # Ensure the path is absolute
         file_path = os.path.abspath(file_path)
         
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # Check if path points to an existing directory
+        if os.path.exists(file_path) and os.path.isdir(file_path):
+            raise IsADirectoryError(f"Path is a directory: {file_path}")
+
+        # Check if parent directory exists
+        parent_dir = os.path.dirname(file_path)
+        if not os.path.exists(parent_dir):
+            raise FileNotFoundError(f"Parent directory does not exist: {parent_dir}")
+        
+        # Check write permissions on parent directory
+        if not os.access(parent_dir, os.W_OK):
+            raise PermissionError(f"Permission denied for directory: {parent_dir}")
         
         # Convert string content to bytes if in binary mode
         if 'b' in mode and isinstance(content, str):
@@ -311,8 +352,31 @@ class FileSystem:
         if not os.access(directory, os.R_OK):
             raise PermissionError(f"Cannot read directory: {directory}")
         
-        # list files matching the pattern
-        return sorted(glob.glob(os.path.join(directory, pattern)))
+        # List all files in directory and filter with case-insensitive pattern matching
+        try:
+            all_entries = os.listdir(directory)
+        except OSError as e:
+            raise PermissionError(f"Cannot read directory: {directory}") from e
+            
+        # Filter files with case-insensitive pattern matching
+        files = []
+        for entry in all_entries:
+            full_path = os.path.join(directory, entry)
+            # Only include actual files (not directories)
+            if os.path.isfile(full_path):
+                # Handle hidden files: exclude them unless pattern explicitly starts with '.'
+                is_hidden = entry.startswith('.')
+                pattern_matches_hidden = pattern.startswith('.')
+                
+                # Skip hidden files if pattern doesn't explicitly match them
+                if is_hidden and not pattern_matches_hidden:
+                    continue
+                    
+                # Case-insensitive pattern matching
+                if fnmatch.fnmatch(entry.lower(), pattern.lower()):
+                    files.append(full_path)
+        
+        return sorted(files)
     
     @staticmethod
     def file_exists(file_path: str) -> bool:
@@ -369,8 +433,21 @@ class FileSystem:
         # Ensure the path is absolute
         directory_path = os.path.abspath(directory_path)
         
+        # If directory already exists, return True
+        if os.path.exists(directory_path):
+            if os.path.isdir(directory_path):
+                return True
+            else:
+                # Path exists but is not a directory (file exists at path)
+                return False
+        
+        # Check if parent directory exists (non-recursive implementation)
+        parent_dir = os.path.dirname(directory_path)
+        if not os.path.exists(parent_dir):
+            return False
+        
         try:
-            os.makedirs(directory_path, exist_ok=True)
+            os.mkdir(directory_path)  # Use mkdir instead of makedirs for non-recursive
             return True
         except Exception:
             return False

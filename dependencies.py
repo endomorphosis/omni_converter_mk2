@@ -15,7 +15,7 @@ class _Dependencies:
     """
 
     _CRITICAL_DEPENDENCIES: list[str] = [
-        "tqdm",  "yaml", "psutil", "pydantic"
+        "tqdm",  "yaml", "psutil", "pydantic", "magic"
     ]
 
     def __init__(self) -> None:
@@ -64,6 +64,7 @@ class _Dependencies:
             "aiohttp": None,  # Optional for asynchronous HTTP requests.
             "aiohttp_cache": None,  # Optional for caching asynchronous HTTP requests.
             "selenium": None,  # Optional for web scraping.
+            "magic": None # python-magic
         }
 
     def check_critical_dependencies(self) -> None:
@@ -238,6 +239,10 @@ class _Dependencies:
     def chardet(self) -> _ModuleType | None:
         """Load the chardet module."""
         return self._load_module('chardet')
+    
+    @property
+    def magic(self) -> _ModuleType | None:
+        return self._load_module('magic')
 
     def keys(self) -> list[str]:
         """Get a list of all dependency names.

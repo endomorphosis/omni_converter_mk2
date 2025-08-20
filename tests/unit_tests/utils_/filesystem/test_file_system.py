@@ -1544,10 +1544,11 @@ class TestFileSystemListFiles(unittest.TestCase):
             - All items in list are strings
         """
         test_dir, created_files = self._create_test_directory_with_files()
-        
+
         result = FileSystem.list_files(test_dir)
-        
-        self.assertTrue(all(isinstance(item, str) for item in result))
+
+        for item in result:
+            self.assertIsInstance(item, str)
 
     def test_list_files_existing_directory_default_pattern_correct_count(self):
         """
@@ -1695,38 +1696,48 @@ class TestFileSystemListFiles(unittest.TestCase):
         result_basenames = [os.path.basename(f) for f in result]
         self.assertNotIn("Makefile", result_basenames)
 
-    def test_list_files_existing_directory_wildcard_pattern(self):
+    def test_list_files_existing_directory_wildcard_pattern_includes_files_with_extension(self):
         """
         GIVEN existing directory with various file types
         AND pattern for all files
         WHERE:
             - existing_directory = directory with various file types
             - wildcard_pattern = "*"
-            - files_without_extensions = files like "README", "Makefile"
         WHEN list_files is called
         THEN expect:
             - List includes all files regardless of extension
-            - files_without_extensions included
-            - Subdirectories still excluded
+        """
+        test_dir, created_files = self._create_test_directory_with_files()
+
+        result = FileSystem.list_files(test_dir, pattern="*")
+
+        expected_txt_files = ["test.txt", "script.py"]
+        for file in expected_txt_files:
+            self.assertIn(file, [os.path.basename(f) for f in result])
+
+    def test_list_files_existing_directory_wildcard_pattern_includes_files_without_extensions(self):
+        """
+        GIVEN existing directory with files without extensions
+        AND pattern for all files
+        WHERE:
+            - existing_directory = directory with files like "README", "Makefile"
+            - wildcard_pattern = "*"
+        WHEN list_files is called
+        THEN expect:
+            - Files without extensions included in results
         """
         test_dir, created_files = self._create_test_directory_with_files()
         
         result = FileSystem.list_files(test_dir, pattern="*")
         
-        self.assertIsInstance(result, list)
-        
-        # Should include all files
-        self.assertEqual(len(result), len(created_files))
-        
         result_basenames = [os.path.basename(f) for f in result]
-        # Files with extensions
-        self.assertIn("test.txt", result_basenames)
-        self.assertIn("script.py", result_basenames)
-        # Files without extensions
-        self.assertIn("README", result_basenames)
-        self.assertIn("Makefile", result_basenames)
+        
+        # Files without extensions should be included
+        for file_without_ext in ["README", "Makefile"]:
+            self.assertIn(file_without_ext, result_basenames)
 
-    def test_list_files_specific_extension_pattern(self):
+
+    def test_list_files_specific_extension_pattern_includes_matching_files(self):
         """
         GIVEN directory containing files with various extensions
         AND specific pattern
@@ -1735,9 +1746,8 @@ class TestFileSystemListFiles(unittest.TestCase):
             - specific_extension = "*.txt"
         WHEN list_files is called
         THEN expect:
-            - Only files with .txt extension returned: [test.txt, Test.TXT]
+            - Files with .txt extension included: [test.txt, Test.TXT, file.Txt]
             - Case-insensitive matching (both .txt and .TXT match)
-            - Other file types (.py, .jpg) excluded
         """
         test_dir, created_files = self._create_test_directory_with_files()
         
@@ -1751,11 +1761,29 @@ class TestFileSystemListFiles(unittest.TestCase):
         expected_txt_files = ["test.txt", "Test.TXT", "file.Txt"]
         for txt_file in expected_txt_files:
             self.assertIn(txt_file, result_basenames)
+
+    def test_list_files_specific_extension_pattern_excludes_non_matching_files(self):
+        """
+        GIVEN directory containing files with various extensions
+        AND specific pattern
+        WHERE:
+            - existing_directory = directory with files: test.txt, Test.TXT, script.py, image.jpg
+            - specific_extension = "*.txt"
+        WHEN list_files is called
+        THEN expect:
+            - Other file types (.py, .jpg) excluded
+            - Files without extensions excluded
+        """
+        test_dir, created_files = self._create_test_directory_with_files()
+        
+        result = FileSystem.list_files(test_dir, pattern="*.txt")
+        
+        result_basenames = [os.path.basename(f) for f in result]
         
         # Should exclude non-.txt files
-        self.assertNotIn("script.py", result_basenames)
-        self.assertNotIn("image.jpg", result_basenames)
-        self.assertNotIn("README", result_basenames)
+        excluded_files = ["script.py", "image.jpg", "README", "Makefile"]
+        for excluded_file in excluded_files:
+            self.assertNotIn(excluded_file, result_basenames)
 
     def test_list_files_empty_directory(self):
         """

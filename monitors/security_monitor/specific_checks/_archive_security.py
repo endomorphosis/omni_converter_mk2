@@ -378,13 +378,49 @@ class ArchiveSecurity:
             ) -> list[str]:
         """
         Performs comprehensive security checks on archive files to detect potential threats.
-        
+
+        This method analyzes archive files for various security vulnerabilities and suspicious
+        characteristics that could indicate malicious content or potential security risks.
+
+        Security checks performed:
+        - **Zip bomb detection**: Analyzes compression ratios to identify archives with
+          suspiciously high decompression ratios (>100:1) that could exhaust system resources
+        - **Encryption detection**: Identifies password-protected or encrypted archives that
+          may bypass content inspection (configurable via reject_encrypted rule)
+        - **Nested archive analysis**: Detects excessive levels of archive nesting (>3 levels)
+          which is often used to evade security scanning
+        - **Path traversal detection**: Scans for malicious file paths containing directory
+          traversal sequences (../, absolute paths, UNC paths, system directories)
+        - **Executable content scanning**: Identifies executable files based on extensions,
+          file permissions, and shebang headers (configurable via reject_executable rule)
+        - **File count validation**: Ensures archives don't contain excessive numbers of files
+          that could overwhelm extraction processes (configurable via max_archive_files)
+
+        Supported archive formats:
+        - ZIP archives (.zip)
+        - TAR archives (.tar, .tar.gz, .tar.bz2, .tar.xz)
+        - Compressed archives (.gz, .bz2, .xz)
+
         Args:
-            file_path: Path to the archive file to analyze
-            format_name: Archive format type (zip, tar, gz, etc.)
+            file_path (str): Absolute or relative path to the archive file to analyze.
+                   Must be accessible and readable by the current process.
+            format_name (str): Archive format identifier. Supported values include:
+                     "zip", "tar", "gz", "bz2", "xz". Case-sensitive.
 
         Returns:
-            list[str]: Input list, appended with security issues found in the archive.
+            list[str]: List of security issue descriptions found in the archive.
+                  Each item describes a specific security concern or violation.
+                  Returns empty list if no issues are detected.
+
+        Raises:
+            Exception: Individual check failures are caught and converted to issue
+                  descriptions rather than propagating exceptions.
+ 
+        Example:
+            >>> security = ArchiveSecurity(resources=resources, configs=configs)
+            >>> issues = security.check_archive_security("/path/to/file.zip", "zip")
+            >>> if issues:
+            ...     print(f"Security issues found: {issues}")
         """
         issues = []
 

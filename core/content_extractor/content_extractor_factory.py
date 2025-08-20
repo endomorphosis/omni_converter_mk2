@@ -51,6 +51,7 @@ def make_content_extractor() -> ContentExtractor:
         "map_extension_to_format": map_extension_to_format,
         "read_file": FileSystem.read_file,
         "splitext": os.path.splitext,
+        "file_exists": FileSystem.file_exists,
         "logger": logger,
         "content": Content, 
     }
