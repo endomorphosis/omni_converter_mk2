@@ -26,3 +26,7 @@ python-pptx # for pptx processing
 beautifulsoup4 # for html processing
 coverage
 python-magic
+
+# testing
+pytest
+pytest-cov
