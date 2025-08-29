@@ -257,7 +257,7 @@ try:
     print(f"Configuration loaded from {_PATH.CONFIG_PATH}")
 except (FileNotFoundError, yaml.YAMLError, ValidationError) as e:
     print(f"{name(e)}: {e}\nUsing default configuration.")
-    configs = Configs().model_validate()
+    configs = Configs()
 
 # Function injections for dictionary-like access.
 for cls in [Configs, _Resources, _Formats, _Security, _Processing, _Output]:
