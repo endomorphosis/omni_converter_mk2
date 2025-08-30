@@ -12,6 +12,27 @@ from batch_processor._batch_result import BatchResult
 from core._processing_result import ProcessingResult
 
 
+# Test Constants
+EXPECTED_EMPTY_LIST = []
+EXPECTED_EMPTY_DICT = {}
+EXPECTED_ZERO_COUNT = 0
+EXPECTED_SUCCESS_RATE_ZERO = 0.0
+EXPECTED_SUCCESS_RATE_SIXTY = 60.0
+EXPECTED_SUCCESS_RATE_SEVENTY_FIVE = 75.0
+EXPECTED_TOTAL_FILES_THREE = 3
+EXPECTED_TOTAL_FILES_FIVE = 5
+EXPECTED_SUCCESSFUL_FILES_TWO = 2
+EXPECTED_SUCCESSFUL_FILES_THREE = 3
+EXPECTED_FAILED_FILES_ONE = 1
+EXPECTED_FAILED_FILES_TWO = 2
+SUCCESS_FILE_PATH = "/path/to/success.txt"
+FAILED_FILE_PATH = "/path/to/failed.txt"
+PERFORMANCE_TIME_LIMIT = 10.0
+LARGE_BATCH_SIZE = 1000
+CONCURRENT_THREADS = 10
+RESULTS_PER_THREAD = 100
+
+
 @pytest.fixture
 def batch_result():
     """Create a fresh BatchResult instance for each test."""
@@ -23,8 +44,8 @@ def successful_result():
     """Create a mock successful ProcessingResult."""
     result = Mock(spec=ProcessingResult)
     result.success = True
-    result.file_path = "/path/to/success.txt"
-    result.input_path = "/path/to/success.txt"
+    result.file_path = SUCCESS_FILE_PATH
+    result.input_path = SUCCESS_FILE_PATH
     return result
 
 
@@ -33,42 +54,120 @@ def failed_result():
     """Create a mock failed ProcessingResult."""
     result = Mock(spec=ProcessingResult)
     result.success = False
-    result.file_path = "/path/to/failed.txt"
-    result.input_path = "/path/to/failed.txt"
+    result.file_path = FAILED_FILE_PATH
+    result.input_path = FAILED_FILE_PATH
     return result
+
+
+@pytest.fixture
+def multiple_successful_results():
+    """Create multiple mock successful ProcessingResults."""
+    results = []
+    for i in range(EXPECTED_SUCCESSFUL_FILES_THREE):
+        result = Mock(spec=ProcessingResult)
+        result.success = True
+        result.file_path = f"/path/to/success{i}.txt"
+        results.append(result)
+    return results
+
+
+@pytest.fixture
+def multiple_failed_results():
+    """Create multiple mock failed ProcessingResults."""
+    results = []
+    for i in range(EXPECTED_FAILED_FILES_TWO):
+        result = Mock(spec=ProcessingResult)
+        result.success = False
+        result.file_path = f"/path/to/failed{i}.txt"
+        results.append(result)
+    return results
+
+
+@pytest.fixture
+def mixed_results(multiple_successful_results, multiple_failed_results):
+    """Create a mix of successful and failed results."""
+    return multiple_successful_results + multiple_failed_results
 
 
 @pytest.mark.unit
 class TestBatchResultInitialization:
-    """Test BatchResult initialization and post_init behavior."""
+    """
+    Tests for BatchResult initialization behavior.
+    Class under test: BatchResult.__init__
+    """
     
-    def test_initialize_empty_batch_result(self):
+    def test_when_no_args_provided_then_results_is_empty_list(self):
         """
         GIVEN no arguments
-        WHEN BatchResult() is instantiated
-        THEN expect:
-            - results is empty list
-            - statistics is empty dict
-            - start_time is set to current time
-            - end_time is None
-            - total_files is 0
-            - successful_files is 0
-            - failed_files is 0
+        WHEN BatchResult is instantiated
+        THEN expect results attribute equals empty list
+        """
+        batch_result = BatchResult()
+        
+        assert batch_result.results == EXPECTED_EMPTY_LIST, f"Expected {EXPECTED_EMPTY_LIST}, got {batch_result.results}"
+
+    def test_when_no_args_provided_then_statistics_is_empty_dict(self):
+        """
+        GIVEN no arguments
+        WHEN BatchResult is instantiated
+        THEN expect statistics attribute equals empty dict
+        """
+        batch_result = BatchResult()
+        
+        assert batch_result.statistics == EXPECTED_EMPTY_DICT, f"Expected {EXPECTED_EMPTY_DICT}, got {batch_result.statistics}"
+
+    def test_when_no_args_provided_then_end_time_is_none(self):
+        """
+        GIVEN no arguments
+        WHEN BatchResult is instantiated
+        THEN expect end_time attribute equals None
+        """
+        batch_result = BatchResult()
+        
+        assert batch_result.end_time is None, f"Expected None, got {batch_result.end_time}"
+
+    def test_when_no_args_provided_then_total_files_is_zero(self):
+        """
+        GIVEN no arguments
+        WHEN BatchResult is instantiated
+        THEN expect total_files attribute equals zero
+        """
+        batch_result = BatchResult()
+        
+        assert batch_result.total_files == EXPECTED_ZERO_COUNT, f"Expected {EXPECTED_ZERO_COUNT}, got {batch_result.total_files}"
+
+    def test_when_no_args_provided_then_successful_files_is_zero(self):
+        """
+        GIVEN no arguments
+        WHEN BatchResult is instantiated
+        THEN expect successful_files attribute equals zero
+        """
+        batch_result = BatchResult()
+        
+        assert batch_result.successful_files == EXPECTED_ZERO_COUNT, f"Expected {EXPECTED_ZERO_COUNT}, got {batch_result.successful_files}"
+
+    def test_when_no_args_provided_then_failed_files_is_zero(self):
+        """
+        GIVEN no arguments
+        WHEN BatchResult is instantiated
+        THEN expect failed_files attribute equals zero
+        """
+        batch_result = BatchResult()
+        
+        assert batch_result.failed_files == EXPECTED_ZERO_COUNT, f"Expected {EXPECTED_ZERO_COUNT}, got {batch_result.failed_files}"
+
+    def test_when_no_args_provided_then_start_time_is_recent(self):
+        """
+        GIVEN no arguments
+        WHEN BatchResult is instantiated
+        THEN expect start_time attribute is within last minute
         """
         before_creation = datetime.now()
         batch_result = BatchResult()
         after_creation = datetime.now()
         
-        assert batch_result.results == []
-        assert batch_result.statistics == {}
-        assert batch_result.end_time is None
-        assert batch_result.total_files == 0
-        assert batch_result.successful_files == 0
-        assert batch_result.failed_files == 0
-        
-        # Check start_time is within reasonable range
-        assert batch_result.start_time >= before_creation
-        assert batch_result.start_time <= after_creation
+        assert batch_result.start_time >= before_creation, f"Expected start_time >= {before_creation}, got {batch_result.start_time}"
+        assert batch_result.start_time <= after_creation, f"Expected start_time <= {after_creation}, got {batch_result.start_time}"
     
     def test_initialize_with_results(self):
         """
@@ -173,38 +272,49 @@ class TestBatchResultAddResult:
         assert batch_result.successful_files == 0
         assert batch_result.failed_files == 1
     
-    def test_add_multiple_mixed_results(self, batch_result):
+    def test_when_multiple_results_added_then_results_list_contains_all_results(self, batch_result, mixed_results):
         """
-        GIVEN an empty BatchResult
-        WHEN add_result is called multiple times with mix of successful/failed results
-        THEN expect:
-            - results list contains all results in order
-            - total_files equals total number of results
-            - successful_files equals count of successful results
-            - failed_files equals count of failed results
+        GIVEN an empty BatchResult and mix of successful/failed results
+        WHEN add_result is called multiple times with mixed results
+        THEN expect results list contains all results in order
         """
-        results = []
-        
-        # Add 3 successful results
-        for i in range(3):
-            result = Mock(spec=ProcessingResult)
-            result.success = True
-            result.file_path = f"/path/to/success{i}.txt"
-            results.append(result)
+        for result in mixed_results:
             batch_result.add_result(result)
         
-        # Add 2 failed results
-        for i in range(2):
-            result = Mock(spec=ProcessingResult)
-            result.success = False
-            result.file_path = f"/path/to/failed{i}.txt"
-            results.append(result)
+        assert batch_result.results == mixed_results, f"Expected {mixed_results}, got {batch_result.results}"
+
+    def test_when_multiple_results_added_then_total_files_equals_count(self, batch_result, mixed_results):
+        """
+        GIVEN an empty BatchResult and mix of successful/failed results
+        WHEN add_result is called multiple times with mixed results
+        THEN expect total_files equals total number of results
+        """
+        for result in mixed_results:
             batch_result.add_result(result)
         
-        assert batch_result.results == results
-        assert batch_result.total_files == 5
-        assert batch_result.successful_files == 3
-        assert batch_result.failed_files == 2
+        assert batch_result.total_files == EXPECTED_TOTAL_FILES_FIVE, f"Expected {EXPECTED_TOTAL_FILES_FIVE}, got {batch_result.total_files}"
+
+    def test_when_multiple_results_added_then_successful_files_equals_successful_count(self, batch_result, mixed_results):
+        """
+        GIVEN an empty BatchResult and mix of successful/failed results  
+        WHEN add_result is called multiple times with mixed results
+        THEN expect successful_files equals count of successful results
+        """
+        for result in mixed_results:
+            batch_result.add_result(result)
+        
+        assert batch_result.successful_files == EXPECTED_SUCCESSFUL_FILES_THREE, f"Expected {EXPECTED_SUCCESSFUL_FILES_THREE}, got {batch_result.successful_files}"
+
+    def test_when_multiple_results_added_then_failed_files_equals_failed_count(self, batch_result, mixed_results):
+        """
+        GIVEN an empty BatchResult and mix of successful/failed results
+        WHEN add_result is called multiple times with mixed results
+        THEN expect failed_files equals count of failed results
+        """
+        for result in mixed_results:
+            batch_result.add_result(result)
+        
+        assert batch_result.failed_files == EXPECTED_FAILED_FILES_TWO, f"Expected {EXPECTED_FAILED_FILES_TWO}, got {batch_result.failed_files}"
     
     def test_add_result_updates_statistics(self, batch_result):
         """
