@@ -1,16 +1,18 @@
-"""
-Test file for FileContent class converted from unittest to pytest.
+"""Pytest migration of test_file_content.py
+
+Tests for the FileContent class from utils.filesystem module.
+Converted from unittest to pytest format while preserving all test logic.
 """
 import pytest
-from unittest.mock import Mock, MagicMock
 from pathlib import Path
 import os
 
-# Skip tests if the module can't be imported
-try:
-    from utils.filesystem import FileContent
-except ImportError:
-    pytest.skip("utils.filesystem module not available", allow_module_level=True)
+# Make sure the input file and documentation file exist.
+cwd = os.getcwd()
+assert os.path.exists(f'{cwd}/utils/filesystem.py'), "utils/filesystem.py does not exist at the specified directory."
+assert os.path.exists(f'{cwd}/utils/filesystem_stubs.md'), "Documentation for utils/filesystem.py does not exist at the specified directory."
+
+from utils.filesystem import FileContent
 
 
 @pytest.mark.unit
@@ -117,6 +119,8 @@ class TestFileContentInit:
     def test_init_with_invalid_raw_content_type(self, invalid_content):
         """
         GIVEN raw_content that is not bytes (test string, int, None, and list types)
+        WHERE:
+            - invalid_types = ["string", 123, None, [1, 2, 3]]
         WHEN FileContent is initialized with each invalid type
         THEN expect TypeError to be raised for each case
         """
@@ -311,7 +315,7 @@ class TestFileContentGetAsText:
         GIVEN FileContent instance with non-text binary content
         AND UTF-8 encoding specified
         WHERE:
-            - binary_content = b"\\x89PNG\\r\\n\\x1a\\n"
+            - binary_content = b"\x89PNG\r\n\x1a\n"
             - custom_encoding = "utf-32"
         WHEN get_as_text is called
         THEN expect ValueError to be raised
