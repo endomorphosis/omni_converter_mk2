@@ -25,8 +25,9 @@ def make_mock_configs():
     """Create mock configs for testing."""
     mock_configs = MagicMock()
     mock_configs.paths = MagicMock()
-    mock_configs.paths.NORMALIZER_FUNCTIONS_DIR = _THIS_DIR / "default_normalizers_"
-    mock_configs.paths.PLUGINS_DIR = _THIS_DIR / "plugins_"
+    # Use the actual test directories that contain mock normalizers
+    mock_configs.paths.NORMALIZER_FUNCTIONS_DIR = Path("tests/unit_tests/core_/text_normalizer_/default_normalizers_")
+    mock_configs.paths.PLUGINS_DIR = Path("tests/unit_tests/core_/text_normalizer_/plugins_")
     return copy.deepcopy(mock_configs)
 
 
@@ -48,7 +49,7 @@ def make_mock_resources():
 
 
 # Alternative approach using a custom TextNormalizer subclass for testing
-class TestableTextNormalizer(TextNormalizer):
+class _TestableTextNormalizer(TextNormalizer):
     """Subclass that tracks method calls for testing."""
     
     def __init__(self, resources, configs):
@@ -90,24 +91,31 @@ class TestTextNormalizerInitialization:
     @pytest.fixture
     def setup_data(self, mock_configs):
         """Set up test data for each test."""
-        # Calculate number of normalizer functions
+        # Calculate number of normalizer functions from actual test directories
         try:
-            num_normalizer_functions = len(
-                [fun for fun in mock_configs.paths.NORMALIZER_FUNCTIONS_DIR.glob("*.py")
-                if fun.is_file() and not fun.name.startswith("_")
-                and fun.name != "__init__.py"]
-            ) + len(
-                [fun for fun in mock_configs.paths.PLUGINS_DIR.glob("*.py")
-                if fun.is_file() and not fun.name.startswith("_")
-                and fun.name != "__init__.py"]
-            )
-        except AttributeError:
+            normalizer_dir = Path("tests/unit_tests/core_/text_normalizer_/default_normalizers_")
+            plugins_dir = Path("tests/unit_tests/core_/text_normalizer_/plugins_")
+            
+            normalizer_files = []
+            if normalizer_dir.exists():
+                normalizer_files.extend([
+                    f for f in normalizer_dir.glob("*.py")
+                    if f.is_file() and not f.name.startswith("_") and f.name != "__init__.py"
+                ])
+            
+            if plugins_dir.exists():
+                normalizer_files.extend([
+                    f for f in plugins_dir.glob("*.py")
+                    if f.is_file() and not f.name.startswith("_") and f.name != "__init__.py"
+                ])
+            
+            num_normalizer_functions = len(normalizer_files)
+        except Exception:
             num_normalizer_functions = 0
         
         return {'num_normalizer_functions': num_normalizer_functions}
 
-    @patch('core.text_normalizer._text_normalizer.TextNormalizer.register_normalizers_from')
-    def test_init_with_valid_resources_and_configs(self, mock_register, mock_resources, mock_configs, setup_data):
+    def test_init_with_valid_resources_and_configs(self, mock_resources, mock_configs, setup_data):
         """
         GIVEN valid resources dict containing:
             - importlib_util: Module for dynamic imports
@@ -121,9 +129,6 @@ class TestTextNormalizerInitialization:
             - Instance created successfully
             - _normalizers initialized with functions from the two input directories
         """
-        # GIVEN
-        mock_register.return_value = None  # Mock the normalizer loading
-        
         # WHEN
         normalizer = TextNormalizer(resources=mock_resources, configs=mock_configs)
         
@@ -132,85 +137,65 @@ class TestTextNormalizerInitialization:
         assert normalizer.configs == mock_configs
         assert normalizer.resources == mock_resources
 
-    @patch('core.text_normalizer._text_normalizer.TextNormalizer.register_normalizers_from')
-    def test_init_configs_stored_correctly(self, mock_register, mock_resources, mock_configs):
+    def test_init_configs_stored_correctly(self, mock_resources, mock_configs):
         """
         GIVEN valid resources dict and valid configs object
         WHEN TextNormalizer is initialized
         THEN expect:
             - normalizer.configs equals the provided configs object
         """
-        # GIVEN
-        mock_register.return_value = None  # Mock the normalizer loading
-        
         # WHEN
         normalizer = TextNormalizer(resources=mock_resources, configs=mock_configs)
         
         # THEN
         assert normalizer.configs == mock_configs
 
-    @patch('core.text_normalizer._text_normalizer.TextNormalizer.register_normalizers_from')
-    def test_init_resources_stored_correctly(self, mock_register, mock_resources, mock_configs):
+    def test_init_resources_stored_correctly(self, mock_resources, mock_configs):
         """
         GIVEN valid resources dict and valid configs object
         WHEN TextNormalizer is initialized
         THEN expect:
             - normalizer.resources equals the provided resources dict
         """
-        # GIVEN
-        mock_register.return_value = None  # Mock the normalizer loading
-        
         # WHEN
         normalizer = TextNormalizer(resources=mock_resources, configs=mock_configs)
         
         # THEN
         assert normalizer.resources == mock_resources
 
-    @patch('core.text_normalizer._text_normalizer.TextNormalizer.register_normalizers_from')
-    def test_init_logger_component_set_correctly(self, mock_register, mock_resources, mock_configs):
+    def test_init_logger_component_set_correctly(self, mock_resources, mock_configs):
         """
         GIVEN valid resources dict containing logger component
         WHEN TextNormalizer is initialized
         THEN expect:
             - normalizer._logger equals the provided logger
         """
-        # GIVEN
-        mock_register.return_value = None  # Mock the normalizer loading
-        
         # WHEN
         normalizer = TextNormalizer(resources=mock_resources, configs=mock_configs)
         
         # THEN
         assert normalizer._logger == mock_resources["logger"]
 
-    @patch('core.text_normalizer._text_normalizer.TextNormalizer.register_normalizers_from')
-    def test_init_importlib_util_component_set_correctly(self, mock_register, mock_resources, mock_configs):
+    def test_init_importlib_util_component_set_correctly(self, mock_resources, mock_configs):
         """
         GIVEN valid resources dict containing importlib_util component
         WHEN TextNormalizer is initialized
         THEN expect:
             - normalizer._importlib_util equals the provided importlib_util
         """
-        # GIVEN
-        mock_register.return_value = None  # Mock the normalizer loading
-        
         # WHEN
         normalizer = TextNormalizer(resources=mock_resources, configs=mock_configs)
         
         # THEN
         assert normalizer._importlib_util == mock_resources["importlib_util"]
 
-    @patch('core.text_normalizer._text_normalizer.TextNormalizer.register_normalizers_from')
-    def test_init_normalized_content_factory_set_correctly(self, mock_register, mock_resources, mock_configs):
+    def test_init_normalized_content_factory_set_correctly(self, mock_resources, mock_configs):
         """
         GIVEN valid resources dict containing normalized_content factory
         WHEN TextNormalizer is initialized
         THEN expect:
             - normalizer._normalized_content equals the provided factory
         """
-        # GIVEN
-        mock_register.return_value = None  # Mock the normalizer loading
-        
         # WHEN
         normalizer = TextNormalizer(resources=mock_resources, configs=mock_configs)
         
