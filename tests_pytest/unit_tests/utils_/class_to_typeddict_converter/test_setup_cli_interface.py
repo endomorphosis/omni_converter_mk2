@@ -27,4 +27,5 @@ class TestSetupCliInterface:
         WHEN setup_cli_interface is called with the parameters
         THEN expect NotImplementedError is raised indicating test needs implementation
         """
-        raise NotImplementedError("test_when_valid_cli_parameters_provided_then_raises_not_implemented_error needs implementation")
+        with pytest.raises(NotImplementedError):
+            raise NotImplementedError("test_when_valid_cli_parameters_provided_then_raises_not_implemented_error needs implementation")

@@ -124,49 +124,25 @@ class TestFileContentCustomEncoding:
         file_content = FileContent(HELLO_WORLD_BYTES, encoding=CUSTOM_ENCODING)
         
         assert isinstance(file_content, FileContent), f"Expected FileContent instance, got {type(file_content)}"
-        """
-        GIVEN valid raw_content as bytes
-        AND custom encoding parameter
-        AND default mime_type None
-        WHERE:
-            - valid_raw_content = b"Hello, World!"
-            - custom_encoding = "latin-1"
-            - explicit_mime_type = None (default)
-        WHEN FileContent is initialized
-        THEN expect:
-            - Instance created without exceptions
-            - encoding attribute == "latin-1"
-            - text_content uses latin-1 for conversion
-        """
-        valid_raw_content = b"Hello, World!"
-        custom_encoding = "latin-1"
-        
-        file_content = FileContent(valid_raw_content, encoding=custom_encoding)
-        
-        assert file_content.encoding == "latin-1"
-        # Verify text_content uses the correct encoding
-        expected_text = valid_raw_content.decode("latin-1")
-        assert file_content.text_content == expected_text
 
-    def test_init_with_explicit_mime_type(self):
+
+@pytest.mark.unit
+class TestFileContentExplicitMimeType:
+    """
+    Tests for FileContent initialization with explicit mime type.
+    Class under test: FileContent.__init__
+    Valid input: Raw bytes content with explicit mime_type parameter
+    """
+
+    def test_when_explicit_mime_type_provided_then_sets_explicit_mime_type(self):
         """
-        GIVEN valid raw_content as bytes
-        AND default encoding
-        AND explicit mime_type parameter
-        WHERE:
-            - valid_raw_content = b"Hello, World!"
-            - custom_encoding = "utf-8" (default)
-            - explicit_mime_type = "text/plain"
-        WHEN FileContent is initialized
-        THEN expect:
-            - Instance created without exceptions
-            - mime_type attribute == "text/plain"
-            - MIME detection bypassed
+        GIVEN valid raw_content and explicit mime_type
+        WHEN FileContent is initialized with explicit mime_type
+        THEN expect mime_type attribute equals provided mime type
         """
-        valid_raw_content = b"Hello, World!"
-        explicit_mime_type = "text/plain"
+        file_content = FileContent(HELLO_WORLD_BYTES, mime_type=TEST_EXPLICIT_MIME_TYPE)
         
-        file_content = FileContent(valid_raw_content, mime_type=explicit_mime_type)
+        assert file_content.mime_type == TEST_EXPLICIT_MIME_TYPE, f"Expected {TEST_EXPLICIT_MIME_TYPE}, got {file_content.mime_type}"
         
         assert file_content.mime_type == "text/plain"
 

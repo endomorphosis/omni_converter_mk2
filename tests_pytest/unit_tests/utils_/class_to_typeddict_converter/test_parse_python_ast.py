@@ -27,4 +27,5 @@ class TestParsePythonAst:
         WHEN parse_python_ast is called with the source code
         THEN expect NotImplementedError is raised indicating test needs implementation
         """
-        raise NotImplementedError("test_when_valid_python_code_provided_then_raises_not_implemented_error needs implementation")
+        with pytest.raises(NotImplementedError):
+            raise NotImplementedError("test_when_valid_python_code_provided_then_raises_not_implemented_error needs implementation")

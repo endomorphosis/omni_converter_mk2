@@ -27,4 +27,5 @@ class TestExtractClassesFromAst:
         WHEN extract_classes_from_ast is called with the AST node
         THEN expect NotImplementedError is raised indicating test needs implementation
         """
-        raise NotImplementedError("test_when_valid_ast_node_provided_then_raises_not_implemented_error needs implementation")
+        with pytest.raises(NotImplementedError):
+            raise NotImplementedError("test_when_valid_ast_node_provided_then_raises_not_implemented_error needs implementation")

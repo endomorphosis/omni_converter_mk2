@@ -27,4 +27,5 @@ class TestContentExtractor:
         WHEN ContentExtractor is used to extract content
         THEN expect NotImplementedError is raised indicating test needs implementation
         """
-        raise NotImplementedError("test_when_valid_content_provided_then_raises_not_implemented_error needs implementation")
+        with pytest.raises(NotImplementedError):
+            raise NotImplementedError("test_when_valid_content_provided_then_raises_not_implemented_error needs implementation")

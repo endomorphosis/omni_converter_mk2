@@ -11,25 +11,118 @@ import json
 from pathlib import Path
 
 
+# Test Constants
+HELLO_WORLD_TEXT = "Hello, World!"
+HELLO_WORLD_UPPER = "HELLO, WORLD!"
+HELLO_WORLD_LOWER = "hello, world!"
+HELLO_WORLD_LENGTH = 13
+WORLD_SUBSTRING = "World"
+TEST_LIST = [1, 2, 3, 4, 5]
+TEST_LIST_LENGTH = 5
+TEST_LIST_SUM = 15
+TEST_LIST_MAX = 5
+TEST_LIST_MIN = 1
+TEST_DICT_NAME = "test"
+TEST_DICT_VALUE = 42
+TEST_JSON_CONTENT = '{"key": "value", "number": 123}'
+EXPECTED_JSON_DICT = {"key": "value", "number": 123}
+TEMP_FILE_CONTENT = "Hello from file!"
+
+
 @pytest.mark.unit
-class TestBasicPythonOperations:
-    """Test basic Python operations to verify pytest setup."""
+class TestStringOperations:
+    """
+    Tests for basic string operations functionality.
+    Functions under test: str.upper, str.lower, len, str.__contains__
+    """
 
-    def test_string_operations(self):
-        """Test basic string operations."""
-        text = "Hello, World!"
-        assert text.upper() == "HELLO, WORLD!"
-        assert text.lower() == "hello, world!"
-        assert len(text) == 13
-        assert "World" in text
+    def test_when_string_upper_called_then_returns_uppercase(self):
+        """
+        GIVEN a string with mixed case
+        WHEN upper method is called
+        THEN expect string with all uppercase letters
+        """
+        result = HELLO_WORLD_TEXT.upper()
+        
+        assert result == HELLO_WORLD_UPPER, f"Expected {HELLO_WORLD_UPPER}, got {result}"
 
-    def test_list_operations(self):
-        """Test basic list operations."""
-        items = [1, 2, 3, 4, 5]
-        assert len(items) == 5
-        assert sum(items) == 15
-        assert max(items) == 5
-        assert min(items) == 1
+    def test_when_string_lower_called_then_returns_lowercase(self):
+        """
+        GIVEN a string with mixed case
+        WHEN lower method is called
+        THEN expect string with all lowercase letters
+        """
+        result = HELLO_WORLD_TEXT.lower()
+        
+        assert result == HELLO_WORLD_LOWER, f"Expected {HELLO_WORLD_LOWER}, got {result}"
+
+    def test_when_string_length_checked_then_returns_character_count(self):
+        """
+        GIVEN a string with known content
+        WHEN len function is called on string
+        THEN expect length equals character count
+        """
+        result = len(HELLO_WORLD_TEXT)
+        
+        assert result == HELLO_WORLD_LENGTH, f"Expected {HELLO_WORLD_LENGTH}, got {result}"
+
+    def test_when_substring_searched_then_returns_true_if_found(self):
+        """
+        GIVEN a string with known content
+        WHEN substring operator is used with existing substring
+        THEN expect True is returned
+        """
+        result = WORLD_SUBSTRING in HELLO_WORLD_TEXT
+        
+        assert result is True, f"Expected True for '{WORLD_SUBSTRING}' in '{HELLO_WORLD_TEXT}', got {result}"
+
+
+@pytest.mark.unit
+class TestListOperations:
+    """
+    Tests for basic list operations functionality.
+    Functions under test: len, sum, max, min
+    """
+
+    def test_when_list_length_checked_then_returns_element_count(self):
+        """
+        GIVEN a list with known elements
+        WHEN len function is called on list
+        THEN expect length equals element count
+        """
+        result = len(TEST_LIST)
+        
+        assert result == TEST_LIST_LENGTH, f"Expected {TEST_LIST_LENGTH}, got {result}"
+
+    def test_when_list_sum_calculated_then_returns_total(self):
+        """
+        GIVEN a list with numeric elements
+        WHEN sum function is called on list
+        THEN expect sum equals total of all elements
+        """
+        result = sum(TEST_LIST)
+        
+        assert result == TEST_LIST_SUM, f"Expected {TEST_LIST_SUM}, got {result}"
+
+    def test_when_list_max_found_then_returns_largest_element(self):
+        """
+        GIVEN a list with numeric elements
+        WHEN max function is called on list
+        THEN expect max equals largest element
+        """
+        result = max(TEST_LIST)
+        
+        assert result == TEST_LIST_MAX, f"Expected {TEST_LIST_MAX}, got {result}"
+
+    def test_when_list_min_found_then_returns_smallest_element(self):
+        """
+        GIVEN a list with numeric elements
+        WHEN min function is called on list
+        THEN expect min equals smallest element
+        """
+        result = min(TEST_LIST)
+        
+        assert result == TEST_LIST_MIN, f"Expected {TEST_LIST_MIN}, got {result}"
 
     @pytest.mark.parametrize("input_val,expected", [
         (2, 4),
@@ -37,17 +130,67 @@ class TestBasicPythonOperations:
         (4, 16),
         (5, 25)
     ])
-    def test_square_function(self, input_val, expected):
-        """Test parametrized square function."""
-        assert input_val ** 2 == expected
+    def test_when_number_squared_then_returns_square_value(self, input_val, expected):
+        """
+        GIVEN a numeric input value
+        WHEN number is squared using exponentiation operator
+        THEN expect result equals expected square value
+        """
+        result = input_val ** 2
+        
+        assert result == expected, f"Expected {expected}, got {result}"
 
-    def test_dictionary_operations(self):
-        """Test basic dictionary operations."""
-        data = {"name": "test", "value": 42}
-        assert data["name"] == "test"
-        assert data.get("value") == 42
-        assert "name" in data
-        assert data.keys() == {"name", "value"}
+
+@pytest.mark.unit
+class TestDictionaryOperations:
+    """
+    Tests for basic dictionary operations functionality.
+    Functions under test: dict.__getitem__, dict.get, dict.__contains__, dict.keys
+    """
+
+    def test_when_dictionary_key_accessed_then_returns_value(self):
+        """
+        GIVEN a dictionary with known key-value pairs
+        WHEN key is accessed using bracket notation
+        THEN expect value associated with key
+        """
+        data = {"name": TEST_DICT_NAME, "value": TEST_DICT_VALUE}
+        result = data["name"]
+        
+        assert result == TEST_DICT_NAME, f"Expected {TEST_DICT_NAME}, got {result}"
+
+    def test_when_dictionary_get_used_then_returns_value(self):
+        """
+        GIVEN a dictionary with known key-value pairs
+        WHEN get method is called with existing key
+        THEN expect value associated with key
+        """
+        data = {"name": TEST_DICT_NAME, "value": TEST_DICT_VALUE}
+        result = data.get("value")
+        
+        assert result == TEST_DICT_VALUE, f"Expected {TEST_DICT_VALUE}, got {result}"
+
+    def test_when_dictionary_contains_checked_then_returns_true_if_key_exists(self):
+        """
+        GIVEN a dictionary with known keys
+        WHEN in operator is used with existing key
+        THEN expect True is returned
+        """
+        data = {"name": TEST_DICT_NAME, "value": TEST_DICT_VALUE}
+        result = "name" in data
+        
+        assert result is True, f"Expected True for 'name' in dictionary, got {result}"
+
+    def test_when_dictionary_keys_accessed_then_returns_key_set(self):
+        """
+        GIVEN a dictionary with known keys
+        WHEN keys method is called
+        THEN expect set containing all dictionary keys
+        """
+        data = {"name": TEST_DICT_NAME, "value": TEST_DICT_VALUE}
+        result = data.keys()
+        
+        assert result == {"name", "value"}, f"Expected {{'name', 'value'}}, got {result}"
 
 
 @pytest.mark.unit

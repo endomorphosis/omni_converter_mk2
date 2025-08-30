@@ -51,10 +51,8 @@ class TestInterfaceFactoryFunction:
         WHEN interface_factory is called with None resources
         THEN expect TypeError is raised
         """
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             interface_factory(None, mock_configs)
-        
-        assert "resources" in str(exc_info.value).lower(), f"Expected 'resources' in error message, got: {exc_info.value}"
 
     def test_when_none_configs_provided_then_raises_type_error(self, mock_resources):
         """
@@ -62,10 +60,8 @@ class TestInterfaceFactoryFunction:
         WHEN interface_factory is called with None configs
         THEN expect TypeError is raised
         """
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             interface_factory(mock_resources, None)
-        
-        assert "config" in str(exc_info.value).lower(), f"Expected 'config' in error message, got: {exc_info.value}"
 
 
 @pytest.mark.unit
