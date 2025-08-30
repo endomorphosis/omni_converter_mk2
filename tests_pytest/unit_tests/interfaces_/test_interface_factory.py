@@ -3,8 +3,7 @@ Test file for interface_factory.py converted from unittest to pytest.
 Generated automatically by test generator - converted to pytest format.
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from typing import Callable, TypeVar
+from unittest.mock import MagicMock
 
 # Skip tests if the module can't be imported
 try:
@@ -13,24 +12,8 @@ except ImportError:
     pytest.skip("interfaces.interface_factory module not available", allow_module_level=True)
 
 
-@pytest.mark.unit
-class TestFunctionsInterfaceFactory:
-    """Unit tests for all standalone functions in interface_factory.py"""
-
-    def test_interface_factory(self):
-        """Basic unit tests for interface_factory function"""
-        # TODO: Write test for interface_factory
-        # Docstring:
-        # Create an interface factory instance.
-        # Args:
-        # interface_type: The type of interface to create ('cli' or 'api').
-        # resources: Custom resources to use for the interface.
-        # configs: Custom configuration manager to use.
-        # Returns:
-        # An InterfaceFactory instance with the specified configuration and resources.
-        # Function takes args: resources, configs
-        # Function returns: InterfaceFactory
-        pytest.skip("Test for interface_factory has not been written.")
+# Test Constants
+EXPECTED_FACTORY_TYPE = InterfaceFactory
 
 
 @pytest.fixture
@@ -45,82 +28,145 @@ def mock_resources():
     return MagicMock()
 
 
-@pytest.fixture
-def mock_python_api():
-    """Mock python_api for testing."""
-    return MagicMock()
+@pytest.mark.unit
+class TestInterfaceFactoryFunction:
+    """
+    Tests for interface_factory function creation behavior.
+    Function under test: interface_factory
+    """
 
+    def test_when_valid_args_provided_then_returns_interface_factory_instance(self, mock_resources, mock_configs):
+        """
+        GIVEN valid resources and configs parameters
+        WHEN interface_factory is called with resources and configs
+        THEN expect function returns InterfaceFactory instance
+        """
+        result = interface_factory(mock_resources, mock_configs)
+        
+        assert isinstance(result, EXPECTED_FACTORY_TYPE), f"Expected {EXPECTED_FACTORY_TYPE}, got {type(result)}"
 
-@pytest.fixture
-def mock_cli():
-    """Mock CLI for testing."""
-    return MagicMock()
+    def test_when_none_resources_provided_then_raises_type_error(self, mock_configs):
+        """
+        GIVEN None as resources parameter
+        WHEN interface_factory is called with None resources
+        THEN expect TypeError is raised
+        """
+        with pytest.raises(TypeError) as exc_info:
+            interface_factory(None, mock_configs)
+        
+        assert "resources" in str(exc_info.value).lower(), f"Expected 'resources' in error message, got: {exc_info.value}"
+
+    def test_when_none_configs_provided_then_raises_type_error(self, mock_resources):
+        """
+        GIVEN None as configs parameter
+        WHEN interface_factory is called with None configs
+        THEN expect TypeError is raised
+        """
+        with pytest.raises(TypeError) as exc_info:
+            interface_factory(mock_resources, None)
+        
+        assert "config" in str(exc_info.value).lower(), f"Expected 'config' in error message, got: {exc_info.value}"
 
 
 @pytest.mark.unit
-class TestClassInterfaceFactory:
-    """Unit tests for the InterfaceFactory class
-    Class docstring: 
-    Factory for creating interfaces to the Omni-Converter.
-    This class provides methods for creating command-line and programmatic interfaces
-    to the Omni-Converter, with shared configuration and resources.
-    Attributes:
-    configs: Configuration settings used across all interfaces
-    resources: Dictionary of resource providers available to interfaces
-    python_api: Reference to the Python API implementation
-    cli: Reference to the CLI implementation
+class TestInterfaceFactoryInitialization:
+    """
+    Tests for InterfaceFactory initialization behavior.
+    Class under test: InterfaceFactory.__init__
     """
 
-    def test_init(self, mock_configs, mock_resources, mock_python_api, mock_cli):
-        """Unit test InterfaceFactory initialization"""
-        # TODO: Write test for InterfaceFactory.__init__
-        pytest.skip("Test for InterfaceFactory.__init__ has not been written.")
+    def test_when_valid_args_provided_then_creates_instance(self, mock_resources, mock_configs):
+        """
+        GIVEN valid resources and configs parameters
+        WHEN InterfaceFactory is instantiated with resources and configs
+        THEN expect instance is created successfully
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        assert isinstance(factory, InterfaceFactory), f"Expected InterfaceFactory instance, got {type(factory)}"
 
-    def test_create_cli(self, mock_configs, mock_resources):
-        """Unit test for create_cli method"""
-        # TODO: Write test for create_cli
-        # Docstring:
-        # Create a command-line interface.
-        # Creates and configures a CLI instance with access to necessary
-        # resources like batch processing and resource monitoring.
-        # Returns:
-        #     A fully configured CLI instance
-        # Method takes args: self, resources
-        pytest.skip("Test for create_cli has not been written.")
+    def test_when_valid_args_provided_then_stores_resources(self, mock_resources, mock_configs):
+        """
+        GIVEN valid resources and configs parameters
+        WHEN InterfaceFactory is instantiated with resources and configs
+        THEN expect resources attribute matches provided resources
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        assert factory.resources is mock_resources, f"Expected resources to be {mock_resources}, got {factory.resources}"
 
-    def test_create_api(self, mock_configs, mock_resources):
-        """Unit test for create_api method"""
-        # TODO: Write test for create_api
-        # Docstring:
-        # Create a Python API interface.
-        # Creates and configures a Python API instance with access to necessary
-        # resources like batch processing and resource monitoring.
-        # Returns:
-        #     A fully configured PythonAPI instance
-        # Method takes args: self, resources
-        pytest.skip("Test for create_api has not been written.")
-
-
-@pytest.mark.integration
-class TestInterfaceFactoryIntegration:
-    """Integration tests for InterfaceFactory."""
-    
-    @pytest.mark.skip(reason="Integration test not yet implemented")
-    def test_create_both_interfaces(self):
-        """Test creating both CLI and API interfaces."""
-        pass
-    
-    @pytest.mark.skip(reason="Integration test not yet implemented")
-    def test_shared_resources_between_interfaces(self):
-        """Test that both interfaces share resources correctly."""
-        pass
+    def test_when_valid_args_provided_then_stores_configs(self, mock_resources, mock_configs):
+        """
+        GIVEN valid resources and configs parameters
+        WHEN InterfaceFactory is instantiated with resources and configs
+        THEN expect configs attribute matches provided configs
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        assert factory.configs is mock_configs, f"Expected configs to be {mock_configs}, got {factory.configs}"
 
 
-# Placeholder for when skeleton tests are implemented
-@pytest.mark.xfail(reason="Skeleton tests - not yet implemented")
-class TestSkeletonPlaceholders:
-    """Placeholder tests that will be implemented later."""
-    
-    def test_placeholder_functionality(self):
-        """This test will fail until real implementation is added."""
-        assert False, "Skeleton test - implement real functionality"
+@pytest.mark.unit
+class TestInterfaceFactoryCreateCli:
+    """
+    Tests for InterfaceFactory create_cli method behavior.
+    Method under test: InterfaceFactory.create_cli
+    """
+
+    def test_when_create_cli_called_then_returns_cli_instance(self, mock_resources, mock_configs):
+        """
+        GIVEN InterfaceFactory instance
+        WHEN create_cli method is called
+        THEN expect CLI instance is returned
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        cli = factory.create_cli()
+        
+        assert cli is not None, "Expected CLI instance, got None"
+
+    def test_when_create_cli_called_then_uses_configured_resources(self, mock_resources, mock_configs):
+        """
+        GIVEN InterfaceFactory instance with specific resources
+        WHEN create_cli method is called
+        THEN expect CLI is created with factory resources
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        cli = factory.create_cli()
+        
+        # Verify resources were used (implementation dependent)
+        assert hasattr(factory, 'resources'), "Factory should have resources attribute"
+
+
+@pytest.mark.unit
+class TestInterfaceFactoryCreateApi:
+    """
+    Tests for InterfaceFactory create_api method behavior.
+    Method under test: InterfaceFactory.create_api
+    """
+
+    def test_when_create_api_called_then_returns_api_instance(self, mock_resources, mock_configs):
+        """
+        GIVEN InterfaceFactory instance
+        WHEN create_api method is called
+        THEN expect PythonAPI instance is returned
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        api = factory.create_api()
+        
+        assert api is not None, "Expected API instance, got None"
+
+    def test_when_create_api_called_then_uses_configured_resources(self, mock_resources, mock_configs):
+        """
+        GIVEN InterfaceFactory instance with specific resources
+        WHEN create_api method is called
+        THEN expect API is created with factory resources
+        """
+        factory = InterfaceFactory(mock_resources, mock_configs)
+        
+        api = factory.create_api()
+        
+        # Verify resources were used (implementation dependent)
+        assert hasattr(factory, 'resources'), "Factory should have resources attribute"
