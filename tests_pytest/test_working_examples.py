@@ -195,77 +195,175 @@ class TestDictionaryOperations:
 
 @pytest.mark.unit
 class TestFileOperations:
-    """Test file operations using temporary files."""
+    """
+    Tests for file operations functionality.
+    Functions under test: file I/O operations with temporary files
+    Shared terminology: "temp file" means temporary file created in temp_dir fixture
+    """
 
-    def test_create_and_read_file(self, temp_dir):
-        """Test file creation and reading."""
+    def test_when_file_created_then_file_exists_on_filesystem(self, temp_dir):
+        """
+        GIVEN temporary directory and file content
+        WHEN file is created with write operation
+        THEN expect file exists on filesystem
+        """
         file_path = os.path.join(temp_dir, "test.txt")
-        content = "Test content"
         
-        # Write file
         with open(file_path, 'w') as f:
-            f.write(content)
+            f.write(TEMP_FILE_CONTENT)
         
-        # Verify file exists
-        assert os.path.exists(file_path)
+        assert os.path.exists(file_path), f"Expected file {file_path} to exist"
+
+    def test_when_file_read_then_returns_written_content(self, temp_dir):
+        """
+        GIVEN temporary file with known content
+        WHEN file is read using read operation
+        THEN expect content equals originally written content
+        """
+        file_path = os.path.join(temp_dir, "test.txt")
         
-        # Read and verify content
+        with open(file_path, 'w') as f:
+            f.write(TEMP_FILE_CONTENT)
+        
         with open(file_path, 'r') as f:
-            read_content = f.read()
+            result = f.read()
         
-        assert read_content == content
+        assert result == TEMP_FILE_CONTENT, f"Expected {TEMP_FILE_CONTENT}, got {result}"
 
-    def test_json_operations(self, temp_dir):
-        """Test JSON file operations."""
+
+@pytest.mark.unit 
+class TestJsonOperations:
+    """
+    Tests for JSON file operations functionality.
+    Functions under test: json.dump, json.load
+    Shared terminology: "JSON data" means dictionary serializable to JSON
+    """
+
+    def test_when_json_data_written_then_file_contains_valid_json(self, temp_dir):
+        """
+        GIVEN dictionary data and temporary JSON file
+        WHEN json.dump is called to write data
+        THEN expect file contains valid JSON data
+        """
         json_file = os.path.join(temp_dir, "test.json")
-        test_data = {"key": "value", "number": 42}
         
-        # Write JSON
         with open(json_file, 'w') as f:
-            json.dump(test_data, f)
+            json.dump(EXPECTED_JSON_DICT, f)
         
-        # Read and verify JSON
         with open(json_file, 'r') as f:
-            loaded_data = json.load(f)
+            result = json.load(f)
         
-        assert loaded_data == test_data
+        assert result == EXPECTED_JSON_DICT, f"Expected {EXPECTED_JSON_DICT}, got {result}"
 
-    def test_path_operations(self, temp_dir):
-        """Test Path operations."""
+
+@pytest.mark.unit
+class TestPathOperations:
+    """
+    Tests for Path operations functionality. 
+    Functions under test: Path.exists, Path.is_dir, Path.write_text, Path.read_text
+    Shared terminology: "path object" means pathlib.Path instance
+    """
+
+    def test_when_temp_directory_checked_then_exists_returns_true(self, temp_dir):
+        """
+        GIVEN temporary directory path
+        WHEN exists method is called on path object
+        THEN expect True is returned
+        """
         path = Path(temp_dir)
-        assert path.exists()
-        assert path.is_dir()
+        result = path.exists()
         
-        file_path = path / "test_file.txt"
-        file_path.write_text("test content")
+        assert result is True, f"Expected True for directory existence, got {result}"
+
+    def test_when_temp_directory_checked_then_is_dir_returns_true(self, temp_dir):
+        """
+        GIVEN temporary directory path
+        WHEN is_dir method is called on path object
+        THEN expect True is returned
+        """
+        path = Path(temp_dir)
+        result = path.is_dir()
         
-        assert file_path.exists()
-        assert file_path.is_file()
-        assert file_path.read_text() == "test content"
+        assert result is True, f"Expected True for directory type, got {result}"
+
+    def test_when_text_written_to_path_then_file_exists(self, temp_dir):
+        """
+        GIVEN path object and text content
+        WHEN write_text method is called
+        THEN expect file exists on filesystem
+        """
+        file_path = Path(temp_dir) / "test_file.txt"
+        file_path.write_text(TEMP_FILE_CONTENT)
+        
+        assert file_path.exists(), f"Expected file {file_path} to exist"
+
+    def test_when_text_written_to_path_then_is_file_returns_true(self, temp_dir):
+        """
+        GIVEN path object with written text content
+        WHEN is_file method is called
+        THEN expect True is returned
+        """
+        file_path = Path(temp_dir) / "test_file.txt"
+        file_path.write_text(TEMP_FILE_CONTENT)
+        
+        assert file_path.is_file(), f"Expected True for file type, got {file_path.is_file()}"
+
+    def test_when_text_read_from_path_then_returns_written_content(self, temp_dir):
+        """
+        GIVEN path object with written text content
+        WHEN read_text method is called
+        THEN expect content equals originally written text
+        """
+        file_path = Path(temp_dir) / "test_file.txt"
+        file_path.write_text(TEMP_FILE_CONTENT)
+        
+        result = file_path.read_text()
+        
+        assert result == TEMP_FILE_CONTENT, f"Expected {TEMP_FILE_CONTENT}, got {result}"
 
 
 @pytest.mark.unit
 class TestExceptionHandling:
-    """Test exception handling patterns."""
+    """
+    Tests for exception handling patterns functionality.
+    Functions under test: division, dictionary access, type operations, int conversion
+    """
 
-    def test_division_by_zero(self):
-        """Test division by zero exception."""
+    def test_when_division_by_zero_performed_then_raises_zero_division_error(self):
+        """
+        GIVEN numeric value and zero divisor
+        WHEN division operation is performed
+        THEN expect ZeroDivisionError is raised
+        """
         with pytest.raises(ZeroDivisionError):
             result = 10 / 0
 
-    def test_key_error(self):
-        """Test KeyError exception."""
+    def test_when_nonexistent_key_accessed_then_raises_key_error(self):
+        """
+        GIVEN dictionary without specific key
+        WHEN nonexistent key is accessed using bracket notation
+        THEN expect KeyError is raised
+        """
         data = {"a": 1}
+        
         with pytest.raises(KeyError):
             value = data["nonexistent"]
 
-    def test_type_error(self):
-        """Test TypeError exception."""
+    def test_when_incompatible_types_added_then_raises_type_error(self):
+        """
+        GIVEN string and integer values
+        WHEN addition operation is performed between incompatible types
+        THEN expect TypeError is raised
+        """
         with pytest.raises(TypeError):
             result = "string" + 5
 
-    def test_exception_message(self):
-        """Test exception message matching."""
+    def test_when_invalid_string_converted_to_int_then_raises_value_error(self):
+        """
+        GIVEN non-numeric string
+        WHEN int conversion is attempted
+        THEN expect ValueError is raised with invalid literal message
+        """
         with pytest.raises(ValueError, match="invalid literal"):
             int("not_a_number")
 
