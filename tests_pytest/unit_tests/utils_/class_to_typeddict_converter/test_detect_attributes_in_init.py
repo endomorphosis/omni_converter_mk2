@@ -1,7 +1,8 @@
 """
 Test suite for utils/class_to_typeddict_converter/detect_attributes_in_init.py converted from unittest to pytest.
 
-NOTE: Original tests were commented out. This is a skeleton conversion.
+NOTE: Original tests were commented out. This file contains NotImplementedError placeholders
+indicating tests need to be written when the module implementation is ready.
 """
 import pytest
 
@@ -12,10 +13,18 @@ except ImportError:
     pytest.skip("class_to_typeddict_converter module not available", allow_module_level=True)
 
 
-@pytest.mark.skip(reason="detect_attributes_in_init tests converted from commented unittest - implementation pending")
-class TestDetectAttributesInInitPlaceholder:
-    """Placeholder for detect_attributes_in_init tests that will be implemented later."""
-    
-    def test_placeholder(self):
-        """Placeholder test to mark this conversion as complete."""
-        assert True  # This will pass but indicates work pending
+@pytest.mark.unit
+class TestDetectAttributesInInit:
+    """
+    Tests for detect_attributes_in_init function behavior.
+    Function under test: detect_attributes_in_init
+    Shared terminology: "valid input" means properly formatted AST method node
+    """
+
+    def test_when_valid_method_node_provided_then_raises_not_implemented_error(self):
+        """
+        GIVEN a valid AST method node as input
+        WHEN detect_attributes_in_init is called with the method node
+        THEN expect NotImplementedError is raised indicating test needs implementation
+        """
+        raise NotImplementedError("test_when_valid_method_node_provided_then_raises_not_implemented_error needs implementation")

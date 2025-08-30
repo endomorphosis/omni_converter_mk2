@@ -1,8 +1,8 @@
 """
 Test suite for core/content_extractor/_content_extractor.py converted from unittest to pytest.
 
-NOTE: Original unittest file was empty. This is a placeholder conversion
-that can be expanded when the implementation is ready.
+NOTE: Original unittest file was empty. This file contains NotImplementedError placeholders
+indicating tests need to be written when the module implementation is ready.
 """
 import pytest
 
@@ -13,10 +13,18 @@ except ImportError:
     pytest.skip("ContentExtractor module not available", allow_module_level=True)
 
 
-@pytest.mark.skip(reason="ContentExtractor tests converted from empty unittest file - implementation pending")
-class TestContentExtractorPlaceholder:
-    """Placeholder for ContentExtractor tests that will be implemented later."""
-    
-    def test_placeholder(self):
-        """Placeholder test to mark this conversion as complete."""
-        assert True  # This will pass but indicates work pending
+@pytest.mark.unit
+class TestContentExtractor:
+    """
+    Tests for ContentExtractor class behavior.
+    Class under test: ContentExtractor
+    Shared terminology: "valid input" means properly formatted content for extraction
+    """
+
+    def test_when_valid_content_provided_then_raises_not_implemented_error(self):
+        """
+        GIVEN valid content for extraction
+        WHEN ContentExtractor is used to extract content
+        THEN expect NotImplementedError is raised indicating test needs implementation
+        """
+        raise NotImplementedError("test_when_valid_content_provided_then_raises_not_implemented_error needs implementation")
