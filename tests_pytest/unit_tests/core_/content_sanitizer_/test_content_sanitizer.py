@@ -37,8 +37,10 @@ def make_constants_resources():
 def temp_dir():
     """Create temporary directory for test files."""
     temp_dir = tempfile.mkdtemp()
-    yield temp_dir
-    shutil.rmtree(temp_dir)
+    try:
+        yield temp_dir
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @pytest.fixture
