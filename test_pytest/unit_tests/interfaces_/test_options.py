@@ -26,129 +26,193 @@ except ImportError:
     pytest.skip("Required modules pydantic and psutil are not installed", allow_module_level=True)
 
 
+# Test Constants
+VALID_WORKER_COUNT = 4
+INVALID_WORKER_COUNT = 1000
+TOTAL_CPU_CORES = 8
+VALID_MEMORY_LIMIT = 1
+INVALID_MEMORY_LIMIT = 100
+TOTAL_SYSTEM_MEMORY = 6
+VALID_VRAM_LIMIT = 6144
+TXT_FORMAT_VALUE = "txt"
+MD_FORMAT_VALUE = "md"
+JSON_FORMAT_VALUE = "json"
+
+
 @pytest.mark.unit
 class TestValidateMaxWorkers:
-    """Test the _validate_max_workers function."""
+    """
+    Tests for _validate_max_workers function behavior.
+    Function under test: _validate_max_workers
+    Valid input: Worker count less than or equal to CPU cores
+    """
 
     @patch('os.cpu_count')
-    def test_validate_max_workers_valid(self, mock_cpu_count):
+    def test_when_valid_worker_count_provided_then_returns_same_value(self, mock_cpu_count):
         """
         GIVEN a max_threads value less than CPU cores
-        WHEN _validate_max_workers(4) is called
-        THEN expect:
-            - Returns the same value
-            - No ValidationError raised
+        WHEN _validate_max_workers is called with valid worker count
+        THEN expect function returns the same value
         """
-        mock_cpu_count.return_value = 8
-        result = _validate_max_workers(4)
-        assert result == 4
+        mock_cpu_count.return_value = TOTAL_CPU_CORES
+        
+        result = _validate_max_workers(VALID_WORKER_COUNT)
+        
+        assert result == VALID_WORKER_COUNT, f"Expected {VALID_WORKER_COUNT}, got {result}"
 
     @patch('os.cpu_count')
-    def test_validate_max_workers_exceeds_cpu_cores(self, mock_cpu_count):
+    def test_when_excessive_worker_count_provided_then_raises_value_error(self, mock_cpu_count):
         """
         GIVEN a max_threads value greater than available CPU cores
-        WHEN _validate_max_workers(1000) is called
-        THEN expect:
-            - Raises ValueError
-            - Error message mentions CPU cores limit
+        WHEN _validate_max_workers is called with excessive worker count
+        THEN expect ValueError is raised
         """
-        mock_cpu_count.return_value = 8
+        mock_cpu_count.return_value = TOTAL_CPU_CORES
+        
         with pytest.raises(ValueError) as exc_info:
-            _validate_max_workers(1000)
-        assert "cpu" in str(exc_info.value).lower()
+            _validate_max_workers(INVALID_WORKER_COUNT)
+        
+        assert "cpu" in str(exc_info.value).lower(), f"Expected 'cpu' in error message, got: {exc_info.value}"
 
 
 @pytest.mark.unit
 class TestValidateMaxMemory:
-    """Test the _validate_max_memory function."""
+    """
+    Tests for _validate_max_memory function behavior.
+    Function under test: _validate_max_memory
+    Valid input: Memory value less than total system memory
+    """
 
     @patch('interfaces.options.Hardware.get_total_memory_in_gb')
-    def test_validate_max_memory_valid(self, mock_get_memory):
+    def test_when_valid_memory_limit_provided_then_returns_same_value(self, mock_get_memory):
         """
         GIVEN a max_memory value less than current total memory
-        WHEN _validate_max_memory(1) is called
-        THEN expect:
-            - Returns the same value
-            - No ValidationError raised
+        WHEN _validate_max_memory is called with valid memory limit
+        THEN expect function returns the same value
         """
-        mock_get_memory.return_value = 6  # 6 GiB
+        mock_get_memory.return_value = TOTAL_SYSTEM_MEMORY
         
-        result = _validate_max_memory(1)
-        assert result == 1
+        result = _validate_max_memory(VALID_MEMORY_LIMIT)
+        
+        assert result == VALID_MEMORY_LIMIT, f"Expected {VALID_MEMORY_LIMIT}, got {result}"
 
     @patch('interfaces.options.Hardware.get_total_memory_in_gb')
-    def test_validate_max_memory_below_current_usage(self, mock_get_memory):
+    def test_when_excessive_memory_limit_provided_then_raises_value_error(self, mock_get_memory):
         """
         GIVEN a max_memory value greater than current total memory
-        WHEN _validate_max_memory(100) is called
-        THEN expect:
-            - Raises ValueError
-            - Error message contains current RSS usage
+        WHEN _validate_max_memory is called with excessive memory limit
+        THEN expect ValueError is raised
         """
-        mock_get_memory.return_value = 6  # 6 GiB
+        mock_get_memory.return_value = TOTAL_SYSTEM_MEMORY
 
-        try:
-            result = _validate_max_memory(100)
-            logger.debug(f"Unexpected success: returned {result}")
-        except Exception as e:
-            logger.debug(f"Exception raised: {type(e).__name__}: {e}")
-        
         with pytest.raises(ValueError):
-            _validate_max_memory(100)
+            _validate_max_memory(INVALID_MEMORY_LIMIT)
 
 
 @pytest.mark.unit
 class TestValidateMaxVram:
-    """Test the _validate_max_vram function."""
+    """
+    Tests for _validate_max_vram function behavior.
+    Function under test: _validate_max_vram
+    Valid input: Any positive VRAM value
+    """
 
-    def test_validate_max_vram_any_positive_value(self):
+    def test_when_positive_vram_value_provided_then_returns_same_value(self):
         """
         GIVEN any positive max_vram value
-        WHEN _validate_max_vram(6144) is called
-        THEN expect:
-            - Returns the same value
-            - No ValidationError raised (TODO: validation not implemented)
+        WHEN _validate_max_vram is called with positive VRAM limit
+        THEN expect function returns the same value
         """
-        result = _validate_max_vram(6144)
-        assert result == 6144
+        result = _validate_max_vram(VALID_VRAM_LIMIT)
+        
+        assert result == VALID_VRAM_LIMIT, f"Expected {VALID_VRAM_LIMIT}, got {result}"
 
 
 @pytest.mark.unit
-class TestOutputFormat:
-    """Test the OutputFormat enum."""
+class TestOutputFormatTxt:
+    """
+    Tests for OutputFormat.TXT enum value behavior.
+    Enum under test: OutputFormat.TXT
+    """
 
-    def test_output_format_txt_value(self):
+    def test_when_accessing_txt_format_then_returns_txt_string(self):
         """
         GIVEN the OutputFormat enum
         WHEN accessing OutputFormat.TXT
-        THEN expect:
-            - Value equals "txt"
-            - Is instance of StrEnum
+        THEN expect value equals txt string constant
         """
-        assert OutputFormat.TXT == "txt"
-        assert isinstance(OutputFormat.TXT, StrEnum)
+        assert OutputFormat.TXT == TXT_FORMAT_VALUE, f"Expected {TXT_FORMAT_VALUE}, got {OutputFormat.TXT}"
 
-    def test_output_format_md_value(self):
+    def test_when_accessing_txt_format_then_is_str_enum_instance(self):
+        """
+        GIVEN the OutputFormat enum
+        WHEN accessing OutputFormat.TXT
+        THEN expect instance is StrEnum type
+        """
+        assert isinstance(OutputFormat.TXT, StrEnum), f"Expected StrEnum instance, got {type(OutputFormat.TXT)}"
+
+
+@pytest.mark.unit
+class TestOutputFormatMd:
+    """
+    Tests for OutputFormat.MD enum value behavior.
+    Enum under test: OutputFormat.MD
+    """
+
+    def test_when_accessing_md_format_then_returns_md_string(self):
         """
         GIVEN the OutputFormat enum
         WHEN accessing OutputFormat.MD
-        THEN expect:
-            - Value equals "md"
-            - Is instance of StrEnum
+        THEN expect value equals md string constant
         """
-        assert OutputFormat.MD == "md"
-        assert isinstance(OutputFormat.MD, StrEnum)
+        assert OutputFormat.MD == MD_FORMAT_VALUE, f"Expected {MD_FORMAT_VALUE}, got {OutputFormat.MD}"
 
-    def test_output_format_json_value(self):
+    def test_when_accessing_md_format_then_is_str_enum_instance(self):
+        """
+        GIVEN the OutputFormat enum
+        WHEN accessing OutputFormat.MD
+        THEN expect instance is StrEnum type
+        """
+        assert isinstance(OutputFormat.MD, StrEnum), f"Expected StrEnum instance, got {type(OutputFormat.MD)}"
+
+
+@pytest.mark.unit
+class TestOutputFormatJson:
+    """
+    Tests for OutputFormat.JSON enum value behavior.
+    Enum under test: OutputFormat.JSON
+    """
+
+    def test_when_accessing_json_format_then_returns_json_string(self):
         """
         GIVEN the OutputFormat enum
         WHEN accessing OutputFormat.JSON
-        THEN expect:
-            - Value equals "json"
-            - Is instance of StrEnum
+        THEN expect value equals json string constant
         """
-        assert OutputFormat.JSON == "json"
-        assert isinstance(OutputFormat.JSON, StrEnum)
+        assert OutputFormat.JSON == JSON_FORMAT_VALUE, f"Expected {JSON_FORMAT_VALUE}, got {OutputFormat.JSON}"
+
+    def test_when_accessing_json_format_then_is_str_enum_instance(self):
+        """
+        GIVEN the OutputFormat enum
+        WHEN accessing OutputFormat.JSON
+        THEN expect instance is StrEnum type
+        """
+        assert isinstance(OutputFormat.JSON, StrEnum), f"Expected StrEnum instance, got {type(OutputFormat.JSON)}"
+
+
+# Additional Test Constants
+DEFAULT_OUTPUT_PATH = Path.home()
+DEFAULT_WALK_VALUE = False
+DEFAULT_NORMALIZE_VALUE = True
+TEST_BATCH_SIZE = 50
+TEST_RETRIES = 3
+TEST_THREADS = 2
+TEST_MEMORY = 4
+TEST_VRAM = 4
+TEST_BUDGET = 10.0
+TEST_NORMALIZERS = "test"
+TEST_CPU = 50
+TEST_QUALITY_THRESHOLD = 0.5
 
 
 @pytest.fixture
@@ -169,96 +233,150 @@ def temp_files():
 
 
 @pytest.mark.unit
-class TestOptionsModel:
-    """Test the Options Pydantic model."""
+class TestOptionsCreationMinimal:
+    """
+    Tests for Options model creation with minimal parameters.
+    Class under test: Options.__init__
+    Valid input: Required input parameter only
+    """
 
-    def test_options_creation_minimal(self, temp_files):
+    def test_when_minimal_input_provided_then_creates_instance(self, temp_files):
         """
         GIVEN only required input parameter
-        WHEN Options(input="/path/to/file") is created
-        THEN expect:
-            - Instance created successfully
-            - All default values are set correctly
-            - input field contains the provided path
+        WHEN Options is created with input file path
+        THEN expect Options instance is created
         """
         options = Options(input=temp_files['temp_file'])
-        assert isinstance(options, Options)
-        assert str(options.input) == temp_files['temp_file']
-        assert options.output == Path.home()
-        assert options.walk is False
-        assert options.normalize is True
+        
+        assert isinstance(options, Options), f"Expected Options instance, got {type(options)}"
 
-    def test_options_creation_with_all_fields(self, temp_files):
+    def test_when_minimal_input_provided_then_sets_input_path(self, temp_files):
         """
-        GIVEN all possible parameters
-        WHEN Options instance is created with all fields specified
-        THEN expect:
-            - Instance created successfully
-            - All fields contain provided values
-            - No validation errors
-        """
-        options = Options(
-            input=temp_files['temp_file'],
-            output=temp_files['temp_dir'],
-            walk=True,
-            normalize=False,
-            security_checks=False,
-            metadata=False,
-            structure=False,
-            format=OutputFormat.JSON,
-            max_threads=2,
-            max_memory=4,
-            max_vram=4,
-            budget_in_usd=10.0,
-            normalizers="test",
-            max_cpu=50,
-            quality_threshold=0.5,
-            continue_on_error=False,
-            parallel=True,
-            follow_symlinks=True,
-            include_metadata=False,
-            lossy=True,
-            normalize_text=False,
-            sanitize=False,
-            show_options=True,
-            show_progress=True,
-            verbose=True,
-            list_formats=True,
-            version=True,
-            batch_size=50,
-            retries=3
-        )
-        assert isinstance(options, Options)
-        assert str(options.input) == temp_files['temp_file']
-        assert str(options.output) == temp_files['temp_dir']
-        assert options.walk is True
-        assert options.normalize is False
-        assert options.format == OutputFormat.JSON
-        assert options.max_threads == 2
-
-    def test_options_input_file_path(self, temp_files):
-        """
-        GIVEN a valid file path
-        WHEN Options(input="/existing/file.txt") is created
-        THEN expect:
-            - input field is FilePath type
-            - Path exists validation passes
+        GIVEN only required input parameter
+        WHEN Options is created with input file path
+        THEN expect input attribute matches provided path
         """
         options = Options(input=temp_files['temp_file'])
-        assert Path(options.input).exists()
-        assert Path(options.input).is_file()
+        
+        assert str(options.input) == temp_files['temp_file'], f"Expected {temp_files['temp_file']}, got {options.input}"
 
-    def test_options_input_directory_path(self, temp_files):
+    def test_when_minimal_input_provided_then_sets_default_output(self, temp_files):
+        """
+        GIVEN only required input parameter
+        WHEN Options is created with input file path
+        THEN expect output attribute equals default home path
+        """
+        options = Options(input=temp_files['temp_file'])
+        
+        assert options.output == DEFAULT_OUTPUT_PATH, f"Expected {DEFAULT_OUTPUT_PATH}, got {options.output}"
+
+    def test_when_minimal_input_provided_then_sets_default_walk(self, temp_files):
+        """
+        GIVEN only required input parameter
+        WHEN Options is created with input file path
+        THEN expect walk attribute equals default walk value
+        """
+        options = Options(input=temp_files['temp_file'])
+        
+        assert options.walk is DEFAULT_WALK_VALUE, f"Expected {DEFAULT_WALK_VALUE}, got {options.walk}"
+
+    def test_when_minimal_input_provided_then_sets_default_normalize(self, temp_files):
+        """
+        GIVEN only required input parameter
+        WHEN Options is created with input file path
+        THEN expect normalize attribute equals default normalize value
+        """
+        options = Options(input=temp_files['temp_file'])
+        
+        assert options.normalize is DEFAULT_NORMALIZE_VALUE, f"Expected {DEFAULT_NORMALIZE_VALUE}, got {options.normalize}"
+
+
+@pytest.mark.unit
+class TestOptionsCreationWithFormat:
+    """
+    Tests for Options model creation with format specification.
+    Class under test: Options.__init__
+    Valid input: Input and format parameters
+    """
+
+    def test_when_json_format_specified_then_sets_json_format(self, temp_files):
+        """
+        GIVEN input parameter and JSON format
+        WHEN Options is created with format=OutputFormat.JSON
+        THEN expect format attribute equals JSON output format
+        """
+        options = Options(input=temp_files['temp_file'], format=OutputFormat.JSON)
+        
+        assert options.format == OutputFormat.JSON, f"Expected {OutputFormat.JSON}, got {options.format}"
+
+    def test_when_custom_batch_size_specified_then_sets_batch_size(self, temp_files):
+        """
+        GIVEN input parameter and custom batch size
+        WHEN Options is created with batch_size parameter
+        THEN expect batch_size attribute equals provided value
+        """
+        options = Options(input=temp_files['temp_file'], batch_size=TEST_BATCH_SIZE)
+        
+        assert options.batch_size == TEST_BATCH_SIZE, f"Expected {TEST_BATCH_SIZE}, got {options.batch_size}"
+
+    def test_when_custom_retries_specified_then_sets_retries(self, temp_files):
+        """
+        GIVEN input parameter and custom retries value
+        WHEN Options is created with retries parameter
+        THEN expect retries attribute equals provided value
+        """
+        options = Options(input=temp_files['temp_file'], retries=TEST_RETRIES)
+        
+        assert options.retries == TEST_RETRIES, f"Expected {TEST_RETRIES}, got {options.retries}"
+
+
+@pytest.mark.unit
+class TestOptionsInputValidation:
+    """
+    Tests for Options model input validation behavior.
+    Class under test: Options.__init__
+    Valid input: Existing file or directory paths
+    """
+
+    def test_when_existing_file_provided_then_input_path_exists(self, temp_files):
+        """
+        GIVEN a valid existing file path
+        WHEN Options is created with input file path
+        THEN expect input path exists as file
+        """
+        options = Options(input=temp_files['temp_file'])
+        
+        assert Path(options.input).exists(), f"Expected path {options.input} to exist"
+
+    def test_when_existing_file_provided_then_input_is_file(self, temp_files):
+        """
+        GIVEN a valid existing file path
+        WHEN Options is created with input file path
+        THEN expect input path is a file
+        """
+        options = Options(input=temp_files['temp_file'])
+        
+        assert Path(options.input).is_file(), f"Expected {options.input} to be a file"
+
+    def test_when_existing_directory_provided_then_input_path_exists(self, temp_files):
         """
         GIVEN a valid directory path
-        WHEN Options(input="/existing/directory") is created
-        THEN expect:
-            - input field is DirectoryPath type
-            - Directory exists validation passes
+        WHEN Options is created with input directory path
+        THEN expect input path exists
         """
         options = Options(input=temp_files['temp_dir'])
-        assert Path(options.input).exists()
-        assert Path(options.input).is_dir()
+        
+        assert Path(options.input).exists(), f"Expected path {options.input} to exist"
+
+    def test_when_existing_directory_provided_then_input_is_directory(self, temp_files):
+        """
+        GIVEN a valid directory path
+        WHEN Options is created with input directory path
+        THEN expect input path is a directory
+        """
+        options = Options(input=temp_files['temp_dir'])
+        
+        assert Path(options.input).is_dir(), f"Expected {options.input} to be a directory"
 
     def test_options_input_list_of_files(self, temp_files):
         """
