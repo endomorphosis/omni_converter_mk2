@@ -30,3 +30,4 @@ python-magic
 # testing
 pytest
 pytest-cov
+pytest-asyncio
