@@ -22,7 +22,7 @@ except ImportError:
                 allow_module_level=True)
 
 from configs import configs
-from tests._fixtures import fixtures
+from _tests._fixtures import fixtures
 
 
 @pytest.fixture

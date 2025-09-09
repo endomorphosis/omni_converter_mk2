@@ -15,7 +15,7 @@ import pytest
 from datetime import datetime
 from typing import Any
 
-from tests._fixtures import fixtures
+from _tests._fixtures import fixtures
 
 
 @pytest.mark.performance

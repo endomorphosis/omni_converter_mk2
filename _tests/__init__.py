@@ -28,7 +28,7 @@ try:
     # #from .test_skeleton_error_handling import ErrorHandlingTest
     # from .test_skeleton_security_effectiveness import SecurityEffectivenessTest
     # from .test_skeleton_text_quality import TextQualityTest
-    from tests.integration_tests.test_vertical_slice import TestVerticalSlice
+    from _tests.integration_tests.test_vertical_slice import TestVerticalSlice
 except ImportError as e:
     # Allow tests to run even if individual modules have import issues
     print(f"Warning: Could not import some test modules: {e}")

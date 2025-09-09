@@ -23,7 +23,7 @@ except ImportError:
 
 
 from configs import configs
-from tests._fixtures import fixtures
+from _tests._fixtures import fixtures
 
 
 class ResourceUtilizationTest(unittest.TestCase):

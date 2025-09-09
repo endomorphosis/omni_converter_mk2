@@ -12,7 +12,7 @@ import time
 from typing import Any, Optional
 from unittest.mock import MagicMock, patch
 
-from tests._fixtures import fixtures
+from _tests._fixtures import fixtures
 
 
 @pytest.fixture

@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 
-from tests._fixtures import fixtures
+from _tests._fixtures import fixtures
 
 
 class ProcessingSuccessRateTest(unittest.TestCase):

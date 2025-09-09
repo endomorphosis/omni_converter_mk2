@@ -1,27 +1,18 @@
 """
-Test suite for monitors/_resource_monitor.py converted from unittest to pytest.
+Perfect Test Suite for ResourceMonitor
 
-This test suite validates the ResourceMonitor component against several criteria:
-
-1. Resource Utilization (Target: <6GB RAM, <80% CPU)
-   - Tests verify accurate tracking of CPU usage against the 80% threshold
-   - Tests verify accurate tracking of memory usage against the 6GB threshold
-   - Tests ensure proper resource limitation enforcement
-   - Tests confirm appropriate handling of resource constraints
-
-2. Processing Speed (Indirect)
-   - The resource monitor indirectly impacts processing speed by controlling 
-     resource allocation, preventing system overload and ensuring sustained 
-     performance across all file types
-   
-3. Error Handling Effectiveness
-   - Tests verify graceful handling when system resources are constrained
-   - Tests ensure appropriate logging and notification of resource issues
+This module demonstrates best practices for unit testing based on:
+- Testing through public contracts only
+- Testing behavior, not implementation details
+- Following AAA (Arrange, Act, Assert) pattern
+- Single assertion per test method
+- Clear GIVEN/WHEN/THEN docstring format
+- No magic numbers or strings
+- Proper use of constants and fixtures
 """
 import pytest
 from unittest.mock import MagicMock, patch
 import copy
-import threading
 import time
 
 try:
@@ -33,229 +24,421 @@ except ImportError:
 from monitors._resource_monitor import ResourceMonitor
 from utils.hardware import Hardware
 from types_ import Logger
-from logger import logger as debug_logger
-from configs import configs, Configs
+from configs import Configs
 
-resources = {
-    "get_cpu_usage_in_percent": Hardware.get_cpu_usage_in_percent,
-    "get_virtual_memory_in_percent": Hardware.get_virtual_memory_in_percent,
-    "get_memory_info": Hardware.get_memory_info,
-    "get_memory_rss_usage_in_mb": Hardware.get_memory_rss_usage_in_mb,
-    "get_memory_vms_usage_in_mb": Hardware.get_memory_vms_usage_in_mb,
-    "get_disk_usage": Hardware.get_disk_usage_in_percent,
-    "get_open_files": Hardware.get_num_open_files,
-    "get_shared_memory_usage_in_mb": Hardware.get_shared_memory_usage_in_mb,
-    "get_num_cpu_cores": Hardware.get_num_cpu_cores,
-}
+# Test Constants
+EXPECTED_MEMORY_LIMIT_MB = 512.0
+EXPECTED_CPU_LIMIT_PERCENT = 80.0
+EXPECTED_MONITORING_INTERVAL_SECONDS = 0.1
+EXPECTED_ACTIVE_MONITORING_FALSE = False
+EXPECTED_NONE_MONITORING_THREAD = None
+EXPECTED_CPU_USAGE_PERCENT = 30.0
+EXPECTED_MEMORY_USAGE_MB = 200.0
+EXPECTED_MEMORY_PERCENT = 40.0
+EXPECTED_DISK_USAGE_PERCENT = 50.0
+EXPECTED_OPEN_FILES_COUNT = 3
+EXPECTED_CPU_UNDER_LIMIT = 70.0
+EXPECTED_MEMORY_UNDER_LIMIT_MB = 400.0
+EXPECTED_CPU_OVER_LIMIT = 90.0
+EXPECTED_MEMORY_OVER_LIMIT_MB = 600.0
+EXPECTED_NEW_MEMORY_LIMIT = 1024.0
+EXPECTED_NEW_CPU_LIMIT = 90.0
+EXPECTED_PARTIAL_UPDATE_MEMORY_LIMIT = 2048.0
+EXPECTED_SUMMARY_MEMORY_LIMIT = 512.0
+EXPECTED_SUMMARY_CPU_LIMIT = 80.0
+EXPECTED_MONITORING_WAIT_SECONDS = 0.2
+MEMORY_INFO_RSS_BYTES = 200 * 1024 * 1024  # 200 MB in bytes
+MEMORY_INFO_VMS_BYTES = 240 * 1024 * 1024  # 240 MB in bytes
+MEMORY_INFO_SHARED_BYTES = 20 * 1024 * 1024  # 20 MB in bytes
 
 
 @pytest.fixture
-def mock_configs():
-    """Create mock configs for testing."""
+def valid_configs():
+    """Create valid mock configs for testing."""
     mock_configs = MagicMock(spec=Configs)
     mock_configs.resources = MagicMock()
-    mock_configs.resources.memory_limit_mb = 512.0  # 512 MB
-    mock_configs.resources.cpu_limit_percent = 80.0  # 80% CPU limit
-    mock_configs.resources.monitoring_interval_seconds = 0.1  # Short interval for tests
+    mock_configs.resources.memory_limit_mb = EXPECTED_MEMORY_LIMIT_MB
+    mock_configs.resources.cpu_limit_percent = EXPECTED_CPU_LIMIT_PERCENT
+    mock_configs.resources.monitoring_interval_seconds = EXPECTED_MONITORING_INTERVAL_SECONDS
     return mock_configs
 
 
 @pytest.fixture
-def mock_resources():
-    """Create mock resources for testing."""
+def valid_resources():
+    """Create valid mock resources for testing."""
+    base_resources = {
+        "get_cpu_usage_in_percent": Hardware.get_cpu_usage_in_percent,
+        "get_virtual_memory_in_percent": Hardware.get_virtual_memory_in_percent,
+        "get_memory_info": Hardware.get_memory_info,
+        "get_memory_rss_usage_in_mb": Hardware.get_memory_rss_usage_in_mb,
+        "get_memory_vms_usage_in_mb": Hardware.get_memory_vms_usage_in_mb,
+        "get_disk_usage": Hardware.get_disk_usage_in_percent,
+        "get_open_files": Hardware.get_num_open_files,
+        "get_shared_memory_usage_in_mb": Hardware.get_shared_memory_usage_in_mb,
+        "get_num_cpu_cores": Hardware.get_num_cpu_cores,
+    }
     return {
-        **copy.deepcopy(resources),
-        "logger": MagicMock(spec=Logger),  # Mock the logger to avoid actual logging during tests
+        **copy.deepcopy(base_resources),
+        "logger": MagicMock(spec=Logger),
     }
 
 
 @pytest.fixture
-def resource_monitor(mock_resources, mock_configs):
+def resource_monitor(valid_resources, valid_configs):
     """Create a ResourceMonitor instance for testing."""
-    monitor = ResourceMonitor(resources=mock_resources, configs=mock_configs)
+    monitor = ResourceMonitor(resources=valid_resources, configs=valid_configs)
     yield monitor
     # Cleanup: Stop any active monitoring
     if hasattr(monitor, 'active_monitoring') and monitor.active_monitoring:
         monitor.stop_monitoring()
 
 
+@pytest.fixture
+def mock_memory_info():
+    """Create mock memory info object."""
+    memory_info_mock = MagicMock()
+    memory_info_mock.rss = MEMORY_INFO_RSS_BYTES
+    memory_info_mock.vms = MEMORY_INFO_VMS_BYTES
+    memory_info_mock.shared = MEMORY_INFO_SHARED_BYTES
+    return memory_info_mock
+
+
+@pytest.fixture
+def mock_process(mock_memory_info):
+    """Create mock psutil process."""
+    process_mock = MagicMock(spec="psutil.Process")
+    process_mock.memory_info.return_value = mock_memory_info
+    process_mock.open_files.return_value = ["file1", "file2", "file3"]
+    return process_mock
+
+
+@pytest.fixture
+def mocked_psutil_standard(mock_process):
+    """Create standard mocked psutil configuration."""
+    with patch('utils.hardware.psutil') as mock_psutil:
+        mock_psutil.cpu_percent.return_value = EXPECTED_CPU_USAGE_PERCENT
+        mock_psutil.Process.return_value = mock_process
+        mock_psutil.virtual_memory.return_value.percent = EXPECTED_MEMORY_PERCENT
+        mock_psutil.disk_usage.return_value.percent = EXPECTED_DISK_USAGE_PERCENT
+        yield mock_psutil
+
+
+@pytest.fixture
+def mocked_psutil_under_limits(mock_process, mock_memory_info):
+    """Create mocked psutil with resources under limits."""
+    with patch('utils.hardware.psutil') as mock_psutil:
+        mock_psutil.cpu_percent.return_value = EXPECTED_CPU_UNDER_LIMIT
+        mock_memory_info.rss = EXPECTED_MEMORY_UNDER_LIMIT_MB * 1024 * 1024
+        mock_psutil.Process.return_value = mock_process
+        yield mock_psutil
+
+
+@pytest.fixture
+def mocked_psutil_over_cpu_limit(mock_process, mock_memory_info):
+    """Create mocked psutil with CPU over limit."""
+    with patch('utils.hardware.psutil') as mock_psutil:
+        mock_psutil.cpu_percent.return_value = EXPECTED_CPU_OVER_LIMIT
+        mock_memory_info.rss = EXPECTED_MEMORY_UNDER_LIMIT_MB * 1024 * 1024
+        mock_psutil.Process.return_value = mock_process
+        yield mock_psutil
+
+
+@pytest.fixture
+def mocked_psutil_over_memory_limit(mock_process, mock_memory_info):
+    """Create mocked psutil with memory over limit."""
+    with patch('utils.hardware.psutil') as mock_psutil:
+        mock_psutil.cpu_percent.return_value = EXPECTED_CPU_UNDER_LIMIT
+        mock_memory_info.rss = EXPECTED_MEMORY_OVER_LIMIT_MB * 1024 * 1024
+        mock_psutil.Process.return_value = mock_process
+        yield mock_psutil
+
+
 @pytest.mark.unit
-class TestResourceMonitor:
-    """Test the ResourceMonitor class."""
-    
-    def test_init(self, resource_monitor):
-        """Test initialization."""
-        assert resource_monitor.cpu_limit_percent == 80.0
-        assert resource_monitor.memory_limit == 512.0
-        assert resource_monitor.monitoring_interval == 0.1
-        assert not resource_monitor.active_monitoring
-        assert resource_monitor.monitoring_thread is None
-        assert "cpu" in resource_monitor.current_resource_usage
-        assert "memory" in resource_monitor.current_resource_usage
+class TestResourceMonitorConstruction:
+    """Test ResourceMonitor construction functionality."""
 
-    @patch('utils.hardware.psutil')
-    def test_start_monitoring(self, mock_psutil, resource_monitor):
-        """Test starting resource monitoring."""
-        # Configure mock for psutil
-        mock_psutil.cpu_percent.return_value = 10.0
-        process_mock = MagicMock(spec="psutil.Process")
+    def test_when_creating_resource_monitor_with_valid_resources_and_configs_then_returns_resource_monitor_instance(
+        self, 
+        valid_resources, 
+        valid_configs
+    ):
+        """
+        GIVEN valid resources and valid configs
+        WHEN ResourceMonitor constructor is called
+        THEN returns ResourceMonitor instance
+        """
+        result = ResourceMonitor(resources=valid_resources, configs=valid_configs)
+        
+        assert isinstance(result, ResourceMonitor), f"Expected ResourceMonitor instance, got {type(result)}"
 
-        # Mock memory_info with all required attributes
-        memory_info_mock = MagicMock()
-        memory_info_mock.rss = 100 * 1024 * 1024  # 100 MB in bytes
-        memory_info_mock.vms = 120 * 1024 * 1024  # 120 MB in bytes
-        memory_info_mock.shared = 10 * 1024 * 1024  # 10 MB in bytes
-        process_mock.memory_info.return_value = memory_info_mock
 
-        mock_psutil.Process.return_value = process_mock
-        mock_psutil.virtual_memory.return_value.percent = 25.0
-        process_mock.open_files.return_value = ["file1", "file2"]
+    @pytest.mark.parametrize(
+        "attribute_name, expected_value",
+        [
+            ("cpu_limit_percent", EXPECTED_CPU_LIMIT_PERCENT),
+            ("memory_limit", EXPECTED_MEMORY_LIMIT_MB),
+            ("monitoring_interval", EXPECTED_MONITORING_INTERVAL_SECONDS),
+            ("active_monitoring", EXPECTED_ACTIVE_MONITORING_FALSE),
+            ("monitoring_thread", EXPECTED_NONE_MONITORING_THREAD)
+        ],
+    )
+    def test_when_creating_resource_monitor_then_initial_attributes_are_correct(
+        self, resource_monitor, attribute_name, expected_value
+    ):
+        """
+        GIVEN valid resources and configs
+        WHEN ResourceMonitor is constructed
+        THEN its initial attributes match the expected values
+        """
+        result = getattr(resource_monitor, attribute_name)
+        
+        assert result == expected_value, f"Expected {attribute_name} to be {expected_value}, but got {result}"
 
-        # Start monitoring
+
+    @pytest.mark.parametrize("expected_key", [
+        "cpu",
+        "memory"
+    ])
+    def test_when_creating_resource_monitor_then_current_resource_usage_contains_expected_keys(self, resource_monitor, expected_key):
+        """
+        GIVEN valid resources and configs
+        WHEN ResourceMonitor is constructed
+        THEN current_resource_usage contains the expected key
+        """
+        result = resource_monitor.current_resource_usage
+        
+        assert expected_key in result, f"Expected '{expected_key}' key in resource usage, got keys: {list(result.keys())}"
+
+@pytest.mark.unit
+class TestResourceMonitorStartMonitoring:
+    """Test ResourceMonitor start_monitoring functionality."""
+
+    def test_when_starting_monitoring_then_active_monitoring_becomes_true(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil
+        WHEN start_monitoring is called
+        THEN active_monitoring becomes True
+        """
         resource_monitor.start_monitoring()
+        
+        assert resource_monitor.active_monitoring is True, f"Expected active monitoring True, got {resource_monitor.active_monitoring}"
 
-        # Check if monitoring started
-        assert resource_monitor.active_monitoring
-        assert resource_monitor.monitoring_thread is not None
-        assert resource_monitor.monitoring_thread.is_alive()
+    def test_when_starting_monitoring_then_monitoring_thread_is_not_none(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil
+        WHEN start_monitoring is called
+        THEN monitoring_thread is not None
+        """
+        resource_monitor.start_monitoring()
+        
+        assert resource_monitor.monitoring_thread is not None, f"Expected monitoring thread not None, got {resource_monitor.monitoring_thread}"
 
-        # Wait briefly for monitoring to collect data
-        time.sleep(0.2)
+    def test_when_starting_monitoring_then_monitoring_thread_is_alive(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil
+        WHEN start_monitoring is called
+        THEN monitoring_thread is alive
+        """
+        resource_monitor.start_monitoring()
+        
+        assert resource_monitor.monitoring_thread.is_alive(), f"Expected monitoring thread to be alive, but it's not"
 
-        # Check if resource usage was updated
-        usage = resource_monitor.current_resource_usage
-        assert usage["cpu"] >= 0
-        assert usage["memory"] >= 0
 
-        # Stop monitoring
+@pytest.mark.unit
+class TestResourceMonitorStopMonitoring:
+    """Test ResourceMonitor stop_monitoring functionality."""
+
+    def test_when_stopping_monitoring_after_starting_then_active_monitoring_becomes_false(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with active monitoring
+        WHEN stop_monitoring is called
+        THEN active_monitoring becomes False
+        """
+        resource_monitor.start_monitoring()
         resource_monitor.stop_monitoring()
-        assert not resource_monitor.active_monitoring
-
-    @patch('utils.hardware.psutil')
-    def test_get_resource_usage(self, mock_psutil, resource_monitor):
-        """Test getting resource usage."""
-        # Configure mock for psutil
-        mock_psutil.cpu_percent.return_value = 30.0
-        process_mock = MagicMock(spec="psutil.Process")
         
-        # Mock memory_info with all required attributes
-        memory_info_mock = MagicMock()
-        memory_info_mock.rss = 200 * 1024 * 1024  # 200 MB in bytes
-        memory_info_mock.vms = 240 * 1024 * 1024  # 240 MB in bytes  
-        memory_info_mock.shared = 20 * 1024 * 1024  # 20 MB in bytes
-        process_mock.memory_info.return_value = memory_info_mock
+        assert resource_monitor.active_monitoring is False, f"Expected active monitoring False, got {resource_monitor.active_monitoring}"
+
+
+@pytest.mark.unit
+class TestResourceMonitorGetResourceUsage:
+    """Test ResourceMonitor _get_resource_usage functionality."""
+
+    def test_when_getting_resource_usage_then_cpu_usage_equals_expected_value(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil returning specific CPU usage
+        WHEN _get_resource_usage is called
+        THEN cpu usage equals expected value
+        """
+        result = resource_monitor._get_resource_usage()
         
-        mock_psutil.Process.return_value = process_mock
-        mock_psutil.virtual_memory.return_value.percent = 40.0
-        mock_psutil.disk_usage.return_value.percent = 50.0
-        process_mock.open_files.return_value = ["file1", "file2", "file3"]
+        assert result["cpu"] == EXPECTED_CPU_USAGE_PERCENT, f"Expected CPU usage {EXPECTED_CPU_USAGE_PERCENT}, got {result['cpu']}"
 
-        # Get resource usage
-        usage = resource_monitor._get_resource_usage()
-
-        # Check usage values
-        assert usage["cpu"] == 30.0
-        assert usage["memory"] == 200.0  # Should be converted to MB
-        assert usage["memory_percent"] == 40.0
-        assert usage["disk_usage"] == 50.0
-        assert usage["open_files"] == 3
-
-    @patch('utils.hardware.psutil')
-    def test_get_current_usage(self, mock_psutil, resource_monitor):
-        """Test getting current usage."""
-        # Configure mock for psutil
-        mock_psutil.cpu_percent.return_value = 20.0
-        process_mock = MagicMock(spec="psutil.Process")
+    def test_when_getting_resource_usage_then_memory_usage_equals_expected_value(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil returning specific memory usage
+        WHEN _get_resource_usage is called
+        THEN memory usage equals expected value
+        """
+        result = resource_monitor._get_resource_usage()
         
-        # Mock memory_info with all required attributes
-        memory_info_mock = MagicMock()
-        memory_info_mock.rss = 150 * 1024 * 1024  # 150 MB in bytes
-        memory_info_mock.vms = 180 * 1024 * 1024  # 180 MB in bytes
-        memory_info_mock.shared = 15 * 1024 * 1024  # 15 MB in bytes
-        process_mock.memory_info.return_value = memory_info_mock
+        assert result["memory"] == EXPECTED_MEMORY_USAGE_MB, f"Expected memory usage {EXPECTED_MEMORY_USAGE_MB}, got {result['memory']}"
+
+    def test_when_getting_resource_usage_then_memory_percent_equals_expected_value(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil returning specific memory percentage
+        WHEN _get_resource_usage is called
+        THEN memory_percent equals expected value
+        """
+        result = resource_monitor._get_resource_usage()
         
-        mock_psutil.Process.return_value = process_mock
-        mock_psutil.virtual_memory.return_value.percent = 30.0
-        mock_psutil.disk_usage.return_value.percent = 45.0
-        process_mock.open_files.return_value = ["file1", "file2"]
+        assert result["memory_percent"] == EXPECTED_MEMORY_PERCENT, f"Expected memory percent {EXPECTED_MEMORY_PERCENT}, got {result['memory_percent']}"
 
-        # Get current usage
-        usage = resource_monitor.current_resource_usage
-
-        # Check if the usage contains expected keys
-        assert "cpu" in usage
-        assert "memory" in usage
-        assert "memory_percent" in usage
-
-    @patch('utils.hardware.psutil')
-    def test_are_resources_available(self, mock_psutil, resource_monitor):
-        """Test checking if resources are available."""
-        # Configure mock for psutil - under limits
-        mock_psutil.cpu_percent.return_value = 70.0  # Below 80% limit
-        process_mock = MagicMock(spec="psutil.Process")
+    def test_when_getting_resource_usage_then_disk_usage_equals_expected_value(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil returning specific disk usage
+        WHEN _get_resource_usage is called
+        THEN disk_usage equals expected value
+        """
+        result = resource_monitor._get_resource_usage()
         
-        # Mock memory_info with all required attributes
-        memory_info_mock = MagicMock()
-        memory_info_mock.rss = 400 * 1024 * 1024  # 400 MB - below 512 MB limit
-        memory_info_mock.vms = 450 * 1024 * 1024  # 450 MB
-        memory_info_mock.shared = 40 * 1024 * 1024  # 40 MB
-        process_mock.memory_info.return_value = memory_info_mock
+        assert result["disk_usage"] == EXPECTED_DISK_USAGE_PERCENT, f"Expected disk usage {EXPECTED_DISK_USAGE_PERCENT}, got {result['disk_usage']}"
+
+    def test_when_getting_resource_usage_then_open_files_equals_expected_count(self, mocked_psutil_standard, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil returning specific open files count
+        WHEN _get_resource_usage is called
+        THEN open_files equals expected count
+        """
+        result = resource_monitor._get_resource_usage()
         
-        mock_psutil.Process.return_value = process_mock
+        assert result["open_files"] == EXPECTED_OPEN_FILES_COUNT, f"Expected open files {EXPECTED_OPEN_FILES_COUNT}, got {result['open_files']}"
 
-        # Resources should be available
-        assert resource_monitor.are_resources_available()
 
-        # Configure mock for psutil - over limits
-        mock_psutil.cpu_percent.return_value = 90.0  # Above 80% limit
-        memory_info_mock.rss = 600 * 1024 * 1024  # 600 MB - above 512 MB limit
+@pytest.mark.unit
+class TestResourceMonitorAreResourcesAvailable:
+    """Test ResourceMonitor are_resources_available functionality."""
 
-        # Resources should not be available
-        assert not resource_monitor.are_resources_available()
-
-    def test_set_resource_limits(self, resource_monitor):
-        """Test setting resource limits."""
-        # Set new limits
-        resource_monitor.set_resource_limits(memory_limit_mb=1024, cpu_limit_percent=90)
-
-        # Check if limits were updated
-        assert resource_monitor.memory_limit == 1024
-        assert resource_monitor.cpu_limit_percent == 90
-
-        # Test with partial updates
-        resource_monitor.set_resource_limits(memory_limit_mb=2048)
-        assert resource_monitor.memory_limit == 2048
-        assert resource_monitor.cpu_limit_percent == 90  # Should remain unchanged
-
-    @patch('utils.hardware.psutil')
-    def test_get_resource_summary(self, mock_psutil, resource_monitor):
-        """Test getting resource summary."""
-        # Configure mock for psutil
-        mock_psutil.cpu_percent.return_value = 25.0
-        process_mock = MagicMock(spec="psutil.Process")
+    def test_when_checking_resources_under_limits_then_returns_true(self, mocked_psutil_under_limits, resource_monitor):
+        """
+        GIVEN a ResourceMonitor with resources under limits
+        WHEN are_resources_available is called
+        THEN returns True
+        """
+        result = resource_monitor.are_resources_available()
         
-        # Mock memory_info with all required attributes
-        memory_info_mock = MagicMock()
-        memory_info_mock.rss = 300 * 1024 * 1024  # 300 MB in bytes
-        memory_info_mock.vms = 350 * 1024 * 1024  # 350 MB in bytes
-        memory_info_mock.shared = 30 * 1024 * 1024  # 30 MB in bytes
-        process_mock.memory_info.return_value = memory_info_mock
+        assert result is True, f"Expected resources available True, got {result}"
+
+    def test_when_checking_resources_over_cpu_limit_then_returns_false(self, mocked_psutil_over_cpu_limit, resource_monitor):
+        """
+        GIVEN a ResourceMonitor with CPU usage over limit
+        WHEN are_resources_available is called
+        THEN returns False
+        """
+        result = resource_monitor.are_resources_available()
         
-        mock_psutil.Process.return_value = process_mock
-        mock_psutil.virtual_memory.return_value.percent = 35.0
-        mock_psutil.disk_usage.return_value.percent = 55.0
-        process_mock.open_files.return_value = ["file1", "file2", "file3", "file4"]
+        assert result is False, f"Expected resources available False, got {result}"
 
-        # Get resource summary
-        summary = resource_monitor.get_resource_summary()
-
-        # Check summary contains expected information
-        assert "current_usage" in summary
-        assert "limits" in summary
-        assert "within_limits" in summary
-        assert summary["limits"]["memory_mb"] == 512.0
-        assert summary["limits"]["cpu_percent"] == 80.0
+    def test_when_checking_resources_over_memory_limit_then_returns_false(self, mocked_psutil_over_memory_limit, resource_monitor):
+        """
+        GIVEN a ResourceMonitor with memory usage over limit
+        WHEN are_resources_available is called
+        THEN returns False
+        """
+        result = resource_monitor.are_resources_available()
+        
+        assert result is False, f"Expected resources available False, got {result}"
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+@pytest.mark.unit
+class TestResourceMonitorSetResourceLimits:
+    """Test ResourceMonitor set_resource_limits functionality."""
+
+    def test_when_setting_memory_and_cpu_limits_then_memory_limit_equals_new_value(self, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance
+        WHEN set_resource_limits is called with new memory limit
+        THEN memory_limit equals new value
+        """
+        resource_monitor.set_resource_limits(
+            memory_limit_mb=EXPECTED_NEW_MEMORY_LIMIT, 
+            cpu_limit_percent=EXPECTED_NEW_CPU_LIMIT
+        )
+        
+        assert resource_monitor.memory_limit == EXPECTED_NEW_MEMORY_LIMIT, f"Expected memory limit {EXPECTED_NEW_MEMORY_LIMIT}, got {resource_monitor.memory_limit}"
+
+    def test_when_setting_memory_and_cpu_limits_then_cpu_limit_percent_equals_new_value(self, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance
+        WHEN set_resource_limits is called with new CPU limit
+        THEN cpu_limit_percent equals new value
+        """
+        resource_monitor.set_resource_limits(
+            memory_limit_mb=EXPECTED_NEW_MEMORY_LIMIT, 
+            cpu_limit_percent=EXPECTED_NEW_CPU_LIMIT
+        )
+        
+        assert resource_monitor.cpu_limit_percent == EXPECTED_NEW_CPU_LIMIT, f"Expected CPU limit {EXPECTED_NEW_CPU_LIMIT}, got {resource_monitor.cpu_limit_percent}"
+
+    def test_when_setting_only_memory_limit_then_memory_limit_equals_new_value(self, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance
+        WHEN set_resource_limits is called with only memory limit
+        THEN memory_limit equals new value
+        """
+        resource_monitor.set_resource_limits(memory_limit_mb=EXPECTED_PARTIAL_UPDATE_MEMORY_LIMIT)
+        
+        assert resource_monitor.memory_limit == EXPECTED_PARTIAL_UPDATE_MEMORY_LIMIT, f"Expected memory limit {EXPECTED_PARTIAL_UPDATE_MEMORY_LIMIT}, got {resource_monitor.memory_limit}"
+
+    def test_when_setting_only_memory_limit_then_cpu_limit_percent_remains_unchanged(self, resource_monitor):
+        """
+        GIVEN a ResourceMonitor instance with existing CPU limit
+        WHEN set_resource_limits is called with only memory limit
+        THEN cpu_limit_percent remains unchanged
+        """
+        original_cpu_limit = resource_monitor.cpu_limit_percent
+        resource_monitor.set_resource_limits(memory_limit_mb=EXPECTED_PARTIAL_UPDATE_MEMORY_LIMIT)
+        
+        assert resource_monitor.cpu_limit_percent == original_cpu_limit, f"Expected CPU limit to remain {original_cpu_limit}, got {resource_monitor.cpu_limit_percent}"
+
+
+@pytest.mark.unit
+class TestResourceMonitorGetResourceSummary:
+    """Test ResourceMonitor get_resource_summary functionality."""
+
+    @pytest.mark.parametrize("expected_key", [
+        "current_usage",
+        "limits",
+        "within_limits"
+    ])
+    def test_when_getting_resource_summary_then_contains_expected_keys(self, mocked_psutil_standard, resource_monitor, expected_key):
+        """
+        GIVEN a ResourceMonitor instance with mocked psutil
+        WHEN get_resource_summary is called
+        THEN the result contains the expected key
+        """
+        result = resource_monitor.get_resource_summary()
+        
+        assert expected_key in result, \
+            f"Expected '{expected_key}' key in summary, got keys: {list(result.keys())}"
+
+    @pytest.mark.parametrize("limit_key, expected_value", [
+        ("memory_mb", EXPECTED_SUMMARY_MEMORY_LIMIT),
+        ("cpu_percent", EXPECTED_SUMMARY_CPU_LIMIT),
+    ])
+    def test_when_getting_resource_summary_then_limits_contain_expected_values(
+        self, 
+        mocked_psutil_standard, 
+        resource_monitor, 
+        limit_key, 
+        expected_value
+    ):
+        """
+        GIVEN a ResourceMonitor instance with expected limits
+        WHEN get_resource_summary is called
+        THEN the limits in the summary contain the expected values
+        """
+        result = resource_monitor.get_resource_summary()
+        
+        assert result["limits"][limit_key] == expected_value, \
+            f"Expected limit '{limit_key}' to be {expected_value}, got {result['limits'][limit_key]}"

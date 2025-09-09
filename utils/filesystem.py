@@ -236,11 +236,11 @@ class FileSystem:
 
         # Ensure the path is absolute
         file_path = os.path.abspath(file_path)
-        
+
         # Check if the file exists
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
-        
+
         # Check if path points to a directory
         if os.path.isdir(file_path):
             raise IsADirectoryError(f"Path is a directory: {file_path}")
@@ -254,11 +254,11 @@ class FileSystem:
             mime_type = magic.from_file(file_path, mime=True)
         except Exception:
             mime_type = None
-        
+
         # Read the file
         with open(file_path, mode) as f:
             content = f.read()
-        
+
         # If the mode is text mode, convert the content to bytes
         if 'b' not in mode and isinstance(content, str):
             encoding = 'utf-8'  # Default encoding

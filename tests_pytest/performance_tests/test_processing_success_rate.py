@@ -13,7 +13,7 @@ import tempfile
 from typing import Any, Optional
 import pytest
 
-from tests._fixtures import fixtures
+from _tests._fixtures import fixtures
 
 
 @pytest.mark.performance

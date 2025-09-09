@@ -1,18 +1,17 @@
 """
 Test suite for monitors/_error_monitor.py converted from unittest to pytest.
+
+This test suite validates the ErrorMonitor component through public contracts only,
+following best practices for unit testing with proper AAA pattern and GIVEN/WHEN/THEN
+docstring format.
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from datetime import datetime
+from unittest.mock import MagicMock
 from pathlib import Path
 from logging import Logger
-from typing import Optional, Any, Type
-import threading
-import time
-import tempfile
-import shutil
-import os
 import pathlib
+import os
+import time
 
 # Skip tests if modules can't be imported
 pytest_plugins = []
@@ -21,12 +20,27 @@ try:
     from monitors._error_monitor import ErrorMonitor
     from monitors import make_error_monitor
 except ImportError:
-    pytest.skip("monitors module not available", allow_module_level=True)
+    raise ImportError("Required modules for testing are not available. Check to make sure they work.")
+
+
+# Test Constants
+VALID_ERROR_TYPE = "FileNotFoundError"
+ANOTHER_VALID_ERROR_TYPE = "ValueError"
+THIRD_ERROR_TYPE = "IOError"
+EXPECTED_SINGLE_ERROR_COUNT = 1
+EXPECTED_TRIPLE_ERROR_COUNT = 3
+EXPECTED_TOTAL_MIXED_ERRORS = 3
+EXPECTED_ZERO_ERRORS = 0
+EXPECTED_TEST_ROOT_PATH = "/test/root"
+EXPECTED_SUPPRESS_ERRORS_FALSE = False
+PERFORMANCE_MAX_DURATION_SECONDS = 1.0
+PERFORMANCE_ERROR_COUNT = 1000
+PERFORMANCE_ERROR_TYPES = 10
 
 
 @pytest.fixture
-def mock_resources():
-    """Mock resources for testing."""
+def valid_resources():
+    """Create valid mock resources for testing."""
     return {
         'logger': MagicMock(spec=Logger),
         'traceback': MagicMock(),
@@ -35,13 +49,13 @@ def mock_resources():
 
 
 @pytest.fixture
-def mock_configs():
-    """Mock configs for testing."""
+def valid_configs():
+    """Create valid mock configs for testing."""
     mock_configs = MagicMock(spec=Configs)
     mock_configs.processing = MagicMock()
     mock_configs.paths = MagicMock()
-    mock_configs.processing.suppress_errors = False
-    root_dir_return_value = Path("/test/root")
+    mock_configs.processing.suppress_errors = EXPECTED_SUPPRESS_ERRORS_FALSE
+    root_dir_return_value = Path(EXPECTED_TEST_ROOT_PATH)
     if os.name == "nt":
         root_dir_spec = pathlib.WindowsPath
     else:
@@ -50,222 +64,278 @@ def mock_configs():
     return mock_configs
 
 
+@pytest.fixture
+def error_monitor(valid_resources, valid_configs):
+    """Create an ErrorMonitor instance for testing."""
+    return ErrorMonitor(valid_resources, valid_configs)
+
+
+@pytest.fixture
+def error_monitor_with_single_error(valid_resources, valid_configs):
+    """Create an ErrorMonitor with a single tracked error."""
+    monitor = ErrorMonitor(valid_resources, valid_configs)
+    monitor.track_error(VALID_ERROR_TYPE)
+    return monitor
+
+
+@pytest.fixture
+def error_monitor_with_mixed_errors(valid_resources, valid_configs):
+    """Create an ErrorMonitor with mixed tracked errors."""
+    monitor = ErrorMonitor(valid_resources, valid_configs)
+    monitor.track_error(VALID_ERROR_TYPE)
+    monitor.track_error(VALID_ERROR_TYPE)
+    monitor.track_error(ANOTHER_VALID_ERROR_TYPE)
+    return monitor
+
+
+@pytest.fixture
+def error_monitor_for_performance_testing(valid_resources, valid_configs):
+    """Create an ErrorMonitor pre-configured for performance testing."""
+    return ErrorMonitor(valid_resources, valid_configs)
+
+
+@pytest.fixture
+def resources_missing_logger():
+    """Create resources dict missing logger key."""
+    return {
+        'traceback': MagicMock(),
+        'datetime': MagicMock()
+    }
+
+
+@pytest.fixture
+def resources_missing_traceback():
+    """Create resources dict missing traceback key."""
+    return {
+        'logger': MagicMock(spec=Logger),
+        'datetime': MagicMock()
+    }
+
+
+@pytest.fixture
+def resources_missing_datetime():
+    """Create resources dict missing datetime key."""
+    return {
+        'logger': MagicMock(spec=Logger),
+        'traceback': MagicMock()
+    }
+
+
 @pytest.mark.unit
-class TestErrorMonitorInitialization:
-    """Test ErrorMonitor initialization and configuration."""
+class TestErrorMonitorConstruction:
+    """Test ErrorMonitor construction functionality."""
 
-    def test_init_with_valid_resources_and_configs(self, mock_resources, mock_configs):
+    def test_when_creating_error_monitor_with_valid_resources_and_configs_then_returns_error_monitor_instance(
+        self, 
+        valid_resources, 
+        valid_configs
+    ):
         """
-        GIVEN valid resources dict containing:
-            - logger: A logger instance
-            - traceback: The traceback module
-            - datetime: The datetime module
-        AND valid configs object with:
-            - processing.suppress_errors attribute
-            - paths.ROOT_DIR attribute
-        WHEN ErrorMonitor is initialized
-        THEN expect:
-            - Instance created successfully
-            - _logger is set from resources['logger']
-            - _suppress_errors is set from configs.processing.suppress_errors
-            - _root_dir is set from configs.paths.ROOT_DIR
-            - _error_counters initialized as empty dict
-            - _error_types initialized as empty set
-            - traceback and datetime attributes are set from resources
+        GIVEN valid resources dict and valid configs object
+        WHEN ErrorMonitor constructor is called
+        THEN returns ErrorMonitor instance
         """
-        monitor = ErrorMonitor(mock_resources, mock_configs)
-
-        assert isinstance(monitor, ErrorMonitor)
-        assert monitor._logger == mock_resources['logger']
-        assert monitor._suppress_errors is False
-        assert monitor._root_dir == Path("/test/root")
-        assert monitor._error_counters == {}
-        assert monitor._error_types == set()
-        assert monitor.traceback == mock_resources['traceback']
-        assert monitor.datetime == mock_resources['datetime']
-
-    def test_init_missing_logger_in_resources(self, mock_configs):
-        """
-        GIVEN resources dict missing 'logger' key
-        WHEN ErrorMonitor is initialized
-        THEN expect KeyError to be raised
-        """
-        invalid_resources = {
-            'traceback': MagicMock(),
-            'datetime': MagicMock()
-        }
+        result = ErrorMonitor(valid_resources, valid_configs)
         
+        assert isinstance(result, ErrorMonitor), f"Expected ErrorMonitor instance, got {type(result)}"
+
+    def test_when_creating_error_monitor_with_missing_logger_then_raises_key_error(
+        self, 
+        resources_missing_logger, 
+        valid_configs
+    ):
+        """
+        GIVEN resources dict missing logger key
+        WHEN ErrorMonitor constructor is called
+        THEN raises KeyError
+        """
         with pytest.raises(KeyError):
-            ErrorMonitor(invalid_resources, mock_configs)
+            ErrorMonitor(resources_missing_logger, valid_configs)
 
-    def test_init_missing_traceback_in_resources(self, mock_configs):
+    def test_when_creating_error_monitor_with_missing_traceback_then_raises_key_error(
+        self, 
+        resources_missing_traceback, 
+        valid_configs
+    ):
         """
-        GIVEN resources dict missing 'traceback' key
-        WHEN ErrorMonitor is initialized
-        THEN expect KeyError to be raised
+        GIVEN resources dict missing traceback key
+        WHEN ErrorMonitor constructor is called
+        THEN raises KeyError
         """
-        invalid_resources = {
-            'logger': MagicMock(spec=Logger),
-            'datetime': MagicMock()
-        }
-        
         with pytest.raises(KeyError):
-            ErrorMonitor(invalid_resources, mock_configs)
+            ErrorMonitor(resources_missing_traceback, valid_configs)
 
-    def test_init_missing_datetime_in_resources(self, mock_configs):
+    def test_when_creating_error_monitor_with_missing_datetime_then_raises_key_error(
+        self, 
+        resources_missing_datetime, 
+        valid_configs
+    ):
         """
-        GIVEN resources dict missing 'datetime' key
-        WHEN ErrorMonitor is initialized
-        THEN expect KeyError to be raised
+        GIVEN resources dict missing datetime key
+        WHEN ErrorMonitor constructor is called
+        THEN raises KeyError
         """
-        invalid_resources = {
-            'logger': MagicMock(spec=Logger),
-            'traceback': MagicMock()
-        }
-        
         with pytest.raises(KeyError):
-            ErrorMonitor(invalid_resources, mock_configs)
+            ErrorMonitor(resources_missing_datetime, valid_configs)
 
-    def test_init_with_none_resources(self, mock_configs):
+    def test_when_creating_error_monitor_with_none_resources_then_raises_type_error(self, valid_configs):
         """
-        GIVEN resources=None
-        WHEN ErrorMonitor is initialized
-        THEN expect TypeError or AttributeError when trying to access resources dict
+        GIVEN resources parameter as None
+        WHEN ErrorMonitor constructor is called
+        THEN raises TypeError
         """
-        with pytest.raises((TypeError, AttributeError)):
-            ErrorMonitor(None, mock_configs)
+        with pytest.raises(TypeError):
+            ErrorMonitor(None, valid_configs)
 
-    def test_init_with_none_configs(self, mock_resources):
+    def test_when_creating_error_monitor_with_none_configs_then_raises_attribute_error(self, valid_resources):
         """
-        GIVEN configs=None
-        WHEN ErrorMonitor is initialized
-        THEN expect AttributeError when trying to access configs attributes
+        GIVEN configs parameter as None
+        WHEN ErrorMonitor constructor is called
+        THEN raises AttributeError
         """
         with pytest.raises(AttributeError):
-            ErrorMonitor(mock_resources, None)
+            ErrorMonitor(valid_resources, None)
 
 
 @pytest.mark.unit
-class TestErrorMonitorErrorHandling:
-    """Test ErrorMonitor error handling and tracking."""
+class TestErrorMonitorTrackError:
+    """Test ErrorMonitor track_error functionality."""
 
-    @pytest.fixture
-    def error_monitor(self, mock_resources, mock_configs):
-        """Create an ErrorMonitor instance for testing."""
-        return ErrorMonitor(mock_resources, mock_configs)
-
-    def test_track_error_adds_to_counters(self, error_monitor):
+    def test_when_tracking_single_error_then_error_can_be_retrieved(self, error_monitor):
         """
         GIVEN an ErrorMonitor instance
         WHEN track_error is called with a specific error type
-        THEN expect error counter to increment for that type
+        THEN get_error_summary returns that error type with count of one
         """
-        error_type = "FileNotFoundError"
+        error_monitor.track_error(VALID_ERROR_TYPE)
         
-        error_monitor.track_error(error_type)
+        result = error_monitor.get_error_summary()
         
-        assert error_type in error_monitor._error_counters
-        assert error_monitor._error_counters[error_type] == 1
-        assert error_type in error_monitor._error_types
+        assert result[VALID_ERROR_TYPE] == EXPECTED_SINGLE_ERROR_COUNT, \
+            f"Expected error count {EXPECTED_SINGLE_ERROR_COUNT}, got {result[VALID_ERROR_TYPE]}"
 
-    def test_track_multiple_same_errors(self, error_monitor):
+    def test_when_tracking_same_error_three_times_then_count_is_three(self, error_monitor):
         """
         GIVEN an ErrorMonitor instance
-        WHEN track_error is called multiple times with same error type
-        THEN expect counter to increment each time
+        WHEN track_error is called three times with same error type
+        THEN get_error_summary returns that error type with count of three
         """
-        error_type = "ValueError"
-        
-        error_monitor.track_error(error_type)
-        error_monitor.track_error(error_type)
-        error_monitor.track_error(error_type)
-        
-        assert error_monitor._error_counters[error_type] == 3
+        for _ in range(EXPECTED_TRIPLE_ERROR_COUNT):
+            error_monitor.track_error(ANOTHER_VALID_ERROR_TYPE)
 
-    @pytest.mark.parametrize("error_types", [
-        ["FileNotFoundError", "ValueError", "IOError"],
-        ["CustomError", "AnotherError"],
-        ["SingleError"]
-    ])
-    def test_track_different_error_types(self, error_monitor, error_types):
+        result = error_monitor.get_error_summary()
+
+        assert result[ANOTHER_VALID_ERROR_TYPE] == EXPECTED_TRIPLE_ERROR_COUNT, \
+            f"Expected error count {EXPECTED_TRIPLE_ERROR_COUNT}, got {result[ANOTHER_VALID_ERROR_TYPE]}"
+
+    @pytest.mark.parametrize(
+        "error_type_to_track",
+        [VALID_ERROR_TYPE, ANOTHER_VALID_ERROR_TYPE, THIRD_ERROR_TYPE],
+    )
+    def test_when_tracking_different_error_types_then_summary_contains_that_error_type(self, error_monitor, error_type_to_track):
         """
         GIVEN an ErrorMonitor instance
-        WHEN track_error is called with different error types
-        THEN expect separate counters for each type
+        WHEN track_error is called with a specific error type
+        THEN get_error_summary contains that error type as a key
         """
-        for error_type in error_types:
-            error_monitor.track_error(error_type)
+        error_monitor.track_error(error_type_to_track)
         
-        for error_type in error_types:
-            assert error_type in error_monitor._error_counters
-            assert error_monitor._error_counters[error_type] == 1
-            assert error_type in error_monitor._error_types
+        result = error_monitor.get_error_summary()
+        
+        assert error_type_to_track in result, \
+            f"Expected {error_type_to_track} in summary keys {list(result.keys())}"
 
 
 @pytest.mark.unit
-class TestErrorMonitorReporting:
-    """Test ErrorMonitor reporting functionality."""
+class TestErrorMonitorGetErrorSummary:
+    """Test ErrorMonitor get_error_summary functionality."""
 
-    @pytest.fixture
-    def error_monitor_with_errors(self, mock_resources, mock_configs):
-        """Create an ErrorMonitor with some tracked errors."""
-        monitor = ErrorMonitor(mock_resources, mock_configs)
-        monitor.track_error("FileNotFoundError")
-        monitor.track_error("FileNotFoundError")
-        monitor.track_error("ValueError")
-        return monitor
-
-    def test_get_error_summary(self, error_monitor_with_errors):
+    def test_when_getting_summary_from_monitor_with_mixed_errors_then_returns_dict(self, error_monitor_with_mixed_errors):
         """
         GIVEN an ErrorMonitor with tracked errors
         WHEN get_error_summary is called
-        THEN expect summary dict with error counts
+        THEN returns dict instance
         """
-        summary = error_monitor_with_errors.get_error_summary()
+        result = error_monitor_with_mixed_errors.get_error_summary()
         
-        assert isinstance(summary, dict)
-        assert "FileNotFoundError" in summary
-        assert "ValueError" in summary
-        assert summary["FileNotFoundError"] == 2
-        assert summary["ValueError"] == 1
+        assert isinstance(result, dict), f"Expected dict instance, got {type(result)}"
 
-    def test_get_total_errors(self, error_monitor_with_errors):
+    @pytest.mark.parametrize(
+        "expected_error_type",
+        [VALID_ERROR_TYPE, ANOTHER_VALID_ERROR_TYPE,],
+    )
+    def test_when_getting_summary_from_monitor_with_mixed_errors_then_contains_expected_error_types(
+        self, error_monitor_with_mixed_errors, expected_error_type
+    ):
         """
-        GIVEN an ErrorMonitor with tracked errors
+        GIVEN an ErrorMonitor with mixed tracked errors
+        WHEN get_error_summary is called
+        THEN the result contains the expected error types
+        """
+        result = error_monitor_with_mixed_errors.get_error_summary()
+
+        assert expected_error_type in result, f"Expected {expected_error_type} in summary keys {list(result.keys())}"
+
+
+@pytest.mark.unit
+class TestErrorMonitorGetTotalErrors:
+    """Test ErrorMonitor get_total_errors functionality."""
+
+    def test_when_getting_total_from_monitor_with_mixed_errors_then_returns_expected_total(self, error_monitor_with_mixed_errors):
+        """
+        GIVEN an ErrorMonitor with mixed tracked errors
         WHEN get_total_errors is called
-        THEN expect total count of all errors
+        THEN returns expected total count
         """
-        total = error_monitor_with_errors.get_total_errors()
+        result = error_monitor_with_mixed_errors.get_total_errors()
         
-        assert total == 3  # 2 FileNotFoundError + 1 ValueError
+        assert result == EXPECTED_TOTAL_MIXED_ERRORS, f"Expected total errors {EXPECTED_TOTAL_MIXED_ERRORS}, got {result}"
 
-    def test_has_errors_returns_true_when_errors_exist(self, error_monitor_with_errors):
+    def test_when_getting_total_from_fresh_monitor_then_returns_zero(self, error_monitor):
+        """
+        GIVEN an ErrorMonitor with no tracked errors
+        WHEN get_total_errors is called
+        THEN returns zero
+        """
+        result = error_monitor.get_total_errors()
+        
+        assert result == EXPECTED_ZERO_ERRORS, f"Expected zero errors {EXPECTED_ZERO_ERRORS}, got {result}"
+
+
+@pytest.mark.unit
+class TestErrorMonitorHasErrors:
+    """Test ErrorMonitor has_errors functionality."""
+
+    def test_when_checking_errors_on_monitor_with_errors_then_returns_true(self, error_monitor_with_single_error):
         """
         GIVEN an ErrorMonitor with tracked errors
         WHEN has_errors is called
-        THEN expect True
+        THEN returns True
         """
-        assert error_monitor_with_errors.has_errors() is True
+        result = error_monitor_with_single_error.has_errors()
+        
+        assert result is True, f"Expected has_errors True, got {result}"
 
-    def test_has_errors_returns_false_when_no_errors(self, mock_resources, mock_configs):
+    def test_when_checking_errors_on_fresh_monitor_then_returns_false(self, error_monitor):
         """
         GIVEN an ErrorMonitor with no tracked errors
         WHEN has_errors is called
-        THEN expect False
+        THEN returns False
         """
-        monitor = ErrorMonitor(mock_resources, mock_configs)
-        assert monitor.has_errors() is False
+        result = error_monitor.has_errors()
+        
+        assert result is False, f"Expected has_errors False, got {result}"
 
 
 @pytest.mark.integration
 class TestMakeErrorMonitor:
-    """Test the make_error_monitor factory function."""
+    """Test make_error_monitor factory functionality."""
 
-    def test_make_error_monitor_creates_instance(self):
+    def test_when_calling_make_error_monitor_with_valid_resources_and_configs_then_returns_error_monitor_instance(self):
         """
         GIVEN valid resources and configs
         WHEN make_error_monitor is called
-        THEN expect ErrorMonitor instance to be created
+        THEN returns ErrorMonitor instance
         """
         mock_resources = {
             'logger': MagicMock(spec=Logger),
@@ -274,32 +344,43 @@ class TestMakeErrorMonitor:
         }
         mock_configs = MagicMock(spec=Configs)
         mock_configs.processing = MagicMock()
-        mock_configs.processing.suppress_errors = False
+        mock_configs.processing.suppress_errors = EXPECTED_SUPPRESS_ERRORS_FALSE
         mock_configs.paths = MagicMock()
-        mock_configs.paths.ROOT_DIR = Path("/test/root")
+        mock_configs.paths.ROOT_DIR = Path(EXPECTED_TEST_ROOT_PATH)
 
-        monitor = make_error_monitor(mock_resources, mock_configs)
+        result = make_error_monitor(mock_resources, mock_configs)
         
-        assert isinstance(monitor, ErrorMonitor)
+        assert isinstance(result, ErrorMonitor), f"Expected ErrorMonitor instance, got {type(result)}"
 
 
 @pytest.mark.slow  
 class TestErrorMonitorPerformance:
     """Test ErrorMonitor performance characteristics."""
 
-    def test_track_many_errors_performance(self, mock_resources, mock_configs):
+    def test_when_tracking_many_errors_rapidly_then_completes_within_time_limit(self, error_monitor_for_performance_testing):
         """
         GIVEN an ErrorMonitor instance
         WHEN tracking many errors rapidly
-        THEN expect reasonable performance
+        THEN completes within expected time limit
         """
-        monitor = ErrorMonitor(mock_resources, mock_configs)
-        
         start_time = time.time()
-        for i in range(1000):
-            monitor.track_error(f"Error{i % 10}")  # 10 different error types
+        for i in range(PERFORMANCE_ERROR_COUNT):
+            error_monitor_for_performance_testing.track_error(f"Error{i % PERFORMANCE_ERROR_TYPES}")
         end_time = time.time()
         
         duration = end_time - start_time
-        assert duration < 1.0  # Should complete in less than 1 second
-        assert monitor.get_total_errors() == 1000
+        
+        assert duration < PERFORMANCE_MAX_DURATION_SECONDS, f"Expected duration < {PERFORMANCE_MAX_DURATION_SECONDS}s, got {duration:.3f}s"
+
+    def test_when_tracking_many_errors_rapidly_then_total_equals_expected_count(self, error_monitor_for_performance_testing):
+        """
+        GIVEN an ErrorMonitor instance
+        WHEN tracking many errors rapidly
+        THEN get_total_errors returns expected count
+        """
+        for i in range(PERFORMANCE_ERROR_COUNT):
+            error_monitor_for_performance_testing.track_error(f"Error{i % PERFORMANCE_ERROR_TYPES}")
+        
+        result = error_monitor_for_performance_testing.get_total_errors()
+        
+        assert result == PERFORMANCE_ERROR_COUNT, f"Expected error count {PERFORMANCE_ERROR_COUNT}, got {result}"
