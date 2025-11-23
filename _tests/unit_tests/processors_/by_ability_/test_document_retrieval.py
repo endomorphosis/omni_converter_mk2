@@ -143,14 +143,14 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
 
     def test_extract_summary_structural_analysis(self):
         """
-        GIVEN processor with mocked extract_structure resource (used for summaries)
+        GIVEN processor with mocked extract_structure resource
         AND document data
         AND options dict with analysis parameters
         WHEN extract_summary(data, options) is called
         THEN expect:
-            - Delegates to self._extract_summary (mapped from extract_structure)
             - Returns list of structural features/sections
             - Appropriate for the format category (e.g., headings, sections for documents)
+            - Resource callable was called exactly once with correct parameters
         """
         raise NotImplementedError("test_extract_summary_structural_analysis test needs to be implemented")
 
