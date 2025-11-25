@@ -5,20 +5,42 @@ Unit tests for document retrieval processor.
 
 This module tests the document retrieval processor's ability to extract text,
 metadata, and structural information from various document formats.
-"""
 
-import unittest
+Converted from unittest to pytest format.
+"""
+from __future__ import annotations
+from typing import Any
+import pytest
 from unittest.mock import Mock, MagicMock
 
 
-class TestDocumentRetrievalProcessorInitialization(unittest.TestCase):
+@pytest.fixture
+def mock_resources() -> dict[str, Any]:
+    """Set up test fixtures with mock resources."""
+    return {
+        "formats": {"pdf", "docx", "txt"},
+        "processor_available": True,
+        "processor_name": "document_processor",
+        "processor_versions": {"pdf": "1.0", "docx": "1.0"},
+        "get_version": MagicMock(return_value="1.0.0"),
+        "extract_metadata": MagicMock(),
+        "extract_structure": MagicMock(),
+        "extract_text": MagicMock(),
+        "open_document_file": MagicMock(),
+    }
+
+
+@pytest.fixture
+def mock_configs() -> MagicMock:
+    """Set up mock configs object."""
+    return MagicMock()
+
+
+@pytest.mark.unit
+class TestDocumentRetrievalProcessorInitialization:
     """Test document retrieval processor initialization and configuration."""
 
-    def setUp(self):
-        """Set up test fixtures."""
-        pass
-
-    def test_init_with_valid_resources(self):
+    def test_init_with_valid_resources(self, mock_resources, mock_configs) -> None:
         """
         GIVEN valid resources dict containing:
             - formats: set of supported formats (e.g., {"pdf", "docx", "txt"})
@@ -40,7 +62,7 @@ class TestDocumentRetrievalProcessorInitialization(unittest.TestCase):
         """
         raise NotImplementedError("test_init_with_valid_resources test needs to be implemented")
 
-    def test_init_missing_required_format_resources(self):
+    def test_init_missing_required_format_resources(self, mock_configs) -> None:
         """
         GIVEN resources dict missing format-specific required keys:
             - Missing 'formats' key
@@ -53,7 +75,7 @@ class TestDocumentRetrievalProcessorInitialization(unittest.TestCase):
         """
         raise NotImplementedError("test_init_missing_required_format_resources test needs to be implemented")
 
-    def test_init_with_empty_formats_set(self):
+    def test_init_with_empty_formats_set(self, mock_resources, mock_configs) -> None:
         """
         GIVEN resources dict with empty formats set: formats=set()
         WHEN DocumentProcessor is initialized
@@ -65,14 +87,11 @@ class TestDocumentRetrievalProcessorInitialization(unittest.TestCase):
         raise NotImplementedError("test_init_with_empty_formats_set test needs to be implemented")
 
 
-class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
+@pytest.mark.unit
+class TestDocumentRetrievalProcessorMethods:
     """Test document retrieval processor method implementations."""
 
-    def setUp(self):
-        """Set up test fixtures with mock resources."""
-        pass
-
-    def test_can_process_supported_format(self):
+    def test_can_process_supported_format(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor initialized with formats {"pdf", "docx", "txt"}
         WHEN can_process("pdf") is called
@@ -82,7 +101,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_can_process_supported_format test needs to be implemented")
 
-    def test_can_process_unsupported_format(self):
+    def test_can_process_unsupported_format(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor initialized with formats {"pdf", "docx", "txt"}
         WHEN can_process("xlsx") is called
@@ -92,7 +111,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_can_process_unsupported_format test needs to be implemented")
 
-    def test_supported_formats_property(self):
+    def test_supported_formats_property(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor with defined format set
         WHEN supported_formats property is accessed
@@ -103,7 +122,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_supported_formats_property test needs to be implemented")
 
-    def test_get_processor_info(self):
+    def test_get_processor_info(self, mock_resources, mock_configs) -> None:
         """
         GIVEN initialized processor with all resources
         WHEN get_processor_info() is called
@@ -114,7 +133,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_get_processor_info test needs to be implemented")
 
-    def test_extract_text_delegates_to_resource(self):
+    def test_extract_text_delegates_to_resource(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor with mocked extract_text resource
         AND document data as bytes
@@ -128,7 +147,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_extract_text_delegates_to_resource test needs to be implemented")
 
-    def test_extract_metadata_delegates_to_resource(self):
+    def test_extract_metadata_delegates_to_resource(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor with mocked extract_metadata resource
         AND document data as bytes
@@ -141,7 +160,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_extract_metadata_delegates_to_resource test needs to be implemented")
 
-    def test_extract_summary_structural_analysis(self):
+    def test_extract_summary_structural_analysis(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor with mocked extract_structure resource
         AND document data
@@ -154,7 +173,7 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         """
         raise NotImplementedError("test_extract_summary_structural_analysis test needs to be implemented")
 
-    def test_process_document_complete_workflow(self):
+    def test_process_document_complete_workflow(self, mock_resources, mock_configs) -> None:
         """
         GIVEN processor with all resources properly mocked
         AND valid document data
@@ -170,14 +189,11 @@ class TestDocumentRetrievalProcessorMethods(unittest.TestCase):
         raise NotImplementedError("test_process_document_complete_workflow test needs to be implemented")
 
 
-class TestDocumentRetrievalFormatHandling(unittest.TestCase):
+@pytest.mark.unit
+class TestDocumentRetrievalFormatHandling:
     """Test format-specific handling within document retrieval processor."""
 
-    def setUp(self):
-        """Set up test fixtures."""
-        pass
-
-    def test_pdf_specific_handling(self):
+    def test_pdf_specific_handling(self, mock_resources, mock_configs) -> None:
         """
         GIVEN PDF document data with embedded fonts
         AND processor configured for document formats
@@ -189,7 +205,7 @@ class TestDocumentRetrievalFormatHandling(unittest.TestCase):
         """
         raise NotImplementedError("test_pdf_specific_handling test needs to be implemented")
 
-    def test_docx_specific_handling(self):
+    def test_docx_specific_handling(self, mock_resources, mock_configs) -> None:
         """
         GIVEN DOCX document data with styles and formatting
         AND processor configured for document formats
@@ -201,7 +217,7 @@ class TestDocumentRetrievalFormatHandling(unittest.TestCase):
         """
         raise NotImplementedError("test_docx_specific_handling test needs to be implemented")
 
-    def test_txt_plain_text_handling(self):
+    def test_txt_plain_text_handling(self, mock_resources, mock_configs) -> None:
         """
         GIVEN TXT plain text document data
         AND processor configured for document formats including TXT
@@ -213,7 +229,7 @@ class TestDocumentRetrievalFormatHandling(unittest.TestCase):
         """
         raise NotImplementedError("test_txt_plain_text_handling test needs to be implemented")
 
-    def test_format_detection_from_data(self):
+    def test_format_detection_from_data(self, mock_resources, mock_configs) -> None:
         """
         GIVEN document data without file extension info
         AND processor must detect format from content
@@ -226,14 +242,11 @@ class TestDocumentRetrievalFormatHandling(unittest.TestCase):
         raise NotImplementedError("test_format_detection_from_data test needs to be implemented")
 
 
-class TestDocumentRetrievalCrossDependencies(unittest.TestCase):
+@pytest.mark.unit
+class TestDocumentRetrievalCrossDependencies:
     """Test document retrieval processor interactions with other processors."""
 
-    def setUp(self):
-        """Set up test fixtures with mock processors."""
-        pass
-
-    def test_delegated_from_parent_processor(self):
+    def test_delegated_from_parent_processor(self, mock_resources, mock_configs) -> None:
         """
         GIVEN parent processor that extracts embedded documents
         AND document processor configured as cross-dependency
@@ -245,7 +258,7 @@ class TestDocumentRetrievalCrossDependencies(unittest.TestCase):
         """
         raise NotImplementedError("test_delegated_from_parent_processor test needs to be implemented")
 
-    def test_batch_processing_multiple_formats(self):
+    def test_batch_processing_multiple_formats(self, mock_resources, mock_configs) -> None:
         """
         GIVEN list of documents in different formats (PDF, DOCX, TXT)
         AND single document processor instance
@@ -257,7 +270,7 @@ class TestDocumentRetrievalCrossDependencies(unittest.TestCase):
         """
         raise NotImplementedError("test_batch_processing_multiple_formats test needs to be implemented")
 
-    def test_options_forwarding_in_delegation(self):
+    def test_options_forwarding_in_delegation(self, mock_resources, mock_configs) -> None:
         """
         GIVEN parent processor with specific options
         AND delegating to document processor
@@ -270,14 +283,11 @@ class TestDocumentRetrievalCrossDependencies(unittest.TestCase):
         raise NotImplementedError("test_options_forwarding_in_delegation test needs to be implemented")
 
 
-class TestDocumentRetrievalErrorHandling(unittest.TestCase):
+@pytest.mark.unit
+class TestDocumentRetrievalErrorHandling:
     """Test error handling in document retrieval processor."""
 
-    def setUp(self):
-        """Set up test fixtures."""
-        pass
-
-    def test_corrupted_file_handling(self):
+    def test_corrupted_file_handling(self, mock_resources, mock_configs) -> None:
         """
         GIVEN corrupted document data that can't be opened
         AND standard options
@@ -290,7 +300,7 @@ class TestDocumentRetrievalErrorHandling(unittest.TestCase):
         """
         raise NotImplementedError("test_corrupted_file_handling test needs to be implemented")
 
-    def test_unsupported_format_in_category(self):
+    def test_unsupported_format_in_category(self, mock_resources, mock_configs) -> None:
         """
         GIVEN data for format not in processor's supported set
         BUT format is related (e.g., ODT for document processor)
@@ -302,7 +312,7 @@ class TestDocumentRetrievalErrorHandling(unittest.TestCase):
         """
         raise NotImplementedError("test_unsupported_format_in_category test needs to be implemented")
 
-    def test_resource_callable_failure(self):
+    def test_resource_callable_failure(self, mock_resources, mock_configs) -> None:
         """
         GIVEN resource callable that raises exception
         WHEN processor method using that resource is called
@@ -312,7 +322,3 @@ class TestDocumentRetrievalErrorHandling(unittest.TestCase):
             - System remains stable
         """
         raise NotImplementedError("test_resource_callable_failure test needs to be implemented")
-
-
-if __name__ == '__main__':
-    unittest.main()
