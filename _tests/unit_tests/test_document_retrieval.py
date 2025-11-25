@@ -11,7 +11,7 @@ Converted from unittest to pytest format.
 from __future__ import annotations
 from typing import Any
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock
 
 
 @pytest.fixture
