@@ -2,7 +2,6 @@
 ```python
 import unittest
 
-
 class TestDependencyProcessorFunctions(unittest.TestCase):
     """Test dependency-specific processor functions (e.g., BeautifulSoup processor)."""
 
@@ -276,8 +275,6 @@ class TestDependencyProcessorOptions(unittest.TestCase):
             - No mojibake or encoding errors
             - UTF-8 as default fallback
         """
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
 ```

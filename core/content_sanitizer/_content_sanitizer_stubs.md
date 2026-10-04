@@ -33,13 +33,13 @@ def __init__(self, configs: Configs = None, resources: dict[str, Any] = None):
 ```python
 def _remove_active_content(self, text: str) -> tuple[str, int]:
     """
-        Remove active content from text.
+    Remove active content from text.
 
-    Args:
-        text: The text to sanitize.
-
-    Returns:
-        Tuple of (sanitized text, count of items removed).
+Args:
+    text: The text to sanitize.
+    
+Returns:
+    Tuple of (sanitized text, count of items removed).
     """
 ```
 * **Async:** False
@@ -51,13 +51,13 @@ def _remove_active_content(self, text: str) -> tuple[str, int]:
 ```python
 def _remove_personal_data(self, text: str) -> tuple[str, int]:
     """
-        Remove personal data from text.
+    Remove personal data from text.
 
-    Args:
-        text: The text to sanitize.
-
-    Returns:
-        Tuple of (sanitized text, count of items removed).
+Args:
+    text: The text to sanitize.
+    
+Returns:
+    Tuple of (sanitized text, count of items removed).
     """
 ```
 * **Async:** False
@@ -69,13 +69,13 @@ def _remove_personal_data(self, text: str) -> tuple[str, int]:
 ```python
 def _remove_scripts(self, text: str) -> tuple[str, int]:
     """
-        Remove script content from text.
+    Remove script content from text.
 
-    Args:
-        text: The text to sanitize.
-
-    Returns:
-        Tuple of (sanitized text, count of items removed).
+Args:
+    text: The text to sanitize.
+    
+Returns:
+    Tuple of (sanitized text, count of items removed).
     """
 ```
 * **Async:** False
@@ -87,13 +87,13 @@ def _remove_scripts(self, text: str) -> tuple[str, int]:
 ```python
 def _sanitize_metadata(self, metadata: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     """
-        Sanitize metadata.
+    Sanitize metadata.
 
-    Args:
-        metadata: The metadata to sanitize.
-
-    Returns:
-        Tuple of (sanitized metadata, list of removed keys).
+Args:
+    metadata: The metadata to sanitize.
+    
+Returns:
+    Tuple of (sanitized metadata, list of removed keys).
     """
 ```
 * **Async:** False
@@ -105,13 +105,13 @@ def _sanitize_metadata(self, metadata: dict[str, Any]) -> tuple[dict[str, Any], 
 ```python
 def sanitize(self, content: "Content") -> SanitizedContent:
     """
-        Sanitize content for security.
+    Sanitize content for security.
 
-    Args:
-        content: The content to sanitize.
+Args:
+    content: The content to sanitize.
 
-    Returns:
-        Sanitized content.
+Returns:
+    Sanitized content.
     """
 ```
 * **Async:** False

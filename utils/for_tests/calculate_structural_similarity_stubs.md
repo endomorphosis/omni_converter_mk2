@@ -45,14 +45,14 @@ def _count_tables(text: str) -> int:
 ```python
 def calculate_structural_similarity(str1: str, str2: str) -> float:
     """
-        Calculate structural similarity between two texts.
+    Calculate structural similarity between two texts.
 
-    Args:
-        str1: First text
-        str2: Second text
-
-    Returns:
-        Structural similarity score
+Args:
+    str1: First text
+    str2: Second text
+    
+Returns:
+    Structural similarity score
     """
 ```
 * **Async:** False

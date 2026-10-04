@@ -9,18 +9,18 @@ Stub file last updated: 2025-07-17 05:45:32
 ```python
 class LLMOptions(BaseModel):
     """
-        Options for LLM processing.
+    Options for LLM processing.
 
-    Attributes:
-        model: The model to use for generation
-        summarize: Whether to generate a summary
-        extract_metadata: Whether to extract metadata
-        analyze_sentiment: Whether to analyze sentiment
-        summary_max_length: Maximum length of summary in characters
-        summary_format: Format of the summary (bullet, paragraph)
-        prompt_name: Name of the prompt template to use
-        custom_system_prompt: Custom system prompt to use
-        custom_user_prompt: Custom user prompt to use
+Attributes:
+    model: The model to use for generation
+    summarize: Whether to generate a summary
+    extract_metadata: Whether to extract metadata
+    analyze_sentiment: Whether to analyze sentiment
+    summary_max_length: Maximum length of summary in characters
+    summary_format: Format of the summary (bullet, paragraph)
+    prompt_name: Name of the prompt template to use
+    custom_system_prompt: Custom system prompt to use
+    custom_user_prompt: Custom user prompt to use
     """
 ```
 * **Async:** False
@@ -44,13 +44,13 @@ class LLMProcessor:
 ```python
 class LLMResult(BaseModel):
     """
-        Result of LLM processing.
+    Result of LLM processing.
 
-    Attributes:
-        summary: Generated summary of the content
-        metadata: Extracted metadata from the content
-        sentiment: Sentiment analysis of the content
-        raw_responses: Raw responses from the LLM
+Attributes:
+    summary: Generated summary of the content
+    metadata: Extracted metadata from the content
+    sentiment: Sentiment analysis of the content
+    raw_responses: Raw responses from the LLM
     """
 ```
 * **Async:** False
@@ -62,11 +62,11 @@ class LLMResult(BaseModel):
 ```python
 def __init__(self, resources: dict[str, Any] = None, configs: Configs = None):
     """
-        Initialize the LLM processor with dependency injection.
+    Initialize the LLM processor with dependency injection.
 
-    Args:
-        resources: Dictionary of resources including LLM interface
-        configs: Configuration parameters
+Args:
+    resources: Dictionary of resources including LLM interface
+    configs: Configuration parameters
     """
 ```
 * **Async:** False
@@ -76,17 +76,15 @@ def __init__(self, resources: dict[str, Any] = None, configs: Configs = None):
 ## _analyze_sentiment
 
 ```python
-async def _analyze_sentiment(
-    self, content: str, options: LLMOptions, model: str, result: LLMResult
-) -> None:
+async def _analyze_sentiment(self, content: str, options: LLMOptions, model: str, result: LLMResult) -> None:
     """
-        Analyze sentiment of the content.
+    Analyze sentiment of the content.
 
-    Args:
-        content: Text content to analyze
-        options: Processing options
-        model: Model to use for generation
-        result: Result object to update
+Args:
+    content: Text content to analyze
+    options: Processing options
+    model: Model to use for generation
+    result: Result object to update
     """
 ```
 * **Async:** True
@@ -96,17 +94,15 @@ async def _analyze_sentiment(
 ## _extract_metadata
 
 ```python
-async def _extract_metadata(
-    self, content: str, options: LLMOptions, model: str, result: LLMResult
-) -> None:
+async def _extract_metadata(self, content: str, options: LLMOptions, model: str, result: LLMResult) -> None:
     """
-        Extract metadata from the content.
+    Extract metadata from the content.
 
-    Args:
-        content: Text content to extract metadata from
-        options: Processing options
-        model: Model to use for generation
-        result: Result object to update
+Args:
+    content: Text content to extract metadata from
+    options: Processing options
+    model: Model to use for generation
+    result: Result object to update
     """
 ```
 * **Async:** True
@@ -116,17 +112,15 @@ async def _extract_metadata(
 ## _generate_image_description
 
 ```python
-async def _generate_image_description(
-    self, content: bytes, options: LLMOptions, model: str, result: LLMResult
-):
+async def _generate_image_description(self, content: bytes, options: LLMOptions, model: str, result: LLMResult):
     """
-        Generate a summary of an image using VLLM.
+    Generate a summary of an image using VLLM.
 
-    Args:
-        content (bytes): Image data in bytes.
-        options: Processing options
-        model: Model to use for generation
-        result: Result object to update
+Args:
+    content (bytes): Image data in bytes.
+    options: Processing options
+    model: Model to use for generation
+    result: Result object to update
     """
 ```
 * **Async:** True
@@ -136,17 +130,15 @@ async def _generate_image_description(
 ## _generate_summary
 
 ```python
-async def _generate_summary(
-    self, content: str, options: LLMOptions, model: str, result: LLMResult
-) -> None:
+async def _generate_summary(self, content: str, options: LLMOptions, model: str, result: LLMResult) -> None:
     """
-        Generate a summary of the content.
+    Generate a summary of the content.
 
-    Args:
-        content: Text content to summarize
-        options: Processing options
-        model: Model to use for generation
-        result: Result object to update
+Args:
+    content: Text content to summarize
+    options: Processing options
+    model: Model to use for generation
+    result: Result object to update
     """
 ```
 * **Async:** True
@@ -158,13 +150,13 @@ async def _generate_summary(
 ```python
 async def _ocr_with_vllm(self, content: bytes, options: LLMOptions, model: str, result: LLMResult):
     """
-        Extract text from an image using a VLLM.
+    Extract text from an image using a VLLM.
 
-    Args:
-        content: Image content to summarize
-        options: Processing options
-        model: Model to use for generation
-        result: Result object to update
+Args:
+    content: Image content to summarize
+    options: Processing options
+    model: Model to use for generation
+    result: Result object to update
     """
 ```
 * **Async:** True
@@ -176,14 +168,14 @@ async def _ocr_with_vllm(self, content: bytes, options: LLMOptions, model: str, 
 ```python
 async def _process_content_async(self, content: str, options: LLMOptions) -> LLMResult:
     """
-        Process content asynchronously using language models.
+    Process content asynchronously using language models.
 
-    Args:
-        content: Text content to process
-        options: Processing options
-
-    Returns:
-        LLMResult containing processing results
+Args:
+    content: Text content to process
+    options: Processing options
+    
+Returns:
+    LLMResult containing processing results
     """
 ```
 * **Async:** True
@@ -193,18 +185,16 @@ async def _process_content_async(self, content: str, options: LLMOptions) -> LLM
 ## process_content
 
 ```python
-def process_content(
-    self, content: str, options: Union[dict[str, Any], LLMOptions] = None
-) -> LLMResult:
+def process_content(self, content: str, options: Union[dict[str, Any], LLMOptions] = None) -> LLMResult:
     """
-        Process content using language models.
+    Process content using language models.
 
-    Args:
-        content: Text content to process
-        options: Processing options
-
-    Returns:
-        LLMResult containing processing results
+Args:
+    content: Text content to process
+    options: Processing options
+    
+Returns:
+    LLMResult containing processing results
     """
 ```
 * **Async:** False

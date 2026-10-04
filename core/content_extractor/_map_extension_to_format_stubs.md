@@ -9,13 +9,13 @@ Stub file last updated: 2025-07-17 05:42:08
 ```python
 def map_extension_to_format(ext: str) -> str:
     """
-        Map a file extension to its corresponding format.
+    Map a file extension to its corresponding format.
 
-    Args:
-        ext: The file extension (with or without leading dot)
-
-    Returns:
-        The format name for the given extension
+Args:
+    ext: The file extension (with or without leading dot)
+    
+Returns:
+    The format name for the given extension
     """
 ```
 * **Async:** False

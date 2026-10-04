@@ -9,13 +9,13 @@ Stub file last updated: 2025-07-17 05:32:27
 ```python
 def generate_startup_report(processors: dict[str, tuple[str, Any, set]]) -> str:
     """
-        Generate a startup summary report.
+    Generate a startup summary report.
 
-    Args:
-        processors: Dictionary of processor instances
-
-    Returns:
-        Formatted startup report string
+Args:
+    processors: Dictionary of processor instances
+    
+Returns:
+    Formatted startup report string
     """
 ```
 * **Async:** False

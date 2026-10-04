@@ -9,20 +9,20 @@ Stub file last updated: 2025-07-17 04:40:25
 ```python
 class BatchProcessor:
     """
-        Batch processor for the Omni-Converter.
+    Batch processor for the Omni-Converter.
 
-    This class orchestrates the processing of multiple files in batches, handling
-    resource management, error handling, and security validation.
+This class orchestrates the processing of multiple files in batches, handling
+resource management, error handling, and security validation.
 
-    Attributes:
-        pipeline: The processing pipeline to use.
-        error_monitor: The error handler to use.
-        resource_monitor: The resource monitor to use.
-        security_monitor: The security manager to use.
-        max_batch_size (int): Maximum number of files to process in a single batch.
-        continue_on_error (bool): Whether to continue processing if errors occur.
-        max_threads (int): Maximum number of worker threads for parallel processing.
-        cancellation_requested (bool): Whether processing cancellation has been requested.
+Attributes:
+    pipeline: The processing pipeline to use.
+    error_monitor: The error handler to use.
+    resource_monitor: The resource monitor to use.
+    security_monitor: The security manager to use.
+    max_batch_size (int): Maximum number of files to process in a single batch.
+    continue_on_error (bool): Whether to continue processing if errors occur.
+    max_threads (int): Maximum number of worker threads for parallel processing.
+    cancellation_requested (bool): Whether processing cancellation has been requested.
     """
 ```
 * **Async:** False
@@ -43,13 +43,13 @@ class Counter(object):
 ```python
 class _BatchState(StrEnum):
     """
-        Enum for batch processing states.
+    Enum for batch processing states.
 
-    Attributes:
-        IDLE: No processing is currently happening.
-        PROCESSING: Files are being processed.
-        CANCELLING: Processing is being cancelled.
-        COMPLETED: Processing has completed.
+Attributes:
+    IDLE: No processing is currently happening.
+    PROCESSING: Files are being processed.
+    CANCELLING: Processing is being cancelled.
+    COMPLETED: Processing has completed.
     """
 ```
 * **Async:** False
@@ -70,11 +70,11 @@ def __init__(self, manager, init_val: int = 0) -> None:
 ```python
 def __init__(self, configs: Configs = None, resources: dict[str, Callable] = None):
     """
-        Initialize a batch processor.
+    Initialize a batch processor.
 
-    Args:
-        configs: Configuration object containing processing settings.
-        resources: Dictionary of resource objects and functions.
+Args:
+    configs: Configuration object containing processing settings.
+    resources: Dictionary of resource objects and functions.
     """
 ```
 * **Async:** False
@@ -94,28 +94,20 @@ def _assert_positive_int(var: Any, name: str) -> None:
 ## _process_chunk
 
 ```python
-def _process_chunk(
-    self,
-    file_paths: list[str],
-    output_dir: Optional[str],
-    options: Optional[dict[str, Any]],
-    progress_callback: Optional[Callable],
-    total_count: int,
-    current_index: int,
-) -> list["ProcessingResult"]:
+def _process_chunk(self, file_paths: list[str], output_dir: Optional[str], options: Optional[dict[str, Any]], progress_callback: Optional[Callable], total_count: int, current_index: int) -> list['ProcessingResult']:
     """
-        Process a chunk of files.
+    Process a chunk of files.
 
-    Args:
-        file_paths: list of file paths to process.
-        output_dir: Directory to write output files to.
-        options: Processing options.
-        progress_callback: Progress callback function.
-        total_count: Total number of files in the full batch.
-        current_index: Current index in the full batch.
-
-    Returns:
-        List of ProcessingResult objects for the processed files.
+Args:
+    file_paths: list of file paths to process.
+    output_dir: Directory to write output files to.
+    options: Processing options.
+    progress_callback: Progress callback function.
+    total_count: Total number of files in the full batch.
+    current_index: Current index in the full batch.
+    
+Returns:
+    List of ProcessingResult objects for the processed files.
     """
 ```
 * **Async:** False
@@ -125,28 +117,20 @@ def _process_chunk(
 ## _process_files_parallel
 
 ```python
-def _process_files_parallel(
-    self,
-    file_paths: list[str],
-    output_dir: Optional[str],
-    options: dict[str, Any],
-    progress_callback: Optional[Callable],
-    total_count: int,
-    current_index: int,
-) -> list["ProcessingResult"]:
+def _process_files_parallel(self, file_paths: list[str], output_dir: Optional[str], options: dict[str, Any], progress_callback: Optional[Callable], total_count: int, current_index: int) -> list['ProcessingResult']:
     """
-        Process files in parallel using a thread pool.
+    Process files in parallel using a thread pool.
 
-    Args:
-        file_paths: list of file paths to process.
-        output_dir: Directory to write output files to.
-        options: Processing options.
-        progress_callback: Progress callback function.
-        total_count: Total number of files in the full batch.
-        current_index: Current index in the full batch.
-
-    Returns:
-        List of ProcessingResult objects for the processed files.
+Args:
+    file_paths: list of file paths to process.
+    output_dir: Directory to write output files to.
+    options: Processing options.
+    progress_callback: Progress callback function.
+    total_count: Total number of files in the full batch.
+    current_index: Current index in the full batch.
+    
+Returns:
+    List of ProcessingResult objects for the processed files.
     """
 ```
 * **Async:** False
@@ -156,28 +140,20 @@ def _process_files_parallel(
 ## _process_files_sequential
 
 ```python
-def _process_files_sequential(
-    self,
-    file_paths: list[str],
-    output_dir: Optional[str],
-    options: dict[str, Any],
-    progress_callback: Optional[Callable],
-    total_count: int,
-    current_index: int,
-) -> list[ProcessingResult]:
+def _process_files_sequential(self, file_paths: list[str], output_dir: Optional[str], options: dict[str, Any], progress_callback: Optional[Callable], total_count: int, current_index: int) -> list[ProcessingResult]:
     """
-        Process files sequentially.
+    Process files sequentially.
 
-    Args:
-        file_paths: list of file paths to process.
-        output_dir: Directory to write output files to.
-        options: Processing options.
-        progress_callback: Progress callback function.
-        total_count: Total number of files in the full batch.
-        current_index: Current index in the full batch.
-
-    Returns:
-        List of ProcessingResult objects for the processed files.
+Args:
+    file_paths: list of file paths to process.
+    output_dir: Directory to write output files to.
+    options: Processing options.
+    progress_callback: Progress callback function.
+    total_count: Total number of files in the full batch.
+    current_index: Current index in the full batch.
+    
+Returns:
+    List of ProcessingResult objects for the processed files.
     """
 ```
 * **Async:** False
@@ -187,19 +163,17 @@ def _process_files_sequential(
 ## _process_single_file
 
 ```python
-def _process_single_file(
-    self, file_path: str, output_path: Optional[str], options: dict[str, Any]
-) -> ProcessingResult:
+def _process_single_file(self, file_path: str, output_path: Optional[str], options: dict[str, Any]) -> ProcessingResult:
     """
-        Process a single file.
+    Process a single file.
 
-    Args:
-        file_path: Path to the file to process.
-        output_path: Path to write output to.
-        options: Processing options.
-
-    Returns:
-        ProcessingResult object for the processed file.
+Args:
+    file_path: Path to the file to process.
+    output_path: Path to write output to.
+    options: Processing options.
+    
+Returns:
+    ProcessingResult object for the processed file.
     """
 ```
 * **Async:** False
@@ -209,9 +183,7 @@ def _process_single_file(
 ## _safe_progress_callback
 
 ```python
-def _safe_progress_callback(
-    self, progress_callback: Optional[Callable], current: int, total: int, filename: str
-) -> None:
+def _safe_progress_callback(self, progress_callback: Optional[Callable], current: int, total: int, filename: str) -> None:
     """
     Safely call progress callback with exception handling.
     """
@@ -279,27 +251,21 @@ def ongoing_batch_result(self):
 ## process_batch
 
 ```python
-def process_batch(
-    self,
-    file_paths: list[str] | str,
-    output_dir: Optional[str] = None,
-    options: Optional[dict[str, Any]] = None,
-    progress_callback: Optional[Callable] = None,
-) -> BatchResult:
+def process_batch(self, file_paths: list[str] | str, output_dir: Optional[str] = None, options: Optional[dict[str, Any]] = None, progress_callback: Optional[Callable] = None) -> BatchResult:
     """
-        Process a batch of files.
+    Process a batch of files.
 
-    Args:
-        file_paths: list of file paths to process, or a directory path to
-            recursively process all files within.
-        output_dir: Directory to write output files to. If None, files will
-            be processed but output will not be written to disk.
-        options: Processing options to pass to the pipeline.
-        progress_callback: Optional callback function for reporting progress.
-            The function should accept current_count, total_count, and current_file.
-
-    Returns:
-        A BatchResult object with the results of the batch processing.
+Args:
+    file_paths: list of file paths to process, or a directory path to
+        recursively process all files within.
+    output_dir: Directory to write output files to. If None, files will
+        be processed but output will not be written to disk.
+    options: Processing options to pass to the pipeline.
+    progress_callback: Optional callback function for reporting progress.
+        The function should accept current_count, total_count, and current_file.
+        
+Returns:
+    A BatchResult object with the results of the batch processing.
     """
 ```
 * **Async:** False
@@ -312,10 +278,10 @@ def process_batch(
 @property
 def processing_status(self) -> dict[str, Any]:
     """
-        Get the current status of batch processing.
+    Get the current status of batch processing.
 
-    Returns:
-        A dictionary with the current status including both legacy and new format.
+Returns:
+    A dictionary with the current status including both legacy and new format.
     """
 ```
 * **Async:** False
@@ -327,10 +293,10 @@ def processing_status(self) -> dict[str, Any]:
 ```python
 def set_continue_on_error(self, flag: bool) -> None:
     """
-        Set whether to continue processing if errors occur.
+    Set whether to continue processing if errors occur.
 
-    Args:
-        flag: Whether to continue processing if errors occur.
+Args:
+    flag: Whether to continue processing if errors occur.
     """
 ```
 * **Async:** False
@@ -342,10 +308,10 @@ def set_continue_on_error(self, flag: bool) -> None:
 ```python
 def set_max_batch_size(self, size: int) -> None:
     """
-        Set the maximum batch size.
+    Set the maximum batch size.
 
-    Args:
-        size: Maximum number of files to process in a single batch.
+Args:
+    size: Maximum number of files to process in a single batch.
     """
 ```
 * **Async:** False
@@ -357,10 +323,10 @@ def set_max_batch_size(self, size: int) -> None:
 ```python
 def set_max_threads(self, count: int) -> None:
     """
-        Set the maximum number of worker threads for parallel processing.
+    Set the maximum number of worker threads for parallel processing.
 
-    Args:
-        count: Maximum number of worker threads.
+Args:
+    count: Maximum number of worker threads.
     """
 ```
 * **Async:** False

@@ -9,10 +9,10 @@ Stub file last updated: 2025-07-17 05:40:43
 ```python
 def make_output_formatter() -> "OutputFormatter":
     """
-        Factory function to create an OutputFormatter instance.
+    Factory function to create an OutputFormatter instance.
 
-    Returns:
-        An instance of OutputFormatter configured with proper dependencies.
+Returns:
+    An instance of OutputFormatter configured with proper dependencies.
     """
 ```
 * **Async:** False

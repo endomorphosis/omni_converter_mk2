@@ -33,11 +33,11 @@ def make_cli() -> CLI:
 ```python
 def make_gui() -> None:
     """
-        Create a GUI interface for the Omni-Converter.
+    Create a GUI interface for the Omni-Converter.
 
-    This function initializes the GUI with necessary resources and configurations.
-    Currently, the GUI is not implemented, but this function serves as a placeholder
-    for future development.
+This function initializes the GUI with necessary resources and configurations.
+Currently, the GUI is not implemented, but this function serves as a placeholder
+for future development.
     """
 ```
 * **Async:** False

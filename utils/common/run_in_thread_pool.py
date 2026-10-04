@@ -6,7 +6,6 @@ try:
 except ImportError:
     raise ImportError("Please install the 'tqdm' package to use this module.")
 
-
 def run_in_thread_pool(func, inputs, *, max_concurrency: int = 5, use_tqdm: bool = True):
     """
     Calls the function ``func`` on the values ``inputs``.
@@ -32,7 +31,9 @@ def run_in_thread_pool(func, inputs, *, max_concurrency: int = 5, use_tqdm: bool
                 }
 
                 while futures:
-                    done, _ = cf.wait(futures, return_when=cf.FIRST_COMPLETED)
+                    done, _ = cf.wait(
+                        futures, return_when=cf.FIRST_COMPLETED
+                    )
 
                     for fut in done:
                         original_input = futures.pop(fut)
@@ -42,7 +43,7 @@ def run_in_thread_pool(func, inputs, *, max_concurrency: int = 5, use_tqdm: bool
                     for input in itertools.islice(func_inputs, len(done)):
                         fut = executor.submit(func, input)
                         futures[fut] = input
-    else:  # TODO Find a way to consolidate the two routes without duplicating code
+    else: # TODO Find a way to consolidate the two routes without duplicating code
         with cf.ThreadPoolExecutor() as executor:
             futures = {
                 executor.submit(func, input): input
@@ -50,7 +51,9 @@ def run_in_thread_pool(func, inputs, *, max_concurrency: int = 5, use_tqdm: bool
             }
 
             while futures:
-                done, _ = cf.wait(futures, return_when=cf.FIRST_COMPLETED)
+                done, _ = cf.wait(
+                    futures, return_when=cf.FIRST_COMPLETED
+                )
 
                 for fut in done:
                     original_input = futures.pop(fut)

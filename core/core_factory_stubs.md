@@ -18,10 +18,10 @@ class _ProcessingPipelineResources(TypedDict):
 ```python
 def make_processing_pipeline() -> ProcessingPipeline:
     """
-        Factory function to create a ProcessingPipeline instance.
+    Factory function to create a ProcessingPipeline instance.
 
-    Returns:
-        An instance of ProcessingPipeline configured with proper dependencies.
+Returns:
+    An instance of ProcessingPipeline configured with proper dependencies.
     """
 ```
 * **Async:** False

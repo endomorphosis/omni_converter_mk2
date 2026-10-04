@@ -20,6 +20,7 @@ import copy
 from core.file_validator._validation_result import ValidationResult
 
 
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -27,6 +28,7 @@ import unittest
 
 # Import the class under test
 from core.file_validator._validation_result import ValidationResult
+
 
 
 class TestValidationResultInitialization(unittest.TestCase):
@@ -49,18 +51,18 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # GIVEN
         is_valid = True
-        errors = ["error1", "error2"]
-        warnings = ["warning1"]
-        validation_context = {"key": "value"}
-
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context,
+            validation_context=validation_context
         )
-
+        
         # THEN
         self.assertIsInstance(result, ValidationResult)
 
@@ -73,18 +75,18 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # GIVEN
         is_valid = True
-        errors = ["error1", "error2"]
-        warnings = ["warning1"]
-        validation_context = {"key": "value"}
-
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context,
+            validation_context=validation_context
         )
-
+        
         # THEN
         self.assertEqual(result.is_valid, True)
 
@@ -97,20 +99,20 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # GIVEN
         is_valid = True
-        errors = ["error1", "error2"]
-        warnings = ["warning1"]
-        validation_context = {"key": "value"}
-
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context,
+            validation_context=validation_context
         )
-
+        
         # THEN
-        self.assertEqual(result.errors, ["error1", "error2"])
+        self.assertEqual(result.errors, ['error1', 'error2'])
 
     def test_init_with_all_valid_parameters_sets_warnings(self):
         """
@@ -121,20 +123,20 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # GIVEN
         is_valid = True
-        errors = ["error1", "error2"]
-        warnings = ["warning1"]
-        validation_context = {"key": "value"}
-
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context,
+            validation_context=validation_context
         )
-
+        
         # THEN
-        self.assertEqual(result.warnings, ["warning1"])
+        self.assertEqual(result.warnings, ['warning1'])
 
     def test_init_with_all_valid_parameters_sets_validation_context(self):
         """
@@ -145,20 +147,20 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # GIVEN
         is_valid = True
-        errors = ["error1", "error2"]
-        warnings = ["warning1"]
-        validation_context = {"key": "value"}
-
+        errors = ['error1', 'error2']
+        warnings = ['warning1']
+        validation_context = {'key': 'value'}
+        
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context,
+            validation_context=validation_context
         )
-
+        
         # THEN
-        self.assertEqual(result.validation_context, {"key": "value"})
+        self.assertEqual(result.validation_context, {'key': 'value'})
 
     def test_init_with_minimal_parameters_creates_instance(self):
         """
@@ -169,7 +171,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN
         result = ValidationResult()
-
+        
         # THEN
         self.assertIsInstance(result, ValidationResult)
 
@@ -182,7 +184,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN
         result = ValidationResult()
-
+        
         # THEN
         self.assertEqual(result.is_valid, True)
 
@@ -195,7 +197,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN
         result = ValidationResult()
-
+        
         # THEN
         self.assertEqual(result.errors, [])
 
@@ -208,7 +210,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN
         result = ValidationResult()
-
+        
         # THEN
         self.assertEqual(result.warnings, [])
 
@@ -221,7 +223,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN
         result = ValidationResult()
-
+        
         # THEN
         self.assertEqual(result.validation_context, {})
 
@@ -246,10 +248,10 @@ class TestValidationResultInitialization(unittest.TestCase):
         # WHEN & THEN
         with self.assertRaises(ValidationError) as context:
             ValidationResult(is_valid="not a boolean")
-
+        
         # Verify the error is related to is_valid field
         error_details = str(context.exception)
-        self.assertIn("is_valid", error_details.lower())
+        self.assertIn('is_valid', error_details.lower())
 
     def test_init_with_invalid_errors_type_raises_validation_error(self):
         """
@@ -272,10 +274,10 @@ class TestValidationResultInitialization(unittest.TestCase):
         # WHEN & THEN
         with self.assertRaises(ValidationError) as context:
             ValidationResult(errors="not a list")
-
+        
         # Verify the error is related to errors field
         error_details = str(context.exception)
-        self.assertIn("errors", error_details.lower())
+        self.assertIn('errors', error_details.lower())
 
     def test_init_with_invalid_warnings_type_raises_validation_error(self):
         """
@@ -286,7 +288,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN & THEN
         with self.assertRaises(ValidationError):
-            ValidationResult(warnings={"not": "a list"})
+            ValidationResult(warnings={'not': 'a list'})
 
     def test_init_with_invalid_warnings_type_error_mentions_field(self):
         """
@@ -297,11 +299,11 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN & THEN
         with self.assertRaises(ValidationError) as context:
-            ValidationResult(warnings={"not": "a list"})
-
+            ValidationResult(warnings={'not': 'a list'})
+        
         # Verify the error is related to warnings field
         error_details = str(context.exception)
-        self.assertIn("warnings", error_details.lower())
+        self.assertIn('warnings', error_details.lower())
 
     def test_init_with_invalid_validation_context_type_raises_validation_error(self):
         """
@@ -312,7 +314,7 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN & THEN
         with self.assertRaises(ValidationError):
-            ValidationResult(validation_context=["not", "a", "dict"])
+            ValidationResult(validation_context=['not', 'a', 'dict'])
 
     def test_init_with_invalid_validation_context_type_error_mentions_field(self):
         """
@@ -323,11 +325,11 @@ class TestValidationResultInitialization(unittest.TestCase):
         """
         # WHEN & THEN
         with self.assertRaises(ValidationError) as context:
-            ValidationResult(validation_context=["not", "a", "dict"])
-
+            ValidationResult(validation_context=['not', 'a', 'dict'])
+        
         # Verify the error is related to validation_context field
         error_details = str(context.exception)
-        self.assertIn("validation_context", error_details.lower())
+        self.assertIn('validation_context', error_details.lower())
 
     def test_init_with_none_values_raises_error(self):
         """
@@ -337,7 +339,11 @@ class TestValidationResultInitialization(unittest.TestCase):
             - raise ValidationError
         """
         with self.assertRaises(ValidationError):
-            ValidationResult(errors=None, warnings=None, validation_context=None)
+            ValidationResult(
+                errors=None,
+                warnings=None,
+                validation_context=None
+            )
 
     def test_init_with_none_errors_raises_validation_error(self):
         """
@@ -373,6 +379,7 @@ class TestValidationResultInitialization(unittest.TestCase):
             ValidationResult(validation_context=None)
 
 
+
 class TestAddError(unittest.TestCase):
     """Test ValidationResult.add_error method."""
 
@@ -392,10 +399,10 @@ class TestAddError(unittest.TestCase):
         """
         # GIVEN
         error_message = "Test error message"
-
+        
         # WHEN
         self.result.add_error(error_message)
-
+        
         # THEN
         self.assertEqual(len(self.result.errors), 1)
         self.assertEqual(self.result.errors[0], error_message)
@@ -413,10 +420,10 @@ class TestAddError(unittest.TestCase):
         existing_error = "Existing error"
         new_error = "New error"
         self.result.add_error(existing_error)
-
+        
         # WHEN
         self.result.add_error(new_error)
-
+        
         # THEN
         self.assertEqual(len(self.result.errors), 2)
 
@@ -432,10 +439,10 @@ class TestAddError(unittest.TestCase):
         existing_error = "Existing error"
         new_error = "New error"
         self.result.add_error(existing_error)
-
+        
         # WHEN
         self.result.add_error(new_error)
-
+        
         # THEN
         self.assertEqual(self.result.errors[0], existing_error)
 
@@ -451,10 +458,10 @@ class TestAddError(unittest.TestCase):
         existing_error = "Existing error"
         new_error = "New error"
         self.result.add_error(existing_error)
-
+        
         # WHEN
         self.result.add_error(new_error)
-
+        
         # THEN
         self.assertEqual(self.result.errors[1], new_error)
 
@@ -534,7 +541,7 @@ class TestAddError(unittest.TestCase):
         error_message = "Duplicate error"
         number_of_msgs = 2
         self.result.add_error(error_message)
-
+        
         # WHEN
         self.result.add_error(error_message)
 
@@ -552,7 +559,7 @@ class TestAddError(unittest.TestCase):
         # GIVEN
         error_message = "Duplicate error"
         self.result.add_error(error_message)
-
+        
         # WHEN
         self.result.add_error(error_message)
 
@@ -570,7 +577,7 @@ class TestAddError(unittest.TestCase):
         # GIVEN
         error_message = "Duplicate error"
         self.result.add_error(error_message)
-
+        
         # WHEN
         self.result.add_error(error_message)
 
@@ -586,12 +593,13 @@ class TestAddError(unittest.TestCase):
         """
         # GIVEN
         self.assertTrue(self.result.is_valid)  # Default is True
-
+        
         # WHEN
         self.result.add_error("Test error")
-
+        
         # THEN - is_valid automatically becomes False when errors are added
         self.assertFalse(self.result.is_valid)
+
 
 
 class TestAddWarning(unittest.TestCase):
@@ -612,7 +620,7 @@ class TestAddWarning(unittest.TestCase):
         """
         # WHEN
         self.result.add_warning(self.valid_warning_message)
-
+        
         # THEN
         self.assertIn(self.valid_warning_message, self.result.warnings)
 
@@ -627,7 +635,7 @@ class TestAddWarning(unittest.TestCase):
         # WHEN
         expected_length = 1
         self.result.add_warning(self.valid_warning_message)
-
+        
         # THEN
         self.assertEqual(len(self.result.warnings), expected_length)
 
@@ -641,7 +649,7 @@ class TestAddWarning(unittest.TestCase):
         """
         # WHEN
         self.result.add_warning(self.valid_warning_message)
-
+        
         # THEN
         self.assertEqual(self.result.warnings[0], self.valid_warning_message)
 
@@ -656,12 +664,12 @@ class TestAddWarning(unittest.TestCase):
         # GIVEN
         existing_warning = "Existing warning"
         self.result.add_warning(existing_warning)
-
+        
         # WHEN
         new_warning = "New warning"
         self.result.add_warning(new_warning)
         expected_length = 2
-
+        
         # THEN
         self.assertEqual(len(self.result.warnings), expected_length)
 
@@ -676,11 +684,11 @@ class TestAddWarning(unittest.TestCase):
         # GIVEN
         existing_warning = "Existing warning"
         self.result.add_warning(existing_warning)
-
+        
         # WHEN
         new_warning = "New warning"
         self.result.add_warning(new_warning)
-
+        
         # THEN
         self.assertEqual(self.result.warnings[0], existing_warning)
 
@@ -699,7 +707,7 @@ class TestAddWarning(unittest.TestCase):
         # WHEN
         new_warning = "New warning"
         self.result.add_warning(new_warning)
-
+        
         # THEN
         self.assertEqual(self.result.warnings[1], new_warning)
 
@@ -713,11 +721,11 @@ class TestAddWarning(unittest.TestCase):
         # GIVEN
         warnings = ["Warning 1", "Warning 2", "Warning 3"]
         expected_length = len(warnings)
-
+        
         # WHEN
         for warning in warnings:
             self.result.add_warning(warning)
-
+        
         # THEN
         self.assertEqual(len(self.result.warnings), expected_length)
 
@@ -730,11 +738,11 @@ class TestAddWarning(unittest.TestCase):
         """
         # GIVEN
         warnings = ["Warning 1", "Warning 2", "Warning 3"]
-
+        
         # WHEN
         for warning in warnings:
             self.result.add_warning(warning)
-
+        
         # THEN
         self.assertEqual(self.result.warnings, warnings)
 
@@ -748,7 +756,7 @@ class TestAddWarning(unittest.TestCase):
         """
         # GIVEN
         empty_warning = ""
-
+        
         # WHEN/THEN
         with self.assertRaises(ValueError):
             self.result.add_warning(empty_warning)
@@ -776,10 +784,10 @@ class TestAddWarning(unittest.TestCase):
         # GIVEN
         warning_message = "Duplicate warning"
         self.result.add_warning(warning_message)
-
+        
         # WHEN
         self.result.add_warning(warning_message)
-
+        
         # THEN
         self.assertEqual(len(self.result.warnings), 2)
 
@@ -794,10 +802,10 @@ class TestAddWarning(unittest.TestCase):
         # GIVEN
         warning_message = "Duplicate warning"
         self.result.add_warning(warning_message)
-
+        
         # WHEN
         self.result.add_warning(warning_message)
-
+        
         # THEN
         self.assertEqual(self.result.warnings[0], warning_message)
 
@@ -812,10 +820,10 @@ class TestAddWarning(unittest.TestCase):
         # GIVEN
         warning_message = "Duplicate warning"
         self.result.add_warning(warning_message)
-
+        
         # WHEN
         self.result.add_warning(warning_message)
-
+        
         # THEN
         self.assertEqual(self.result.warnings[1], warning_message)
 
@@ -829,10 +837,10 @@ class TestAddWarning(unittest.TestCase):
         """
         # GIVEN
         self.assertTrue(self.result.is_valid)  # Default is True
-
+        
         # WHEN
         self.result.add_warning("Test warning")
-
+        
         # THEN
         self.assertTrue(self.result.is_valid)
 
@@ -847,10 +855,10 @@ class TestAddWarning(unittest.TestCase):
         error_message = "Existing error"
         warning_message = "New warning"
         self.result.add_error(error_message)
-
+        
         # WHEN
         self.result.add_warning(warning_message)
-
+        
         # THEN
         self.assertEqual(len(self.result.warnings), 1)
 
@@ -866,10 +874,10 @@ class TestAddWarning(unittest.TestCase):
         warning_message = "New warning"
         self.result.add_error(error_message)
         original_errors = self.result.errors.copy()
-
+        
         # WHEN
         self.result.add_warning(warning_message)
-
+        
         # THEN
         self.assertEqual(self.result.errors, original_errors)
 
@@ -884,12 +892,14 @@ class TestAddWarning(unittest.TestCase):
         error_message = "Existing error"
         warning_message = "New warning"
         self.result.add_error(error_message)
-
+        
         # WHEN
         self.result.add_warning(warning_message)
-
+        
         # THEN
         self.assertEqual(self.result.warnings[0], warning_message)
+
+
 
 
 class TestAddContext(unittest.TestCase):
@@ -912,10 +922,10 @@ class TestAddContext(unittest.TestCase):
         # GIVEN
         key = "test_key"
         value = "test_value"
-
+        
         # WHEN
         self.result.add_context(key, value)
-
+        
         # THEN
         self.assertEqual(len(self.result.validation_context), 1)
         self.assertEqual(self.result.validation_context[key], value)
@@ -936,10 +946,10 @@ class TestAddContext(unittest.TestCase):
         new_key = "new_key"
         new_value = "new_value"
         self.result.add_context(existing_key, existing_value)
-
+        
         # WHEN
         self.result.add_context(new_key, new_value)
-
+        
         # THEN
         self.assertEqual(len(self.result.validation_context), 2)
         self.assertEqual(self.result.validation_context[existing_key], existing_value)
@@ -961,13 +971,13 @@ class TestAddContext(unittest.TestCase):
         new_value = "new_value"
         other_key = "other_key"
         other_value = "other_value"
-
+        
         self.result.add_context(key, original_value)
         self.result.add_context(other_key, other_value)
-
+        
         # WHEN
         self.result.add_context(key, new_value)
-
+        
         # THEN
         self.assertEqual(len(self.result.validation_context), 2)
         self.assertEqual(self.result.validation_context[key], new_value)
@@ -995,13 +1005,13 @@ class TestAddContext(unittest.TestCase):
             ("list_key", [1, 2, 3]),
             ("dict_key", {"nested": "dict"}),
             ("none_key", None),
-            ("bool_key", True),
+            ("bool_key", True)
         ]
-
+        
         # WHEN
         for key, value in test_cases:
             self.result.add_context(key, value)
-
+        
         # THEN
         self.assertEqual(len(self.result.validation_context), 6)
         for key, expected_value in test_cases:
@@ -1035,10 +1045,11 @@ class TestAddContext(unittest.TestCase):
         # GIVEN
         none_key = None
         value = "value_for_none_key"
-
+        
         # WHEN & THEN
         with self.assertRaises(TypeError):
             self.result.add_context(none_key, value)
+
 
     def test_add_context_with_complex_nested_value(self):
         """
@@ -1053,18 +1064,23 @@ class TestAddContext(unittest.TestCase):
         # GIVEN
         key = "complex_key"
         complex_value = {
-            "level1": {"level2": [{"item1": "value1"}, {"item2": [1, 2, {"nested": True}]}]},
-            "other_level1": ["a", "b", {"c": "d"}],
+            "level1": {
+                "level2": [
+                    {"item1": "value1"},
+                    {"item2": [1, 2, {"nested": True}]}
+                ]
+            },
+            "other_level1": ["a", "b", {"c": "d"}]
         }
-
+        
         # WHEN
         self.result.add_context(key, complex_value)
-
+        
         # THEN
         self.assertEqual(len(self.result.validation_context), 1)
         retrieved_value = self.result.validation_context[key]
         self.assertEqual(retrieved_value, complex_value)
-
+        
         # Verify deep structure is preserved
         self.assertEqual(retrieved_value["level1"]["level2"][1]["item2"][2]["nested"], True)
         self.assertEqual(retrieved_value["other_level1"][2]["c"], "d")
@@ -1079,12 +1095,17 @@ class TestAddContext(unittest.TestCase):
             - All values are accessible by their keys
         """
         # GIVEN
-        contexts = [("key1", "value1"), ("key2", "value2"), ("key3", "value3"), ("key4", "value4")]
-
+        contexts = [
+            ("key1", "value1"),
+            ("key2", "value2"),
+            ("key3", "value3"),
+            ("key4", "value4")
+        ]
+        
         # WHEN
         for key, value in contexts:
             self.result.add_context(key, value)
-
+        
         # THEN
         self.assertEqual(len(self.result.validation_context), 4)
         for key, expected_value in contexts:
@@ -1107,15 +1128,15 @@ class TestToDict(unittest.TestCase):
         """
         # GIVEN
         self.result.is_valid = True
-        self.result.add_error("error1")
-        self.result.add_error("error2")
-        self.result.add_warning("warning1")
-        self.result.add_context("key", "value")
-        self.result.add_context("count", 42)
-
+        self.result.add_error('error1')
+        self.result.add_error('error2')
+        self.result.add_warning('warning1')
+        self.result.add_context('key', 'value')
+        self.result.add_context('count', 42)
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
         self.assertIsInstance(result_dict, dict)
 
@@ -1131,9 +1152,9 @@ class TestToDict(unittest.TestCase):
 
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
-        self.assertEqual(result_dict["is_valid"], True)
+        self.assertEqual(result_dict['is_valid'], True)
 
     def test_to_dict_with_is_valid_false(self):
         """
@@ -1147,9 +1168,9 @@ class TestToDict(unittest.TestCase):
 
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
-        self.assertEqual(result_dict["is_valid"], False)
+        self.assertEqual(result_dict['is_valid'], False)
 
     def test_to_dict_with_all_fields_populated_preserves_errors(self):
         """
@@ -1159,15 +1180,15 @@ class TestToDict(unittest.TestCase):
             - dict['errors'] == ['error1', 'error2']
         """
         # GIVEN
-        errors = ["error1", "error2"]
+        errors = ['error1', 'error2']
         for error in errors:
             self.result.add_error(error)
 
         # WHEN
         result_dict = self.result.to_dict()
-
+    
         # THEN
-        self.assertEqual(result_dict["errors"], errors)
+        self.assertEqual(result_dict['errors'], errors)
 
     def test_to_dict_with_all_fields_populated_preserves_warnings(self):
         """
@@ -1177,14 +1198,14 @@ class TestToDict(unittest.TestCase):
             - dict['warnings'] == ['warning1']
         """
         # GIVEN
-        warning = "warning1"
+        warning = 'warning1'
         self.result.add_warning(warning)
 
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
-        self.assertEqual(result_dict["warnings"], [warning])
+        self.assertEqual(result_dict['warnings'], [warning])
 
     def test_to_dict_with_all_fields_populated_preserves_validation_context(self):
         """
@@ -1195,17 +1216,18 @@ class TestToDict(unittest.TestCase):
         """
         # GIVEN
         self.result.is_valid = True
-        self.result.add_error("error1")
-        self.result.add_error("error2")
-        self.result.add_warning("warning1")
-        self.result.add_context("key", "value")
-        self.result.add_context("count", 42)
-
+        self.result.add_error('error1')
+        self.result.add_error('error2')
+        self.result.add_warning('warning1')
+        self.result.add_context('key', 'value')
+        self.result.add_context('count', 42)
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
-        self.assertEqual(result_dict["validation_context"], {"key": "value", "count": 42})
+        self.assertEqual(result_dict['validation_context'], {'key': 'value', 'count': 42})
+
 
     def test_to_dict_with_empty_collections(self):
         """
@@ -1224,16 +1246,16 @@ class TestToDict(unittest.TestCase):
         # GIVEN
         self.result.is_valid = False
         # Default initialization should have empty collections
-
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
         self.assertIsInstance(result_dict, dict)
-        self.assertEqual(result_dict["is_valid"], False)
-        self.assertEqual(result_dict["errors"], [])
-        self.assertEqual(result_dict["warnings"], [])
-        self.assertEqual(result_dict["validation_context"], {})
+        self.assertEqual(result_dict['is_valid'], False)
+        self.assertEqual(result_dict['errors'], [])
+        self.assertEqual(result_dict['warnings'], [])
+        self.assertEqual(result_dict['validation_context'], {})
 
     def test_to_dict_preserves_data_types(self):
         """
@@ -1251,32 +1273,32 @@ class TestToDict(unittest.TestCase):
             - Nested structures remain intact
         """
         # GIVEN
-        self.result.add_context("string_val", "test string")
-        self.result.add_context("int_val", 123)
-        self.result.add_context("float_val", 45.67)
-        self.result.add_context("bool_val", True)
-        self.result.add_context("list_val", [1, 2, 3])
-        self.result.add_context("nested_dict", {"inner": {"value": "nested"}})
-
+        self.result.add_context('string_val', "test string")
+        self.result.add_context('int_val', 123)
+        self.result.add_context('float_val', 45.67)
+        self.result.add_context('bool_val', True)
+        self.result.add_context('list_val', [1, 2, 3])
+        self.result.add_context('nested_dict', {'inner': {'value': 'nested'}})
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
-        context = result_dict["validation_context"]
-        self.assertEqual(type(context["string_val"]), str)
-        self.assertEqual(type(context["int_val"]), int)
-        self.assertEqual(type(context["float_val"]), float)
-        self.assertEqual(type(context["bool_val"]), bool)
-        self.assertEqual(type(context["list_val"]), list)
-        self.assertEqual(type(context["nested_dict"]), dict)
-
+        context = result_dict['validation_context']
+        self.assertEqual(type(context['string_val']), str)
+        self.assertEqual(type(context['int_val']), int)
+        self.assertEqual(type(context['float_val']), float)
+        self.assertEqual(type(context['bool_val']), bool)
+        self.assertEqual(type(context['list_val']), list)
+        self.assertEqual(type(context['nested_dict']), dict)
+        
         # Verify values are correct
-        self.assertEqual(context["string_val"], "test string")
-        self.assertEqual(context["int_val"], 123)
-        self.assertEqual(context["float_val"], 45.67)
-        self.assertEqual(context["bool_val"], True)
-        self.assertEqual(context["list_val"], [1, 2, 3])
-        self.assertEqual(context["nested_dict"], {"inner": {"value": "nested"}})
+        self.assertEqual(context['string_val'], "test string")
+        self.assertEqual(context['int_val'], 123)
+        self.assertEqual(context['float_val'], 45.67)
+        self.assertEqual(context['bool_val'], True)
+        self.assertEqual(context['list_val'], [1, 2, 3])
+        self.assertEqual(context['nested_dict'], {'inner': {'value': 'nested'}})
 
     def test_to_dict_returns_new_dict_instance(self):
         """
@@ -1288,22 +1310,22 @@ class TestToDict(unittest.TestCase):
             - Modifying original doesn't affect returned dicts
         """
         # GIVEN
-        self.result.add_error("test error")
-        self.result.add_context("test_key", "test_value")
-
+        self.result.add_error('test error')
+        self.result.add_context('test_key', 'test_value')
+        
         # WHEN
         dict1 = self.result.to_dict()
         dict2 = self.result.to_dict()
-
+        
         # THEN
         self.assertIsNot(dict1, dict2)  # Different instances
-
+        
         # Modify dict1 and verify dict2 and original are unaffected
-        dict1["errors"].append("modified error")
-        dict1["validation_context"]["new_key"] = "new_value"
-
-        self.assertNotEqual(dict1["errors"], dict2["errors"])
-        self.assertNotIn("new_key", dict2["validation_context"])
+        dict1['errors'].append('modified error')
+        dict1['validation_context']['new_key'] = 'new_value'
+        
+        self.assertNotEqual(dict1['errors'], dict2['errors'])
+        self.assertNotIn('new_key', dict2['validation_context'])
         self.assertEqual(len(self.result.errors), 1)  # Original unchanged
 
     def test_to_dict_handles_modified_instance(self):
@@ -1322,22 +1344,22 @@ class TestToDict(unittest.TestCase):
         """
         # GIVEN - Initial state
         initial_dict = self.result.to_dict()
-
+        
         # WHEN - Modify the instance
-        self.result.add_error("error after creation")
-        self.result.add_warning("warning after creation")
-        self.result.add_context("context_after", "creation")
-
+        self.result.add_error('error after creation')
+        self.result.add_warning('warning after creation')
+        self.result.add_context('context_after', 'creation')
+        
         modified_dict = self.result.to_dict()
-
+        
         # THEN
-        self.assertNotEqual(initial_dict["errors"], modified_dict["errors"])
-        self.assertNotEqual(initial_dict["warnings"], modified_dict["warnings"])
-        self.assertNotEqual(initial_dict["validation_context"], modified_dict["validation_context"])
-
-        self.assertIn("error after creation", modified_dict["errors"])
-        self.assertIn("warning after creation", modified_dict["warnings"])
-        self.assertEqual(modified_dict["validation_context"]["context_after"], "creation")
+        self.assertNotEqual(initial_dict['errors'], modified_dict['errors'])
+        self.assertNotEqual(initial_dict['warnings'], modified_dict['warnings'])
+        self.assertNotEqual(initial_dict['validation_context'], modified_dict['validation_context'])
+        
+        self.assertIn('error after creation', modified_dict['errors'])
+        self.assertIn('warning after creation', modified_dict['warnings'])
+        self.assertEqual(modified_dict['validation_context']['context_after'], 'creation')
 
     def test_to_dict_deep_copy_behavior(self):
         """
@@ -1350,24 +1372,24 @@ class TestToDict(unittest.TestCase):
         """
         # GIVEN
         nested_list = [1, 2, [3, 4]]
-        nested_dict = {"outer": {"inner": "value"}}
-
-        self.result.add_context("nested_list", nested_list)
-        self.result.add_context("nested_dict", nested_dict)
-
+        nested_dict = {'outer': {'inner': 'value'}}
+        
+        self.result.add_context('nested_list', nested_list)
+        self.result.add_context('nested_dict', nested_dict)
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN - Modify nested structures in returned dict
-        result_dict["validation_context"]["nested_list"][2].append(5)
-        result_dict["validation_context"]["nested_dict"]["outer"]["inner"] = "modified"
-
+        result_dict['validation_context']['nested_list'][2].append(5)
+        result_dict['validation_context']['nested_dict']['outer']['inner'] = 'modified'
+        
         # Original should be unchanged
-        original_nested_list = self.result.validation_context["nested_list"]
-        original_nested_dict = self.result.validation_context["nested_dict"]
-
+        original_nested_list = self.result.validation_context['nested_list']
+        original_nested_dict = self.result.validation_context['nested_dict']
+        
         self.assertEqual(len(original_nested_list[2]), 2)  # Should still be [3, 4]
-        self.assertEqual(original_nested_dict["outer"]["inner"], "value")  # Unchanged
+        self.assertEqual(original_nested_dict['outer']['inner'], 'value')  # Unchanged
 
     def test_to_dict_with_pydantic_model_features(self):
         """
@@ -1380,25 +1402,25 @@ class TestToDict(unittest.TestCase):
             - Result is JSON-serializable
         """
         # GIVEN
-        self.result.add_error("test error")
-        self.result.add_warning("test warning")
-        self.result.add_context("test_key", "test_value")
-
+        self.result.add_error('test error')
+        self.result.add_warning('test warning')
+        self.result.add_context('test_key', 'test_value')
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
-        expected_keys = {"is_valid", "errors", "warnings", "validation_context"}
+        expected_keys = {'is_valid', 'errors', 'warnings', 'validation_context'}
         self.assertEqual(set(result_dict.keys()), expected_keys)
-
+        
         # Should not include Pydantic internals
         for key in result_dict.keys():
-            self.assertFalse(key.startswith("_"))
-
+            self.assertFalse(key.startswith('_'))
+        
         # Should be JSON-serializable
         import json
-
         json.dumps(result_dict)
+
 
     def test_to_dict_field_order(self):
         """
@@ -1410,17 +1432,17 @@ class TestToDict(unittest.TestCase):
             - Order matches model field definition order
         """
         # GIVEN
-        self.result.add_error("test error")
-        self.result.add_warning("test warning")
-        self.result.add_context("test_key", "test_value")
-
+        self.result.add_error('test error')
+        self.result.add_warning('test warning')
+        self.result.add_context('test_key', 'test_value')
+        
         # WHEN
         result_dict = self.result.to_dict()
-
+        
         # THEN
         keys_list = list(result_dict.keys())
-        expected_order = ["is_valid", "errors", "warnings", "validation_context"]
-
+        expected_order = ['is_valid', 'errors', 'warnings', 'validation_context']
+        
         # Check that all expected keys are present
         self.assertEqual(set(keys_list), set(expected_order))
 

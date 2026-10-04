@@ -9,8 +9,8 @@ Stub file last updated: 2025-07-17 05:36:42
 ```python
 def core_dump():
     """
-        Function to handle core dump on unexpected exit.
-    This is a placeholder for actual core dump logic.
+    Function to handle core dump on unexpected exit.
+This is a placeholder for actual core dump logic.
     """
 ```
 * **Async:** False

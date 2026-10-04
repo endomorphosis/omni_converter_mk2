@@ -2,7 +2,6 @@
 ```python
 import unittest
 
-
 class TestAbilityProcessorInitialization(unittest.TestCase):
     """Test ability-based processor initialization and configuration."""
 
@@ -280,6 +279,6 @@ class TestAbilityProcessorErrorHandling(unittest.TestCase):
         """
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
 ```

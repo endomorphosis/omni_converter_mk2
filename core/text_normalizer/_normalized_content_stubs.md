@@ -6,14 +6,14 @@
 @dataclass
 class NormalizedContent:
     """
-        Normalized content from a file.
+    Normalized content from a file.
 
-    This class represents normalized content with normalization metadata.
+This class represents normalized content with normalization metadata.
 
-    Attributes:
-        text (str): The normalized text content object.
-        metadata (dict[str, Any]): Metadata about the content.
-        normalized_by (list[str]): list of normalizers applied to the content.
+Attributes:
+    text (str): The normalized text content object.
+    metadata (dict[str, Any]): Metadata about the content.
+    normalized_by (list[str]): list of normalizers applied to the content.
     """
 ```
 * **Async:** False
@@ -25,10 +25,10 @@ class NormalizedContent:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-        Convert to a dictionary.
+    Convert to a dictionary.
 
-    Returns:
-        A dictionary representation of the normalized content.
+Returns:
+    A dictionary representation of the normalized content.
     """
 ```
 * **Async:** False

@@ -7,18 +7,16 @@ Stub file last updated: 2025-07-17 05:31:38
 ## fix_pdf_eof
 
 ```python
-@try_except(
-    raise_=False, exception_type=file_errors, msg="Error in fix_pdf_eof", default_return=False
-)
+@try_except(raise_=False, exception_type=file_errors, msg="Error in fix_pdf_eof", default_return=False)
 def fix_pdf_eof(pdf_path):
     """
-        Checks if a PDF has an EOF marker and adds one if missing.
+    Checks if a PDF has an EOF marker and adds one if missing.
 
-    Args:
-        pdf_path: Path to the PDF file
-
-    Returns:
-        True if the file was fixed or already had an EOF, False if error
+Args:
+    pdf_path: Path to the PDF file
+    
+Returns:
+    True if the file was fixed or already had an EOF, False if error
     """
 ```
 * **Async:** False

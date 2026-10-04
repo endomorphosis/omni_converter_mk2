@@ -9,15 +9,15 @@ Stub file last updated: 2025-07-17 05:30:21
 ```python
 def run_in_thread_pool(func, inputs, *, max_concurrency: int = 5, use_tqdm: bool = True):
     """
-        Calls the function ``func`` on the values ``inputs``.
+    Calls the function ``func`` on the values ``inputs``.
 
-    ``func`` should be a function that takes a single input, which is the
-    individual values in the iterable ``inputs``.
+``func`` should be a function that takes a single input, which is the
+individual values in the iterable ``inputs``.
 
-    Generates (input, output) tuples as the calls to ``func`` complete.
+Generates (input, output) tuples as the calls to ``func`` complete.
 
-    See https://alexwlchan.net/2019/10/adventures-with-concurrent-futures/ for an explanation
-    of how this function works.
+See https://alexwlchan.net/2019/10/adventures-with-concurrent-futures/ for an explanation
+of how this function works.
     """
 ```
 * **Async:** False

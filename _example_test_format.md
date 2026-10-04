@@ -7,12 +7,8 @@ from unittest.mock import Mock, MagicMock
 import os
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists("resource_monitor.py"), (
-    "resource_monitor.py does not exist at the specified directory."
-)
-assert os.path.exists("resource_monitor_stubs.md"), (
-    "Documentation for resource_monitor.py does not exist at the specified directory."
-)
+assert os.path.exists('resource_monitor.py'), "resource_monitor.py does not exist at the specified directory."
+assert os.path.exists('resource_monitor_stubs.md'), "Documentation for resource_monitor.py does not exist at the specified directory."
 
 # Make sure the input file and documentation file exist.
 from resource_monitor import (
@@ -29,9 +25,7 @@ from _test_utils import (
 assert ResourceMonitor.logger, "ResourceMonitor class should have a logger attribute."
 assert ResourceMonitor.traceback, "ResourceMonitor class should have a traceback attribute."
 assert ResourceMonitor.datetime, "ResourceMonitor class should have a datetime attribute."
-assert ResourceMonitor._suppress_errors, (
-    "ResourceMonitor class should have a _suppress_errors attribute."
-)
+assert ResourceMonitor._suppress_errors, "ResourceMonitor class should have a _suppress_errors attribute."
 assert ResourceMonitor._root_dir, "ResourceMonitor class should have a _root_dir attribute."
 
 
@@ -69,9 +63,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
             - _error_types initialized as empty set
             - traceback and datetime attributes are set from resources
         """
-        raise NotImplementedError(
-            "test_init_with_valid_resources_and_configs test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_with_valid_resources_and_configs test needs to be implemented")
+
 
     def test_init_missing_logger_in_resources(self):
         """
@@ -79,9 +72,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        raise NotImplementedError(
-            "test_init_missing_logger_in_resources test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_missing_logger_in_resources test needs to be implemented")
+
 
     def test_init_missing_traceback_in_resources(self):
         """
@@ -89,12 +81,10 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        raise NotImplementedError(
-            "test_init_missing_traceback_in_resources test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_missing_traceback_in_resources test needs to be implemented")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
 ```
 
@@ -102,7 +92,6 @@ if __name__ == "__main__":
 ## Pytest
 ```python
 import pytest
-
 
 class TestErrorMonitorInitialization:
     """Test ErrorMonitor initialization and configuration."""
@@ -135,9 +124,7 @@ class TestErrorMonitorInitialization:
             - _error_types initialized as empty set
             - traceback and datetime attributes are set from resources
         """
-        raise NotImplementedError(
-            "test_init_with_valid_resources_and_configs test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_with_valid_resources_and_configs test needs to be implemented")
 
     def test_init_missing_logger_in_resources(self):
         """
@@ -145,9 +132,7 @@ class TestErrorMonitorInitialization:
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        raise NotImplementedError(
-            "test_init_missing_logger_in_resources test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_missing_logger_in_resources test needs to be implemented")
 
     def test_init_missing_traceback_in_resources(self):
         """
@@ -155,9 +140,7 @@ class TestErrorMonitorInitialization:
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
-        raise NotImplementedError(
-            "test_init_missing_traceback_in_resources test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_missing_traceback_in_resources test needs to be implemented")
 
 
 if __name__ == "__main__":

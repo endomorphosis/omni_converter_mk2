@@ -18,10 +18,10 @@ class ImageHandlerResources(TypedDict):
 ```python
 def _create_application_handler(processors) -> ApplicationHandler:
     """
-        Factory function to create an ApplicationHandler instance.
+    Factory function to create an ApplicationHandler instance.
 
-    Returns:
-        An instance of ApplicationHandler.
+Returns:
+    An instance of ApplicationHandler.
     """
 ```
 * **Async:** False
@@ -33,10 +33,10 @@ def _create_application_handler(processors) -> ApplicationHandler:
 ```python
 def _create_audio_handler(processors):
     """
-        Factory function to create an AudioHandler instance.
+    Factory function to create an AudioHandler instance.
 
-    Returns:
-        An instance of AudioHandler.
+Returns:
+    An instance of AudioHandler.
     """
 ```
 * **Async:** False
@@ -57,14 +57,14 @@ def _create_image_handler(processors):
 ```python
 def _create_text_handler(processors):
     """
-        Factory function to create a TextHandler instance.
+    Factory function to create a TextHandler instance.
 
-    Args:
-        resources: Additional resources to provide.
-        configs: Configuration settings.
-
-    Returns:
-        An instance of TextHandler.
+Args:
+    resources: Additional resources to provide.
+    configs: Configuration settings.
+    
+Returns:
+    An instance of TextHandler.
     """
 ```
 * **Async:** False
@@ -76,10 +76,10 @@ def _create_text_handler(processors):
 ```python
 def _create_video_handler(processors):
     """
-        Factory function to create a VideoHandler instance.
+    Factory function to create a VideoHandler instance.
 
-    Returns:
-        An instance of VideoHandler.
+Returns:
+    An instance of VideoHandler.
     """
 ```
 * **Async:** False
@@ -91,14 +91,14 @@ def _create_video_handler(processors):
 ```python
 def make_all_handlers() -> dict[str, Callable]:
     """
-        Create factory functions for all format handlers.
+    Create factory functions for all format handlers.
 
-    Args:
-        resources: Optional additional resources to provide to handlers.
-        configs: Configuration settings.
-
-    Returns:
-        Dictionary mapping handler types to factory functions.
+Args:
+    resources: Optional additional resources to provide to handlers.
+    configs: Configuration settings.
+    
+Returns:
+    Dictionary mapping handler types to factory functions.
     """
 ```
 * **Async:** False

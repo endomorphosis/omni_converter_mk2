@@ -29,7 +29,7 @@ Example Output:
 ## __init__
 
 ```python
-def __init__(self, resources: dict[str, Callable] = None, configs=None) -> None:
+def __init__(self, resources: dict[str, Callable] = None, configs = None) -> None:
     """
     Initialize the image processor.
     """
@@ -43,13 +43,13 @@ def __init__(self, resources: dict[str, Callable] = None, configs=None) -> None:
 ```python
 def can_process(self, format_name: str) -> bool:
     """
-        Check if this processor can handle the given format.
+    Check if this processor can handle the given format.
 
-    Args:
-        format_name: The name of the format to check.
-
-    Returns:
-        True if this processor can handle the format, False otherwise.
+Args:
+    format_name: The name of the format to check.
+    
+Returns:
+    True if this processor can handle the format, False otherwise.
     """
 ```
 * **Async:** False
@@ -61,14 +61,14 @@ def can_process(self, format_name: str) -> bool:
 ```python
 def extract_images(self, data: bytes, options: dict[str, Any]) -> list[BinaryIO]:
     """
-        Extract images from a document or image file.
+    Extract images from a document or image file.
 
-    Args:
-        data: The binary data of the document or image file.
-        options: Processing options.
-
-    Returns:
-        A list of binary streams containing extracted images.
+Args:
+    data: The binary data of the document or image file.
+    options: Processing options.
+    
+Returns:
+    A list of binary streams containing extracted images.
     """
 ```
 * **Async:** False
@@ -80,14 +80,14 @@ def extract_images(self, data: bytes, options: dict[str, Any]) -> list[BinaryIO]
 ```python
 def extract_metadata(self, data: bytes, options: dict[str, Any]) -> dict[str, Any]:
     """
-        Extract metadata from an image.
+    Extract metadata from an image.
 
-    Args:
-        data: The binary data of the image.
-        options: Processing options.
-
-    Returns:
-        Metadata extracted from the image.
+Args:
+    data: The binary data of the image.
+    options: Processing options.
+    
+Returns:
+    Metadata extracted from the image.
     """
 ```
 * **Async:** False
@@ -99,14 +99,14 @@ def extract_metadata(self, data: bytes, options: dict[str, Any]) -> dict[str, An
 ```python
 def extract_summary(self, data: bytes, options: dict[str, Any]) -> list[dict[str, Any]]:
     """
-        Extract visual features from an image.
+    Extract visual features from an image.
 
-    Args:
-        data: The binary data of the image.
-        options: Processing options.
-
-    Returns:
-        A list of features extracted from the image.
+Args:
+    data: The binary data of the image.
+    options: Processing options.
+    
+Returns:
+    A list of features extracted from the image.
     """
 ```
 * **Async:** False
@@ -118,14 +118,14 @@ def extract_summary(self, data: bytes, options: dict[str, Any]) -> list[dict[str
 ```python
 def extract_text(self, data: bytes, options: dict[str, Any]) -> str:
     """
-        Extract text from an image using OCR.
+    Extract text from an image using OCR.
 
-    Args:
-        data: The binary data of the image.
-        options: Processing options.
-
-    Returns:
-        Extracted text from the image.
+Args:
+    data: The binary data of the image.
+    options: Processing options.
+    
+Returns:
+    Extracted text from the image.
     """
 ```
 * **Async:** False
@@ -137,11 +137,11 @@ def extract_text(self, data: bytes, options: dict[str, Any]) -> str:
 ```python
 def get_processor_info(self) -> dict[str, Any]:
     """
-        Get information about this processor.
+    Get information about this processor.
 
-    Returns:
-        A dictionary containing information about this processor, such as name, version,
-        supported formats, and any other relevant metadata.
+Returns:
+    A dictionary containing information about this processor, such as name, version,
+    supported formats, and any other relevant metadata.
     """
 ```
 * **Async:** False
@@ -151,18 +151,16 @@ def get_processor_info(self) -> dict[str, Any]:
 ## process_image
 
 ```python
-def process_image(
-    self, data: bytes, options: dict[str, Any]
-) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+def process_image(self, data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
-        Process an image completely, extracting text, metadata, and features.
+    Process an image completely, extracting text, metadata, and features.
 
-    Args:
-        data: The binary data of the image.
-        options: Processing options.
-
-    Returns:
-        A tuple of (text content, metadata, sections).
+Args:
+    data: The binary data of the image.
+    options: Processing options.
+    
+Returns:
+    A tuple of (text content, metadata, sections).
     """
 ```
 * **Async:** False
@@ -175,10 +173,10 @@ def process_image(
 @property
 def supported_formats(self) -> list[str]:
     """
-        Get the list of formats supported by this processor.
+    Get the list of formats supported by this processor.
 
-    Returns:
-        A list of format names supported by this processor.
+Returns:
+    A list of format names supported by this processor.
     """
 ```
 * **Async:** False

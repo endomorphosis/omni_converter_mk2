@@ -9,10 +9,10 @@ Stub file last updated: 2025-07-17 05:40:08
 ```python
 def make_content_sanitizer() -> ContentSanitizer:
     """
-        Factory function to create a ContentSanitizer instance.
+    Factory function to create a ContentSanitizer instance.
 
-    Returns:
-        An instance of ContentSanitizer configured with proper dependencies.
+Returns:
+    An instance of ContentSanitizer configured with proper dependencies.
     """
 ```
 * **Async:** False

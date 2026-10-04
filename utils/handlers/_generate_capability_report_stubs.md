@@ -9,13 +9,13 @@ Stub file last updated: 2025-07-17 05:32:27
 ```python
 def generate_capability_report(processors: dict[str, Any]) -> str:
     """
-        Generate a human-readable capability report.
+    Generate a human-readable capability report.
 
-    Args:
-        processors: Dictionary of processor instances
-
-    Returns:
-        Formatted capability report string
+Args:
+    processors: Dictionary of processor instances
+    
+Returns:
+    Formatted capability report string
     """
 ```
 * **Async:** False

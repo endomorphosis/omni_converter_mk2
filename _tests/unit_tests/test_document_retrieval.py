@@ -8,7 +8,6 @@ metadata, and structural information from various document formats.
 
 Converted from unittest to pytest format.
 """
-
 from __future__ import annotations
 from typing import Any
 import pytest
@@ -74,9 +73,7 @@ class TestDocumentRetrievalProcessorInitialization:
             - KeyError raised with descriptive message
             - Error indicates which required resource is missing
         """
-        raise NotImplementedError(
-            "test_init_missing_required_format_resources test needs to be implemented"
-        )
+        raise NotImplementedError("test_init_missing_required_format_resources test needs to be implemented")
 
     def test_init_with_empty_formats_set(self, mock_resources, mock_configs) -> None:
         """
@@ -112,9 +109,7 @@ class TestDocumentRetrievalProcessorMethods:
             - Returns False
             - No exceptions raised
         """
-        raise NotImplementedError(
-            "test_can_process_unsupported_format test needs to be implemented"
-        )
+        raise NotImplementedError("test_can_process_unsupported_format test needs to be implemented")
 
     def test_supported_formats_property(self, mock_resources, mock_configs) -> None:
         """
@@ -150,9 +145,7 @@ class TestDocumentRetrievalProcessorMethods:
             - Returns result from resource callable
             - Resource callable was called exactly once
         """
-        raise NotImplementedError(
-            "test_extract_text_delegates_to_resource test needs to be implemented"
-        )
+        raise NotImplementedError("test_extract_text_delegates_to_resource test needs to be implemented")
 
     def test_extract_metadata_delegates_to_resource(self, mock_resources, mock_configs) -> None:
         """
@@ -165,9 +158,7 @@ class TestDocumentRetrievalProcessorMethods:
             - Returns dict with document-specific metadata (author, title, page_count, etc.)
             - Resource callable was called with correct parameters
         """
-        raise NotImplementedError(
-            "test_extract_metadata_delegates_to_resource test needs to be implemented"
-        )
+        raise NotImplementedError("test_extract_metadata_delegates_to_resource test needs to be implemented")
 
     def test_extract_summary_structural_analysis(self, mock_resources, mock_configs) -> None:
         """
@@ -180,9 +171,7 @@ class TestDocumentRetrievalProcessorMethods:
             - Appropriate for the format category (e.g., headings, sections for documents)
             - Resource callable was called exactly once with correct parameters
         """
-        raise NotImplementedError(
-            "test_extract_summary_structural_analysis test needs to be implemented"
-        )
+        raise NotImplementedError("test_extract_summary_structural_analysis test needs to be implemented")
 
     def test_process_document_complete_workflow(self, mock_resources, mock_configs) -> None:
         """
@@ -197,9 +186,7 @@ class TestDocumentRetrievalProcessorMethods:
             - sections contains structural analysis results
             - All extraction methods called in correct order
         """
-        raise NotImplementedError(
-            "test_process_document_complete_workflow test needs to be implemented"
-        )
+        raise NotImplementedError("test_process_document_complete_workflow test needs to be implemented")
 
 
 @pytest.mark.unit
@@ -269,9 +256,7 @@ class TestDocumentRetrievalCrossDependencies:
             - Returns properly formatted results
             - Integration works seamlessly
         """
-        raise NotImplementedError(
-            "test_delegated_from_parent_processor test needs to be implemented"
-        )
+        raise NotImplementedError("test_delegated_from_parent_processor test needs to be implemented")
 
     def test_batch_processing_multiple_formats(self, mock_resources, mock_configs) -> None:
         """
@@ -283,9 +268,7 @@ class TestDocumentRetrievalCrossDependencies:
             - No state pollution between calls
             - Consistent output structure
         """
-        raise NotImplementedError(
-            "test_batch_processing_multiple_formats test needs to be implemented"
-        )
+        raise NotImplementedError("test_batch_processing_multiple_formats test needs to be implemented")
 
     def test_options_forwarding_in_delegation(self, mock_resources, mock_configs) -> None:
         """
@@ -297,9 +280,7 @@ class TestDocumentRetrievalCrossDependencies:
             - Parent options don't override format-specific needs
             - Results properly integrated back
         """
-        raise NotImplementedError(
-            "test_options_forwarding_in_delegation test needs to be implemented"
-        )
+        raise NotImplementedError("test_options_forwarding_in_delegation test needs to be implemented")
 
 
 @pytest.mark.unit
@@ -329,9 +310,7 @@ class TestDocumentRetrievalErrorHandling:
             - Suggests alternatives if available
             - Returns empty results tuple
         """
-        raise NotImplementedError(
-            "test_unsupported_format_in_category test needs to be implemented"
-        )
+        raise NotImplementedError("test_unsupported_format_in_category test needs to be implemented")
 
     def test_resource_callable_failure(self, mock_resources, mock_configs) -> None:
         """

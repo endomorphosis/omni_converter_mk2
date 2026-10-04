@@ -9,28 +9,28 @@ Stub file last updated: 2025-07-17 05:40:43
 ```python
 class OutputFormatter:
     """
-        Output formatter for the Omni-Converter.
+    Output formatter for the Omni-Converter.
 
-    This class formats extracted normalized content into different output formats.
+This class formats extracted normalized content into different output formats.
 
-    Attributes:
-        resources (dict[str, Callable]): Dictionary of callable objects and dependencies.
-        configs (Configs): Configuration settings.
-        output_formats (dict[str, FormatterFunc]): Dictionary of formatter functions.
-        default_format (str): The default output format.
+Attributes:
+    resources (dict[str, Callable]): Dictionary of callable objects and dependencies.
+    configs (Configs): Configuration settings.
+    output_formats (dict[str, FormatterFunc]): Dictionary of formatter functions.
+    default_format (str): The default output format.
 
-    Properties:
-        available_formats (list[str]): List of available output formats.
+Properties:
+    available_formats (list[str]): List of available output formats.
 
-    Public Methods:
-        format_output: Format normalized content for output in specified format.
-        register_format: Register a new output format with formatter function.
+Public Methods:
+    format_output: Format normalized content for output in specified format.
+    register_format: Register a new output format with formatter function.
 
-    Private Methods:
-        _register_default_formatters: Register the default output formatters.
-        _format_as_txt: Format normalized content as plain text.
-        _format_as_json: Format normalized content as JSON.
-        _format_as_markdown: Format normalized content as Markdown.
+Private Methods:
+    _register_default_formatters: Register the default output formatters.
+    _format_as_txt: Format normalized content as plain text.
+    _format_as_json: Format normalized content as JSON.
+    _format_as_markdown: Format normalized content as Markdown.
     """
 ```
 * **Async:** False
@@ -42,11 +42,11 @@ class OutputFormatter:
 ```python
 def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
     """
-        Initialize an output formatter.
+    Initialize an output formatter.
 
-    Args:
-        resources: A dictionary of callable objects and dependencies.
-        configs: A pydantic model containing configuration settings.
+Args:
+    resources: A dictionary of callable objects and dependencies.
+    configs: A pydantic model containing configuration settings.
     """
 ```
 * **Async:** False
@@ -58,13 +58,13 @@ def __init__(self, resources: dict[str, Callable] = None, configs: Configs = Non
 ```python
 def _format_as_json(self, output_dict: dict) -> str:
     """
-        Format normalized content as JSON.
+    Format normalized content as JSON.
 
-    Args:
-        output_dict: The normalized content to format.
-
-    Returns:
-        The formatted normalized content as JSON.
+Args:
+    output_dict: The normalized content to format.
+    
+Returns:
+    The formatted normalized content as JSON.
     """
 ```
 * **Async:** False
@@ -76,13 +76,13 @@ def _format_as_json(self, output_dict: dict) -> str:
 ```python
 def _format_as_markdown(self, output_dict: dict) -> str:
     """
-        Format normalized content as Markdown.
+    Format normalized content as Markdown.
 
-    Args:
-        output_dict: The normalized content to format.
-
-    Returns:
-        The formatted normalized content as Markdown.
+Args:
+    output_dict: The normalized content to format.
+    
+Returns:
+    The formatted normalized content as Markdown.
     """
 ```
 * **Async:** False
@@ -94,13 +94,13 @@ def _format_as_markdown(self, output_dict: dict) -> str:
 ```python
 def _format_as_txt(self, output_dict: dict) -> str:
     """
-        Format normalized content as plain text.
+    Format normalized content as plain text.
 
-    Args:
-        normalized_content: The normalized content to format.
-
-    Returns:
-        The formatted normalized content as plain text.
+Args:
+    normalized_content: The normalized content to format.
+    
+Returns:
+    The formatted normalized content as plain text.
     """
 ```
 * **Async:** False
@@ -147,10 +147,10 @@ def _register_default_formatters(self) -> None:
 @property
 def available_formats(self) -> list[str]:
     """
-        Get the available output formats.
+    Get the available output formats.
 
-    Returns:
-        List of available output formats.
+Returns:
+    List of available output formats.
     """
 ```
 * **Async:** False
@@ -160,27 +160,21 @@ def available_formats(self) -> list[str]:
 ## format_output
 
 ```python
-def format_output(
-    self,
-    normalized_content: Content,
-    format: Optional[str] = None,
-    options: Optional[dict[str, Any]] = None,
-    output_path: Optional[str] = None,
-) -> FormattedOutput:
+def format_output(self, normalized_content: Content, format: Optional[str] = None, options: Optional[dict[str, Any]] = None, output_path: Optional[str] = None) -> FormattedOutput:
     """
-        Format normalized content for output.
+    Format normalized content for output.
 
-    Args:
-        normalized_content: The normalized content to format.
-        format: The output format. If None, the default format is used.
-        options: Optional formatting options.
-        output_path: The path where the output will be written.
-
-    Returns:
-        The formatted output.
-
-    Raises:
-        ValueError: If the specified format is not supported.
+Args:
+    normalized_content: The normalized content to format.
+    format: The output format. If None, the default format is used.
+    options: Optional formatting options.
+    output_path: The path where the output will be written.
+    
+Returns:
+    The formatted output.
+    
+Raises:
+    ValueError: If the specified format is not supported.
     """
 ```
 * **Async:** False
@@ -192,15 +186,15 @@ def format_output(
 ```python
 def register_format(self, format_name: str, formatter: FormatterFunc) -> None:
     """
-        Register an output format.
+    Register an output format.
 
-    Args:
-        format_name: The name of the format.
-        formatter: The formatter function.
-
-    Raises:
-        TypeError: If the formatter is not a callable function or has an incorrect signature.
-        ValueError: If a formatter for the format already exists.
+Args:
+    format_name: The name of the format.
+    formatter: The formatter function.
+    
+Raises:
+    TypeError: If the formatter is not a callable function or has an incorrect signature.
+    ValueError: If a formatter for the format already exists.
     """
 ```
 * **Async:** False

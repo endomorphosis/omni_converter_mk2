@@ -9,10 +9,10 @@ Stub file last updated: 2025-07-17 05:28:21
 ```python
 def make_error_monitor() -> ErrorMonitor:
     """
-        Create an ErrorMonitor instance.
+    Create an ErrorMonitor instance.
 
-    Returns:
-        ErrorMonitor: A configured ErrorMonitor instance ready for use.
+Returns:
+    ErrorMonitor: A configured ErrorMonitor instance ready for use.
     """
 ```
 * **Async:** False
@@ -24,11 +24,11 @@ def make_error_monitor() -> ErrorMonitor:
 ```python
 def make_resource_monitor() -> ResourceMonitor:
     """
-        Factory function to create and configure a ResourceMonitor instance.
+    Factory function to create and configure a ResourceMonitor instance.
 
-    Returns:
-        ResourceMonitor: A configured monitor instance with hardware resource
-            tracking functions, logger, and system configurations.
+Returns:
+    ResourceMonitor: A configured monitor instance with hardware resource
+        tracking functions, logger, and system configurations.
     """
 ```
 * **Async:** False
@@ -40,10 +40,10 @@ def make_resource_monitor() -> ResourceMonitor:
 ```python
 def make_security_monitor() -> SecurityMonitor:
     """
-        Create a security monitor instance.
+    Create a security monitor instance.
 
-    Returns:
-        An instance of SecurityMonitor.
+Returns:
+    An instance of SecurityMonitor.
     """
 ```
 * **Async:** False

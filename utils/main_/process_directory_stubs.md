@@ -25,25 +25,19 @@ def _estimate_file_count(dir_path: str, recursive: bool) -> int:
 ## process_directory
 
 ```python
-def process_directory(
-    dir_path: str,
-    output_dir: Optional[str] = None,
-    options: Optional[dict[str, Any]] = None,
-    show_progress: bool = True,
-    recursive: bool = False,
-) -> BatchResult:
+def process_directory(dir_path: str, output_dir: Optional[str] = None, options: Optional[dict[str, Any]] = None, show_progress: bool = True, recursive: bool = False) -> BatchResult:
     """
-        Process all files in a directory.
+    Process all files in a directory.
 
-    Args:
-        dir_path: The path to the directory to process.
-        output_dir: The directory to write output files to. If None, prints content to stdout.
-        options: Processing options. If None, default options are used.
-        show_progress: Whether to show a progress bar.
-        recursive: Whether to process directories recursively.
-
-    Returns:
-        BatchResult object with processing results.
+Args:
+    dir_path: The path to the directory to process.
+    output_dir: The directory to write output files to. If None, prints content to stdout.
+    options: Processing options. If None, default options are used.
+    show_progress: Whether to show a progress bar.
+    recursive: Whether to process directories recursively.
+    
+Returns:
+    BatchResult object with processing results.
     """
 ```
 * **Async:** False

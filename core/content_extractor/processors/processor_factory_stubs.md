@@ -39,18 +39,18 @@ class _MakeProcessorCache:
 ```python
 class _ProcessorResources(TypedDict):
     """
-        TypedDict defining the structure of processor resources.
+    TypedDict defining the structure of processor resources.
 
-    Attributes:
-        supported_formats: Set of formats supported by the processor.
-        processor_name: Name of the processor.
-        dependencies: Dictionary mapping dependency names to their instances
-        critical_resources: List of critical callables required by the processor.
-        optional_resources: List of optional callables that enhance functionality
-        logger: Logger instance for logging messages
-        configs: Configs instance containing configuration settings
-        dependency_priority: Optional list defining priority order of dependencies
-        dependency_mapping: Optional mapping of resources to required dependencies
+Attributes:
+    supported_formats: Set of formats supported by the processor.
+    processor_name: Name of the processor.
+    dependencies: Dictionary mapping dependency names to their instances
+    critical_resources: List of critical callables required by the processor. 
+    optional_resources: List of optional callables that enhance functionality
+    logger: Logger instance for logging messages
+    configs: Configs instance containing configuration settings
+    dependency_priority: Optional list defining priority order of dependencies
+    dependency_mapping: Optional mapping of resources to required dependencies
     """
 ```
 * **Async:** False
@@ -126,41 +126,39 @@ def __str__(self):
 ## _apply_cross_processor_dependencies
 
 ```python
-def _apply_cross_processor_dependencies(
-    processors: dict[str, Any], dependencies: list[tuple[str, str, str, str]]
-) -> dict[str, Any]:
+def _apply_cross_processor_dependencies(processors: dict[str, Any], dependencies: list[tuple[str, str, str, str]]) -> dict[str, Any]:
     """
-        Apply cross-processor dependencies by enhancing methods with other processors.
+    Apply cross-processor dependencies by enhancing methods with other processors.
 
-    This utility function allows one processor to use capabilities from another processor
-    by wrapping the original method with enhanced functionality. The original method
-    is called first, then each result is processed by the target processor's method.
+This utility function allows one processor to use capabilities from another processor
+by wrapping the original method with enhanced functionality. The original method
+is called first, then each result is processed by the target processor's method.
 
-    Args:
-        processors (dict[str, Any]): Dictionary mapping processor names to processor instances.
-        dependencies (list[tuple[str, str, str, str]]): list of dependency tuples, where each tuple contains:
-        - source_proc_name (str): Name of the processor to enhance
-        - source_method_name (str): Name of the method to enhance
-        - target_proc_name (str): Name of the processor that provides enhancement
-        - target_method_name (str): Name of the method that provides enhancement
+Args:
+    processors (dict[str, Any]): Dictionary mapping processor names to processor instances.
+    dependencies (list[tuple[str, str, str, str]]): list of dependency tuples, where each tuple contains:
+    - source_proc_name (str): Name of the processor to enhance
+    - source_method_name (str): Name of the method to enhance
+    - target_proc_name (str): Name of the processor that provides enhancement
+    - target_method_name (str): Name of the method that provides enhancement
 
-    Returns:
-        dict[str, Any]: The processors dictionary with enhanced methods applied.
+Returns:
+    dict[str, Any]: The processors dictionary with enhanced methods applied.
 
-    Raises:
-        TypeError: If processors is not a dictionary or dependencies is not a list.
+Raises:
+    TypeError: If processors is not a dictionary or dependencies is not a list.
 
-    Example:
-        >>> processors = {
-        ...     "xlsx_processor": xlsx_proc,
-        ...     "image_processor": image_proc
-        ... }
-        >>> dependencies = [
-        ...     ("xlsx_processor", "extract_images", "image_processor", "process_image")
-        ... ]
-        >>> enhanced_processors = _apply_cross_processor_dependencies(processors, dependencies)
-        >>> # Now xlsx_processor.extract_images() will use image_processor.process_image()
-        >>> # to enhance each extracted image
+Example:
+    >>> processors = {
+    ...     "xlsx_processor": xlsx_proc,
+    ...     "image_processor": image_proc
+    ... }
+    >>> dependencies = [
+    ...     ("xlsx_processor", "extract_images", "image_processor", "process_image")
+    ... ]
+    >>> enhanced_processors = _apply_cross_processor_dependencies(processors, dependencies)
+    >>> # Now xlsx_processor.extract_images() will use image_processor.process_image()
+    >>> # to enhance each extracted image
     """
 ```
 * **Async:** False
@@ -252,13 +250,13 @@ def _make_mock(self) -> MagicMock:
 ```python
 def _make_processor(resources: _ProcessorResources) -> Any:
     """
-        Create a processor instance based on the provided resources.
+    Create a processor instance based on the provided resources.
 
-    Args:
-        resources: Dictionary containing processor resources and configurations.
+Args:
+    resources: Dictionary containing processor resources and configurations.
 
-    Returns:
-        Processor instance with proper processor_info structure.
+Returns:
+    Processor instance with proper processor_info structure.
     """
 ```
 * **Async:** False
@@ -268,22 +266,17 @@ def _make_processor(resources: _ProcessorResources) -> Any:
 ## _mock_processor
 
 ```python
-def _mock_processor(
-    self,
-    methods: dict[Union[str, tuple[str, Any]], str],
-    supported_formats: set[str],
-    processor_name: str,
-) -> MagicMock:
+def _mock_processor(self, methods: dict[Union[str, tuple[str, Any]], str], supported_formats: set[str], processor_name: str) -> MagicMock:
     """
-        Create a mock processor with specified methods.
+    Create a mock processor with specified methods.
 
-    Args:
-        methods: Dictionary mapping method names to their categories
-        supported_formats: Set of formats supported by the processor
-        processor_name: Name of the processor being mocked
-
-    Returns:
-        MagicMock: Mock processor with all specified methods
+Args:
+    methods: Dictionary mapping method names to their categories
+    supported_formats: Set of formats supported by the processor
+    processor_name: Name of the processor being mocked
+    
+Returns:
+    MagicMock: Mock processor with all specified methods
     """
 ```
 * **Async:** False
@@ -394,10 +387,10 @@ def is_cached(self) -> bool:
 @staticmethod
 def make_processors() -> dict[str, Any]:
     """
-        Create all processor instances.
+    Create all processor instances.
 
-    Returns:
-        dict mapping processor names to processor instances
+Returns:
+    dict mapping processor names to processor instances
     """
 ```
 * **Async:** False
@@ -409,10 +402,10 @@ def make_processors() -> dict[str, Any]:
 ```python
 def make_processors():
     """
-        Create all processor instances.
+    Create all processor instances.
 
-    Returns:
-        dict mapping processor names to processor instances
+Returns:
+    dict mapping processor names to processor instances
     """
 ```
 * **Async:** False

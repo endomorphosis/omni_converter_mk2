@@ -10,20 +10,20 @@ Stub file last updated: 2025-07-17 05:39:35
 @dataclass
 class ProcessingResult:
     """
-        Result of processing a file.
+    Result of processing a file.
 
-    This class represents the result of processing a file, including success status,
-    file paths, errors, and metadata.
+This class represents the result of processing a file, including success status,
+file paths, errors, and metadata.
 
-    Attributes:
-        success (bool): Whether the processing was successful.
-        file_path (str): The path to the input file.
-        output_path (str): The path to the output file.
-        format (str): The detected format of the input file.
-        errors (list[str]): list of errors encountered during processing.
-        metadata (dict[str, Any]): Metadata about the processing.
-        content_hash (str): Hash of the content for verification.
-        timestamp (datetime): Time when the processing was completed.
+Attributes:
+    success (bool): Whether the processing was successful.
+    file_path (str): The path to the input file.
+    output_path (str): The path to the output file.
+    format (str): The detected format of the input file.
+    errors (list[str]): list of errors encountered during processing.
+    metadata (dict[str, Any]): Metadata about the processing.
+    content_hash (str): Hash of the content for verification.
+    timestamp (datetime): Time when the processing was completed.
     """
 ```
 * **Async:** False
@@ -35,10 +35,10 @@ class ProcessingResult:
 ```python
 def __str__(self) -> str:
     """
-        Get a string representation of the result.
+    Get a string representation of the result.
 
-    Returns:
-        A string representation of the processing result.
+Returns:
+    A string representation of the processing result.
     """
 ```
 * **Async:** False
@@ -50,10 +50,10 @@ def __str__(self) -> str:
 ```python
 def add_error(self, error: str) -> None:
     """
-        Add an error to the result.
+    Add an error to the result.
 
-    Args:
-        error: The error message to add.
+Args:
+    error: The error message to add.
     """
 ```
 * **Async:** False
@@ -65,11 +65,11 @@ def add_error(self, error: str) -> None:
 ```python
 def add_metadata(self, key: str, value: Any) -> None:
     """
-        Add metadata to the result.
+    Add metadata to the result.
 
-    Args:
-        key: The metadata key.
-        value: The metadata value.
+Args:
+    key: The metadata key.
+    value: The metadata value.
     """
 ```
 * **Async:** False
@@ -82,10 +82,10 @@ def add_metadata(self, key: str, value: Any) -> None:
 @property
 def error_string(self) -> str:
     """
-        Get the errors as a formatted string.
+    Get the errors as a formatted string.
 
-    Returns:
-        A formatted string of errors.
+Returns:
+    A formatted string of errors.
     """
 ```
 * **Async:** False
@@ -97,10 +97,10 @@ def error_string(self) -> str:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-        Convert to a dictionary.
+    Convert to a dictionary.
 
-    Returns:
-        A dictionary representation of the processing result.
+Returns:
+    A dictionary representation of the processing result.
     """
 ```
 * **Async:** False

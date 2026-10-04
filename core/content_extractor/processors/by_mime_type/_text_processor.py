@@ -1,8 +1,11 @@
 from types_ import Any, Callable, Configs, Content, Logger
 
-
 class TextProcessor:
-    def __init__(self, resources: dict[str, Callable] = None, configs: "Configs" = None) -> None:
+
+    def __init__(self, 
+                 resources: dict[str, Callable] = None, 
+                 configs: 'Configs' = None
+                ) -> None:
         """Initialize the plaintext processor."""
         self.configs = configs
         self.resources = resources
@@ -20,15 +23,13 @@ class TextProcessor:
 
         self._logger: Logger = self.resources["logger"]
 
-    def __call__(
-        self, data: bytes | str, options: dict[str, Any]
-    ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+    def __call__(self, data: bytes | str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """Process plaintext content.
 
         Args:
             file_content: The file content to process.
             options: Processing options.
-
+            
         Returns:
             tuple of (text content, metadata, sections).
         """
@@ -48,9 +49,7 @@ class TextProcessor:
         """Check if the processor can handle the given file format."""
         return self._can_handle(self.supported_formats, self.format_extensions, file_path)
 
-    def process(
-        self, data: str | bytes, options: dict[str, Any] = None
-    ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+    def process(self, data: str | bytes, options: dict[str, Any] = None) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """Process the provided data and return text, metadata, and sections."""
         if options is None:
             options = {}
@@ -83,47 +82,43 @@ class TextProcessor:
     def capabilities(self) -> dict[str, Any]:
         """Return the capabilities of the processor."""
         return {
-            "extract_text": {
+            'extract_text': {
                 "available": self._extract_text is not None,
-                "implementation": self._extract_text.__name__ if self._extract_text else None,
+                "implementation": self._extract_text.__name__ if self._extract_text else None
             },
-            "extract_metadata": {
+            'extract_metadata': {
                 "available": self._extract_metadata is not None,
-                "implementation": self._extract_metadata.__name__
-                if self._extract_metadata
-                else None,
+                "implementation": self._extract_metadata.__name__ if self._extract_metadata else None
             },
-            "extract_structure": {
+            'extract_structure': {
                 "available": self._extract_structure is not None,
-                "implementation": self._extract_structure.__name__
-                if self._extract_structure
-                else None,
+                "implementation": self._extract_structure.__name__ if self._extract_structure else None
             },
-            "process": {
+            'process': {
                 "available": self._process is not None,
-                "implementation": self._process.__name__ if self._process else None,
-            },
+                "implementation": self._process.__name__ if self._process else None
+            }
         }
 
     @property
     def processor_info(self) -> dict[str, Any]:
         """Get information about the processor.
-
+        
         Returns:
             A dictionary containing processor information.
         """
         return {
-            "processor_name": self._processor_name,
-            "version": self.get_version(),
-            "capabilities": self.capabilities,
-            "supported_formats": self._supported_formats,
-            "available": self._processor_available,
+            'processor_name': self._processor_name,
+            'version': self.get_version(),
+            'capabilities': self.capabilities,
+            'supported_formats': self._supported_formats,
+            'available': self._processor_available
         }
 
     def get_version(self) -> str:
         """
         Get the version of the processor.
-
+        
         Returns:
             The version of the processor.
         """

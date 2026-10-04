@@ -116,16 +116,14 @@ All processors must implement the `DependencyModuleProtocol`:
 class DependencyModuleProtocol(Protocol):
     def extract_text(data: str | bytes, options: Optional[dict[str, Any]]) -> str:
         """Extract plain text content from the file."""
-
+        
     def extract_metadata(text: str, options: Optional[dict[str, Any]]) -> dict[str, Any]:
         """Extract metadata from the file."""
-
+        
     def extract_structure(text: str, options: Optional[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract structural information from the file."""
-
-    def process(
-        data: bytes | str, options: Optional[dict[str, Any]]
-    ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+        
+    def process(data: bytes | str, options: Optional[dict[str, Any]]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """Process the file and return comprehensive extraction results."""
 ```
 
@@ -154,19 +152,19 @@ Each processor configuration includes:
 ```python
 {
     "supported_formats": {"xlsx", "xlsm"},  # File extensions
-    "processor_name": "xlsx_processor",  # Unique identifier
-    "dependencies": {  # Required packages
+    "processor_name": "xlsx_processor",      # Unique identifier
+    "dependencies": {                        # Required packages
         "openpyxl": None,
-        "pandas": None,
+        "pandas": None
     },
-    "critical_resources": [  # Must-have methods
+    "critical_resources": [                  # Must-have methods
         "extract_data",
-        "extract_metadata",
+        "extract_metadata"
     ],
-    "optional_resources": [  # Nice-to-have methods
+    "optional_resources": [                  # Nice-to-have methods
         "extract_images",
-        "analyze",
-    ],
+        "analyze"
+    ]
 }
 ```
 
@@ -194,7 +192,7 @@ This means:
 def extract_text(data: str | bytes, options: Optional[dict[str, Any]] = None) -> str:
     if isinstance(data, str):
         return data
-    return data.decode("utf-8", errors="ignore")
+    return data.decode('utf-8', errors='ignore')
 ```
 
 ### 2. Dependency-Wrapped Functions
@@ -202,7 +200,7 @@ def extract_text(data: str | bytes, options: Optional[dict[str, Any]] = None) ->
 def extract_text(data: str | bytes, options: Optional[dict[str, Any]] = None) -> str:
     if isinstance(data, str):
         return data
-    soup = dependencies.bs4.BeautifulSoup(html_content, "html.parser")
+    soup = dependencies.bs4.BeautifulSoup(html_content, 'html.parser')
     # Process with BeautifulSoup
     return text
 ```
@@ -210,7 +208,10 @@ def extract_text(data: str | bytes, options: Optional[dict[str, Any]] = None) ->
 ### 3. Complex Class-Based (MIME-Type Specific)
 ```python
 class XlsxProcessor:
-    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
+    def __init__(self, 
+                resources: dict[str, Callable] = None, 
+                configs: Configs = None
+                ) -> None:
         self.resources = resources
         self.configs = configs
 
@@ -226,13 +227,13 @@ class XlsxProcessor:
 
         # These don't raise any errors, but must return the type expected by the processor
         self._extract_images = resources.get("extract_images", lambda x, y: [])
-
+        
     def extract_text(self, data: bytes, options: dict[str, Any]) -> str:
         try:
             return self._extract_text(data, options)
         except Exception as e:
             self._logger.error(f"Error extracting text: {e}")
-
+    
     ...
 ```
 
@@ -291,20 +292,21 @@ except Exception as e:
 ```python
 def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
     return {
-        "format": "plain",
-        "line_count": text.count("\n") + 1,
-        "character_count": len(text),
-        "word_count": len(text.split()),
+        'format': 'plain',
+        'line_count': text.count('\n') + 1,
+        'character_count': len(text),
+        'word_count': len(text.split())
     }
 ```
 
 ### 5. Structure Output for Usability
 ```python
 def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]]:
-    return [
-        {"type": "paragraph", "content": paragraph.strip(), "order": index}
-        for index, paragraph in enumerate(text.split("\n\n"))
-    ]
+    return [{
+        'type': 'paragraph',
+        'content': paragraph.strip(),
+        'order': index
+    } for index, paragraph in enumerate(text.split('\n\n'))]
 ```
 
 ## Adding a New Processor
@@ -316,7 +318,7 @@ def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]
     "processor_name": "newformat_processor",
     "dependencies": {"somelibrary": None},
     "critical_resources": ["extract_text", "extract_metadata"],
-    "optional_resources": ["analyze"],
+    "optional_resources": ["analyze"]
 }
 ```
 
@@ -331,20 +333,15 @@ def extract_text(data: bytes, options: dict[str, Any]) -> str:
     # Your implementation
     pass
 
-
 def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
     # Your implementation
     pass
-
 
 def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]]:
     # Your implementation
     pass
 
-
-def process(
-    data: bytes, options: dict[str, Any]
-) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+def process(data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     text = extract_text(data, options)
     metadata = extract_metadata(text, options)
     structure = extract_structure(text, options)
@@ -369,11 +366,11 @@ processor.processor_info
     "processor_name": "xlsx_processor",
     "capabilities": {
         "extract_text": {"available": True, "implementation": "native"},
-        "extract_images": {"available": False, "implementation": "mock"},
+        "extract_images": {"available": False, "implementation": "mock"}
     },
     "supported_formats": {"xlsx", "xlsm"},
     "implementation_used": "openpyxl",
-    "dependencies": ["openpyxl", "pandas"],
+    "dependencies": ["openpyxl", "pandas"]
 }
 ```
 
@@ -563,16 +560,14 @@ All processors must implement the `DependencyModuleProtocol`:
 class DependencyModuleProtocol(Protocol):
     def extract_text(data: str | bytes, options: Optional[dict[str, Any]]) -> str:
         """Extract plain text content from the file."""
-
+        
     def extract_metadata(text: str, options: Optional[dict[str, Any]]) -> dict[str, Any]:
         """Extract metadata from the file."""
-
+        
     def extract_structure(text: str, options: Optional[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract structural information from the file."""
-
-    def process(
-        data: bytes | str, options: Optional[dict[str, Any]]
-    ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+        
+    def process(data: bytes | str, options: Optional[dict[str, Any]]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
         """Process the file and return comprehensive extraction results."""
 ```
 
@@ -605,19 +600,19 @@ Each processor configuration includes:
 ```python
 {
     "supported_formats": {"xlsx", "xlsm"},  # File extensions
-    "processor_name": "xlsx_processor",  # Unique identifier
-    "dependencies": {  # Required packages
+    "processor_name": "xlsx_processor",      # Unique identifier
+    "dependencies": {                        # Required packages
         "openpyxl": None,
-        "pandas": None,
+        "pandas": None
     },
-    "critical_resources": [  # Must-have methods
+    "critical_resources": [                  # Must-have methods
         "extract_data",
-        "extract_metadata",
+        "extract_metadata"
     ],
-    "optional_resources": [  # Nice-to-have methods
+    "optional_resources": [                  # Nice-to-have methods
         "extract_images",
-        "analyze",
-    ],
+        "analyze"
+    ]
 }
 ```
 
@@ -645,13 +640,13 @@ This means:
 def extract_text(data: str | bytes, options: dict[str, Any]) -> str:
     if isinstance(data, str):
         return data
-    return data.decode("utf-8", errors="ignore")
+    return data.decode('utf-8', errors='ignore')
 ```
 
 ### 2. Dependency-Wrapped Functions
 ```python
 def extract_text(html_content: str, options: Optional[dict[str, Any]] = None) -> str:
-    soup = dependencies.bs4.BeautifulSoup(html_content, "html.parser")
+    soup = dependencies.bs4.BeautifulSoup(html_content, 'html.parser')
     # Process with BeautifulSoup
     return text
 ```
@@ -752,20 +747,21 @@ except Exception as e:
 ```python
 def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
     return {
-        "format": "plain",
-        "line_count": text.count("\n") + 1,
-        "character_count": len(text),
-        "word_count": len(text.split()),
+        'format': 'plain',
+        'line_count': text.count('\n') + 1,
+        'character_count': len(text),
+        'word_count': len(text.split())
     }
 ```
 
 ### 5. Structure Output for Usability
 ```python
 def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]]:
-    return [
-        {"type": "paragraph", "content": paragraph.strip(), "order": index}
-        for index, paragraph in enumerate(text.split("\n\n"))
-    ]
+    return [{
+        'type': 'paragraph',
+        'content': paragraph.strip(),
+        'order': index
+    } for index, paragraph in enumerate(text.split('\n\n'))]
 ```
 
 ## Adding a New Processor
@@ -779,7 +775,7 @@ def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]
     "processor_name": "newformat_processor",
     "dependencies": {"somelibrary": None},
     "critical_resources": ["extract_text", "extract_metadata"],
-    "optional_resources": ["analyze"],
+    "optional_resources": ["analyze"]
 }
 ```
 
@@ -797,7 +793,7 @@ def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]
     "processor_name": "category_processor",
     "dependencies": {"lib1": None, "lib2": None},
     "critical_resources": ["extract_text", "process_category"],
-    "optional_resources": ["analyze_features"],
+    "optional_resources": ["analyze_features"]
 }
 ```
 
@@ -819,20 +815,15 @@ def extract_text(data: bytes, options: dict[str, Any]) -> str:
     # Your implementation
     pass
 
-
 def extract_metadata(text: str, options: dict[str, Any]) -> dict[str, Any]:
     # Your implementation
     pass
-
 
 def extract_structure(text: str, options: dict[str, Any]) -> list[dict[str, Any]]:
     # Your implementation
     pass
 
-
-def process(
-    data: bytes, options: dict[str, Any]
-) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+def process(data: bytes, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     text = extract_text(data, options)
     metadata = extract_metadata(text, options)
     structure = extract_structure(text, options)
@@ -857,11 +848,11 @@ processor.processor_info
     "processor_name": "xlsx_processor",
     "capabilities": {
         "extract_text": {"available": True, "implementation": "native"},
-        "extract_images": {"available": False, "implementation": "mock"},
+        "extract_images": {"available": False, "implementation": "mock"}
     },
     "supported_formats": {"xlsx", "xlsm"},
     "implementation_used": "openpyxl",
-    "dependencies": ["openpyxl", "pandas"],
+    "dependencies": ["openpyxl", "pandas"]
 }
 ```
 

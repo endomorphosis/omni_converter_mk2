@@ -9,10 +9,10 @@ Stub file last updated: 2025-07-17 04:43:35
 ```python
 def make_file_format_detector():
     """
-        Factory function to create a FileFormatDetector instance with proper dependencies.
+    Factory function to create a FileFormatDetector instance with proper dependencies.
 
-    Returns:
-        An instance of FileFormatDetector with all required dependencies injected.
+Returns:
+    An instance of FileFormatDetector with all required dependencies injected.
     """
 ```
 * **Async:** False

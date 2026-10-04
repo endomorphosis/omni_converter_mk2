@@ -1,3 +1,5 @@
+
+
 from dependencies import dependencies
 from types_ import Any, Optional
 
@@ -35,7 +37,6 @@ def check_if_available() -> bool:
         or configuration issues.
     """
     pass
-
 
 def create_async_openai_client():
     """
@@ -152,7 +153,6 @@ async def generate_text(prompt: str, model: str = "gpt-3.5-turbo", **kwargs) -> 
         API tokens based on both the input prompt and generated response length.
     """
     pass
-
 
 async def generate_embeddings(text: str, model: str = "text-embedding-ada-002") -> list[float]:
     """

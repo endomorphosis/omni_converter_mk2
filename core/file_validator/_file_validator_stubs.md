@@ -5,13 +5,13 @@
 ```python
 class FileValidator:
     """
-        File validator for the Omni-Converter.
+    File validator for the Omni-Converter.
 
-    Validates files for processing, checking for issues like:
-    - File exists and is readable
-    - File size is within limits
-    - File format is supported
-    - File is not corrupted
+Validates files for processing, checking for issues like:
+- File exists and is readable
+- File size is within limits
+- File format is supported
+- File is not corrupted
     """
 ```
 ## __init__
@@ -30,18 +30,16 @@ def __init__(self, resources: dict[str, Callable] = None, configs: Configs = Non
 
 ```python
 @staticmethod
-def _check_for_null_bytes_and_permissions(
-    file_path: str, format_name: str, result: list[str]
-) -> bool:
+def _check_for_null_bytes_and_permissions(file_path: str, format_name: str, result: list[str]) -> bool:
     """
-        Check for null bytes and permission issues that could cause hangs
+    Check for null bytes and permission issues that could cause hangs
 
-    Args:
-        file_path: The path to the file.
-        format_name: The format of the file
-
-    Returns:
-        True if the file is corrupt, False otherwise.
+Args:
+    file_path: The path to the file.
+    format_name: The format of the file
+    
+Returns:
+    True if the file is corrupt, False otherwise.
     """
 ```
 * **Async:** False
@@ -53,14 +51,14 @@ def _check_for_null_bytes_and_permissions(
 ```python
 def get_validation_errors(self, file_path: str, format_name: Optional[str] = None) -> list[str]:
     """
-        Get validation errors for a file.
+    Get validation errors for a file.
 
-    Args:
-        file_path: The path to the file.
-        format_name: The format of the file, if known. Will be detected if not provided.
-
-    Returns:
-        A list of validation errors.
+Args:
+    file_path: The path to the file.
+    format_name: The format of the file, if known. Will be detected if not provided.
+    
+Returns:
+    A list of validation errors.
     """
 ```
 * **Async:** False
@@ -72,14 +70,14 @@ def get_validation_errors(self, file_path: str, format_name: Optional[str] = Non
 ```python
 def is_valid_for_processing(self, file_path: str, format_name: Optional[str] = None) -> bool:
     """
-        Check if a file is valid for processing.
+    Check if a file is valid for processing.
 
-    Args:
-        file_path: The path to the file.
-        format_name: The format of the file, if known. Will be detected if not provided.
-
-    Returns:
-        True if the file is valid for processing, False otherwise.
+Args:
+    file_path: The path to the file.
+    format_name: The format of the file, if known. Will be detected if not provided.
+    
+Returns:
+    True if the file is valid for processing, False otherwise.
     """
 ```
 * **Async:** False
@@ -91,17 +89,17 @@ def is_valid_for_processing(self, file_path: str, format_name: Optional[str] = N
 ```python
 def validate_file(self, file_path: str, format_name: Optional[str] = None) -> ValidationResult:
     """
-        Validate a file for processing.
+    Validate a file for processing.
 
-    Args:
-        file_path: The path to the file.
-        format_name: The format of the file, if known. Will be detected if not provided.
-
-    Returns:
-        A validation result.
-
-    Raises:
-        FileNotFoundError: If the file does not exist.
+Args:
+    file_path: The path to the file.
+    format_name: The format of the file, if known. Will be detected if not provided.
+    
+Returns:
+    A validation result.
+    
+Raises:
+    FileNotFoundError: If the file does not exist.
     """
 ```
 * **Async:** False

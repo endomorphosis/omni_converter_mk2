@@ -9,18 +9,18 @@ Stub file last updated: 2025-07-17 05:28:21
 ```python
 class ResourceMonitor:
     """
-        Resource monitor for the Omni-Converter.
+    Resource monitor for the Omni-Converter.
 
-    This class monitors system resources such as CPU and memory usage, and
-    provides methods to check if resources are available for processing.
+This class monitors system resources such as CPU and memory usage, and
+provides methods to check if resources are available for processing.
 
-    Attributes:
-        cpu_limit_percent (float): Maximum CPU usage percentage (0-100).
-        memory_limit (int): Maximum memory usage in MB.
-        current_resource_usage (dict[str, float]): Current resource usage.
-        active_monitoring (bool): Whether active monitoring is enabled.
-        monitoring_thread: Thread for active monitoring.
-        monitoring_interval (float): Interval for active monitoring in seconds.
+Attributes:
+    cpu_limit_percent (float): Maximum CPU usage percentage (0-100).
+    memory_limit (int): Maximum memory usage in MB.
+    current_resource_usage (dict[str, float]): Current resource usage.
+    active_monitoring (bool): Whether active monitoring is enabled.
+    monitoring_thread: Thread for active monitoring.
+    monitoring_interval (float): Interval for active monitoring in seconds.
     """
 ```
 * **Async:** False
@@ -32,12 +32,12 @@ class ResourceMonitor:
 ```python
 def __init__(self, configs: Configs = None, resources: dict[str, Callable] = None):
     """
-        Initialize a resource monitor.
+    Initialize a resource monitor.
 
-    Args:
-        cpu_limit_percent: Maximum CPU usage percentage (0-100).
-        memory_limit: Maximum memory usage in MB.
-        monitoring_interval: Interval for active monitoring in seconds.
+Args:
+    cpu_limit_percent: Maximum CPU usage percentage (0-100).
+    memory_limit: Maximum memory usage in MB.
+    monitoring_interval: Interval for active monitoring in seconds.
     """
 ```
 * **Async:** False
@@ -49,10 +49,10 @@ def __init__(self, configs: Configs = None, resources: dict[str, Callable] = Non
 ```python
 def _get_resource_usage(self) -> dict[str, float]:
     """
-        Get current resource usage for the entire program.
+    Get current resource usage for the entire program.
 
-    Returns:
-        A dictionary with current CPU and memory usage.
+Returns:
+    A dictionary with current CPU and memory usage.
     """
 ```
 * **Async:** False
@@ -64,24 +64,24 @@ def _get_resource_usage(self) -> dict[str, float]:
 ```python
 def _log_detailed_memory_information_for_debug_purposes(self):
     """
-        Log detailed memory usage information for debugging purposes.
+    Log detailed memory usage information for debugging purposes.
 
-    This method logs comprehensive memory statistics including RSS (Resident Set Size),
-    VMS (Virtual Memory Size), shared memory usage, system memory percentage, and
-    the configured memory limit. It also checks for potential memory leak indicators
-    by warning when memory usage approaches 80% of the configured limit.
+This method logs comprehensive memory statistics including RSS (Resident Set Size),
+VMS (Virtual Memory Size), shared memory usage, system memory percentage, and
+the configured memory limit. It also checks for potential memory leak indicators
+by warning when memory usage approaches 80% of the configured limit.
 
-    The method handles exceptions gracefully and logs any errors that occur during
-    the memory information gathering process.
+The method handles exceptions gracefully and logs any errors that occur during
+the memory information gathering process.
 
-    Logs:
-        DEBUG: Detailed memory usage statistics with RSS, VMS, shared memory,
-               system percentage, and memory limit information
-        WARNING: When memory usage exceeds 80% of the configured limit
-        ERROR: If any exception occurs during memory information logging
+Logs:
+    DEBUG: Detailed memory usage statistics with RSS, VMS, shared memory,
+           system percentage, and memory limit information
+    WARNING: When memory usage exceeds 80% of the configured limit
+    ERROR: If any exception occurs during memory information logging
 
-    Raises:
-        None: All exceptions are caught and logged as errors
+Raises:
+    None: All exceptions are caught and logged as errors
     """
 ```
 * **Async:** False
@@ -106,10 +106,10 @@ def _monitoring_loop(self) -> None:
 @property
 def are_resources_available(self) -> tuple[bool, Optional[str]]:
     """
-        Check if resources are available for processing.
+    Check if resources are available for processing.
 
-    Returns:
-        A tuple of (is_available, reason), where reason is None if resources are available.
+Returns:
+    A tuple of (is_available, reason), where reason is None if resources are available.
     """
 ```
 * **Async:** False
@@ -122,10 +122,10 @@ def are_resources_available(self) -> tuple[bool, Optional[str]]:
 @property
 def current_resource_usage(self) -> dict[str, float]:
     """
-        Get current resource usage.
+    Get current resource usage.
 
-    Returns:
-        A dictionary with current resource usage.
+Returns:
+    A dictionary with current resource usage.
     """
 ```
 * **Async:** False
@@ -138,10 +138,10 @@ def current_resource_usage(self) -> dict[str, float]:
 @property
 def resource_summary(self) -> dict[str, Any]:
     """
-        Get a summary of resource usage and limits.
+    Get a summary of resource usage and limits.
 
-    Returns:
-        A dictionary with resource usage summary.
+Returns:
+    A dictionary with resource usage summary.
     """
 ```
 * **Async:** False
@@ -151,15 +151,13 @@ def resource_summary(self) -> dict[str, Any]:
 ## set_resource_limits
 
 ```python
-def set_resource_limits(
-    self, cpu_limit_percent: Optional[float] = None, memory_limit: Optional[int] = None
-) -> None:
+def set_resource_limits(self, cpu_limit_percent: Optional[float] = None, memory_limit: Optional[int] = None) -> None:
     """
-        Set resource limits.
+    Set resource limits.
 
-    Args:
-        cpu_limit_percent: Maximum CPU usage percentage (0-100).
-        memory_limit: Maximum memory usage in MB.
+Args:
+    cpu_limit_percent: Maximum CPU usage percentage (0-100).
+    memory_limit: Maximum memory usage in MB.
     """
 ```
 * **Async:** False
@@ -171,10 +169,10 @@ def set_resource_limits(
 ```python
 def start_monitoring(self) -> bool:
     """
-        Start active resource monitoring.
+    Start active resource monitoring.
 
-    Returns:
-        True if monitoring started successfully, False otherwise.
+Returns:
+    True if monitoring started successfully, False otherwise.
     """
 ```
 * **Async:** False

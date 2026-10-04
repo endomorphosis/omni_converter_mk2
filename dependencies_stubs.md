@@ -9,8 +9,8 @@ Stub file last updated: 2025-07-17 05:36:42
 ```python
 class _Dependencies:
     """
-        Class to enable the lazy-loading of dependencies and third-party libraries.
-    This optimizes performance, allows for dynamic error checking, and reduce initial load time.
+    Class to enable the lazy-loading of dependencies and third-party libraries.
+This optimizes performance, allows for dynamic error checking, and reduce initial load time.
     """
 ```
 * **Async:** False
@@ -94,21 +94,21 @@ def _load_module(self, module_name: str) -> _ModuleType | None:
 ```python
 def _test_for_non_critical_dependencies() -> None:
     """
-        Test for non-critical dependencies in a separate thread to ensure the application starts promptly and to avoid dead.
+    Test for non-critical dependencies in a separate thread to ensure the application starts promptly and to avoid dead.
 
-    This function creates a temporary instance of the `_Dependencies` class to load all required
-    modules without causing deadlocks. Once all modules have been checked, the temporary instance is
-    cleared from memory to optimize resource usage.
+This function creates a temporary instance of the `_Dependencies` class to load all required
+modules without causing deadlocks. Once all modules have been checked, the temporary instance is
+cleared from memory to optimize resource usage.
 
-    Key Steps:
-    1. Creates a separate `_Dependencies` instance to handle module loading.
-    2. Ensures all modules are loaded using `load_all_modules`.
-    3. Clears the cache and deletes the temporary instance to free up memory.
-    4. Triggers garbage collection to reclaim unused memory.
+Key Steps:
+1. Creates a separate `_Dependencies` instance to handle module loading.
+2. Ensures all modules are loaded using `load_all_modules`.
+3. Clears the cache and deletes the temporary instance to free up memory.
+4. Triggers garbage collection to reclaim unused memory.
 
-    Note:
-    - This function is designed to handle non-critical dependencies, allowing the application
-        to start without waiting for all dependencies to be fully loaded.
+Note:
+- This function is designed to handle non-critical dependencies, allowing the application
+    to start without waiting for all dependencies to be fully loaded.
     """
 ```
 * **Async:** False
@@ -153,10 +153,10 @@ def chardet(self) -> _ModuleType | None:
 ```python
 def check_critical_dependencies(self) -> None:
     """
-        Check if all critical dependencies are available.
+    Check if all critical dependencies are available.
 
-    Raises:
-        ImportError: If any critical dependency is not available.
+Raises:
+    ImportError: If any critical dependency is not available.
     """
 ```
 * **Async:** False
@@ -168,9 +168,9 @@ def check_critical_dependencies(self) -> None:
 ```python
 def clear_cache(self) -> None:
     """
-        Clear the cache of loaded modules.
+    Clear the cache of loaded modules.
 
-    Used to save memory when large dependencies are no longer needed.
+Used to save memory when large dependencies are no longer needed.
     """
 ```
 * **Async:** False
@@ -182,10 +182,10 @@ def clear_cache(self) -> None:
 ```python
 def clear_module(self, module_name: str) -> None:
     """
-        Clear a specific module from the cache.
+    Clear a specific module from the cache.
 
-    Args:
-        module_name (str): The name of the module to clear.
+Args:
+    module_name (str): The name of the module to clear.
     """
 ```
 * **Async:** False
@@ -220,13 +220,13 @@ def duckdb(self) -> _ModuleType | None:
 ```python
 def is_available(self, module_name: str) -> bool:
     """
-        Check if a specific module is available.
+    Check if a specific module is available.
 
-    Args:
-        module_name (str): The name of the module to check.
+Args:
+    module_name (str): The name of the module to check.
 
-    Returns:
-        bool: True if the module is available, False otherwise.
+Returns:
+    bool: True if the module is available, False otherwise.
     """
 ```
 * **Async:** False
@@ -238,10 +238,10 @@ def is_available(self, module_name: str) -> bool:
 ```python
 def items(self) -> list[tuple[str, _ModuleType | None]]:
     """
-        Get a list of all dependencies as (name, module) tuples.
+    Get a list of all dependencies as (name, module) tuples.
 
-    Returns:
-        A list of tuples containing dependency names and their corresponding modules.
+Returns:
+    A list of tuples containing dependency names and their corresponding modules.
     """
 ```
 * **Async:** False
@@ -253,10 +253,10 @@ def items(self) -> list[tuple[str, _ModuleType | None]]:
 ```python
 def keys(self) -> list[str]:
     """
-        Get a list of all dependency names.
+    Get a list of all dependency names.
 
-    Returns:
-        A list of dependency names.
+Returns:
+    A list of dependency names.
     """
 ```
 * **Async:** False
@@ -268,9 +268,9 @@ def keys(self) -> list[str]:
 ```python
 def load_all_modules(self) -> None:
     """
-        Load all modules and cache them.
+    Load all modules and cache them.
 
-    This is called at the start of the program to check which dependencies are available.
+This is called at the start of the program to check which dependencies are available.
     """
 ```
 * **Async:** False
@@ -447,10 +447,10 @@ def tqdm(self) -> _ModuleType | None:
 ```python
 def values(self) -> list[_ModuleType | None]:
     """
-        Get a list of all loaded modules.
+    Get a list of all loaded modules.
 
-    Returns:
-        A list of loaded modules, with None for unloaded modules.
+Returns:
+    A list of loaded modules, with None for unloaded modules.
     """
 ```
 * **Async:** False
