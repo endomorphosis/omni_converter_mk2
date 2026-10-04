@@ -9,14 +9,14 @@ Stub file last updated: 2025-07-17 04:40:25
 ```python
 class _BatchProcessorResources(TypedDict):
     """
-    TypedDict for BatchProcessor resources.
+        TypedDict for BatchProcessor resources.
 
-Attributes:
-    processing_pipeline: Instance of ProcessingPipeline.
-    error_monitor: Instance of ErrorMonitor.
-    resource_monitor: Instance of ResourceMonitor.
-    security_monitor: Instance of SecurityMonitor.
-    logger: Logger instance.
+    Attributes:
+        processing_pipeline: Instance of ProcessingPipeline.
+        error_monitor: Instance of ErrorMonitor.
+        resource_monitor: Instance of ResourceMonitor.
+        security_monitor: Instance of SecurityMonitor.
+        logger: Logger instance.
     """
 ```
 * **Async:** False
@@ -37,10 +37,10 @@ def make_async_batch_processor() -> AsyncBatchProcessor:
 ```python
 def make_batch_processor() -> BatchProcessor:
     """
-    Make a BatchProcessor instance.
+        Make a BatchProcessor instance.
 
-Returns:
-    An instance of BatchProcessor.
+    Returns:
+        An instance of BatchProcessor.
     """
 ```
 * **Async:** False

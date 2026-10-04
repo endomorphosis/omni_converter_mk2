@@ -9,15 +9,15 @@ Stub file last updated: 2025-07-17 05:31:21
 ```python
 def longest_common_subsequence_length(seq1: list[str], seq2: list[str]) -> int:
     """
-    Calculate length of longest common subsequence between two sequences.
-# TODO Verify if this is the correct implementation of LCS.
+        Calculate length of longest common subsequence between two sequences.
+    # TODO Verify if this is the correct implementation of LCS.
 
-Args:
-    seq1: First sequence
-    seq2: Second sequence
-    
-Returns:
-    Length of longest common subsequence
+    Args:
+        seq1: First sequence
+        seq2: Second sequence
+
+    Returns:
+        Length of longest common subsequence
     """
 ```
 * **Async:** False
