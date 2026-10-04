@@ -9,14 +9,14 @@ Stub file last updated: 2025-07-17 05:29:23
 ```python
 class FileContent:
     """
-    Content of a file.
+        Content of a file.
 
-Attributes:
-    raw_content (bytes): The raw binary content of the file.
-    text_content (str): The text content of the file, if applicable.
-    encoding (str): The encoding of the text content.
-    size (int): The size of the content in bytes.
-    mime_type (str): The MIME type of the content.
+    Attributes:
+        raw_content (bytes): The raw binary content of the file.
+        text_content (str): The text content of the file, if applicable.
+        encoding (str): The encoding of the text content.
+        size (int): The size of the content in bytes.
+        mime_type (str): The MIME type of the content.
     """
 ```
 * **Async:** False
@@ -28,16 +28,16 @@ Attributes:
 ```python
 class FileInfo(BaseModel):
     """
-    Information about a file.
+        Information about a file.
 
-Attributes:
-    path (str): The path to the file.
-    size (int): The size of the file in bytes.
-    modified_time (datetime): The time the file was last modified.
-    mime_type (str): The MIME type of the file.
-    extension (str): The file extension.
-    is_readable (bool): Whether the file is readable.
-    is_writable (bool): Whether the file is writable.
+    Attributes:
+        path (str): The path to the file.
+        size (int): The size of the file in bytes.
+        modified_time (datetime): The time the file was last modified.
+        mime_type (str): The MIME type of the file.
+        extension (str): The file extension.
+        is_readable (bool): Whether the file is readable.
+        is_writable (bool): Whether the file is writable.
     """
 ```
 * **Async:** False
@@ -49,9 +49,9 @@ Attributes:
 ```python
 class FileSystem:
     """
-    File system utility functions.
+        File system utility functions.
 
-Provides functions for file reading, writing, and information retrieval.
+    Provides functions for file reading, writing, and information retrieval.
     """
 ```
 * **Async:** False
@@ -63,12 +63,12 @@ Provides functions for file reading, writing, and information retrieval.
 ```python
 def __init__(self, raw_content: bytes, encoding: str = "utf-8", mime_type: Optional[str] = None):
     """
-    Initialize file content.
+        Initialize file content.
 
-Args:
-    raw_content: The raw binary content of the file.
-    encoding: The encoding to use for text conversion.
-    mime_type: The MIME type of the content. If None, will be guessed from content.
+    Args:
+        raw_content: The raw binary content of the file.
+        encoding: The encoding to use for text conversion.
+        mime_type: The MIME type of the content. If None, will be guessed from content.
     """
 ```
 * **Async:** False
@@ -80,13 +80,13 @@ Args:
 ```python
 def _determine_mime_type(path_or_bytes: str | bytes | None) -> Optional[str]:
     """
-    Determine the MIME type of a file.
+        Determine the MIME type of a file.
 
-Args:
-    file_path: The path to the file.
-    
-Returns:
-    The MIME type of the file.
+    Args:
+        file_path: The path to the file.
+
+    Returns:
+        The MIME type of the file.
     """
 ```
 * **Async:** False
@@ -99,10 +99,10 @@ Returns:
 @property
 def as_binary(self) -> bytes:
     """
-    Get the content as binary.
+        Get the content as binary.
 
-Returns:
-    The raw binary content.
+    Returns:
+        The raw binary content.
     """
 ```
 * **Async:** False
@@ -115,13 +115,13 @@ Returns:
 @staticmethod
 def create_directory(directory_path: str) -> bool:
     """
-    Create a directory.
+        Create a directory.
 
-Args:
-    directory_path: The path to the directory.
-    
-Returns:
-    True if the directory was created successfully, False otherwise.
+    Args:
+        directory_path: The path to the directory.
+
+    Returns:
+        True if the directory was created successfully, False otherwise.
     """
 ```
 * **Async:** False
@@ -134,13 +134,13 @@ Returns:
 @staticmethod
 def file_exists(file_path: str) -> bool:
     """
-    Check if a file exists.
+        Check if a file exists.
 
-Args:
-    file_path: The path to the file.
-    
-Returns:
-    True if the file exists, False otherwise.
+    Args:
+        file_path: The path to the file.
+
+    Returns:
+        True if the file exists, False otherwise.
     """
 ```
 * **Async:** False
@@ -153,16 +153,16 @@ Returns:
 @classmethod
 def from_path(cls, path: str) -> "FileInfo":
     """
-    Create FileInfo from a file path.
+        Create FileInfo from a file path.
 
-Args:
-    path: The path to the file.
-    
-Returns:
-    FileInfo instance with populated data.
-    
-Raises:
-    FileNotFoundError: If the file does not exist.
+    Args:
+        path: The path to the file.
+
+    Returns:
+        FileInfo instance with populated data.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
     """
 ```
 * **Async:** False
@@ -174,13 +174,13 @@ Raises:
 ```python
 def get_as_text(self, encoding: Optional[str] = None) -> str:
     """
-    Get the content as text.
+        Get the content as text.
 
-Args:
-    encoding: The encoding to use. If None, uses the current encoding.
-    
-Returns:
-    The content as text.
+    Args:
+        encoding: The encoding to use. If None, uses the current encoding.
+
+    Returns:
+        The content as text.
     """
 ```
 * **Async:** False
@@ -193,16 +193,16 @@ Returns:
 @staticmethod
 def get_file_info(path: str) -> FileInfo:
     """
-    Get information about a file.
+        Get information about a file.
 
-Args:
-    file_path: The path to the file.
-    
-Returns:
-    File information.
-    
-Raises:
-    FileNotFoundError: If the file does not exist.
+    Args:
+        file_path: The path to the file.
+
+    Returns:
+        File information.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
     """
 ```
 * **Async:** False
@@ -215,18 +215,18 @@ Raises:
 @staticmethod
 def list_files(directory: str, pattern: str = "*.*") -> list[str]:
     """
-    list files in a directory.
+        list files in a directory.
 
-Args:
-    directory: The directory to list files in.
-    pattern: The pattern to match files against.
-    
-Returns:
-    A list of file paths matching the pattern.
-    
-Raises:
-    FileNotFoundError: If the directory does not exist.
-    PermissionError: If the directory cannot be read.
+    Args:
+        directory: The directory to list files in.
+        pattern: The pattern to match files against.
+
+    Returns:
+        A list of file paths matching the pattern.
+
+    Raises:
+        FileNotFoundError: If the directory does not exist.
+        PermissionError: If the directory cannot be read.
     """
 ```
 * **Async:** False
@@ -239,18 +239,18 @@ Raises:
 @staticmethod
 def read_file(file_path: str, mode: str = "rb") -> FileContent:
     """
-    Read a file.
+        Read a file.
 
-Args:
-    file_path: The path to the file.
-    mode: The mode to open the file in. Default is binary mode.
-    
-Returns:
-    The file content.
-    
-Raises:
-    FileNotFoundError: If the file does not exist.
-    PermissionError: If the file cannot be read.
+    Args:
+        file_path: The path to the file.
+        mode: The mode to open the file in. Default is binary mode.
+
+    Returns:
+        The file content.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be read.
     """
 ```
 * **Async:** False
@@ -262,10 +262,10 @@ Raises:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-    Convert to a dictionary.
+        Convert to a dictionary.
 
-Returns:
-    A dictionary containing the file information.
+    Returns:
+        A dictionary containing the file information.
     """
 ```
 * **Async:** False
@@ -278,18 +278,18 @@ Returns:
 @staticmethod
 def write_file(file_path: str, content: str | bytes, mode: str = "wb") -> bool:
     """
-    Write to a file.
+        Write to a file.
 
-Args:
-    file_path: The path to the file.
-    content: The content to write.
-    mode: The mode to open the file in. Default is binary mode.
-    
-Returns:
-    True if the file was written successfully, False otherwise.
-    
-Raises:
-    PermissionError: If the file cannot be written.
+    Args:
+        file_path: The path to the file.
+        content: The content to write.
+        mode: The mode to open the file in. Default is binary mode.
+
+    Returns:
+        True if the file was written successfully, False otherwise.
+
+    Raises:
+        PermissionError: If the file cannot be written.
     """
 ```
 * **Async:** False

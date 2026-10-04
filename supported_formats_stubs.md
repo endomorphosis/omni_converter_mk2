@@ -23,16 +23,16 @@ def ALL_ROADMAP_FORMATS(cls) -> set[str]:
 @_classproperty
 def APPLICATION_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping application format names to their supported file extensions.
+        A dictionary mapping application format names to their supported file extensions.
 
-Example:
-    >>> {
-    "pdf": frozenset(("pdf",)),
-    "json": frozenset(("json", "jsonl")),
-    "docx": frozenset(("docx",)),
-    "xlsx": frozenset(("xlsx", "xlsm", "xlsb", "xltx", "xltm")),
-    "zip": frozenset(("zip",))
-    }
+    Example:
+        >>> {
+        "pdf": frozenset(("pdf",)),
+        "json": frozenset(("json", "jsonl")),
+        "docx": frozenset(("docx",)),
+        "xlsx": frozenset(("xlsx", "xlsm", "xlsb", "xltx", "xltm")),
+        "zip": frozenset(("zip",))
+        }
     """
 ```
 * **Async:** False
@@ -58,16 +58,16 @@ def ARCHIVE_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
 @_classproperty
 def AUDIO_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping audio format names to their supported file extensions.
+        A dictionary mapping audio format names to their supported file extensions.
 
-Example:
-    >>> {
-    "mp3": frozenset(("mp3", "mpeg")),
-    "wav": frozenset(("wav", "x-wav")),
-    "ogg": frozenset(("ogg",)),
-    "flac": frozenset(("flac",)),
-    "aac": frozenset(("aac",))
-    }
+    Example:
+        >>> {
+        "mp3": frozenset(("mp3", "mpeg")),
+        "wav": frozenset(("wav", "x-wav")),
+        "ogg": frozenset(("ogg",)),
+        "flac": frozenset(("flac",)),
+        "aac": frozenset(("aac",))
+        }
     """
 ```
 * **Async:** False
@@ -106,13 +106,13 @@ def CSV_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
 @_classproperty
 def DOCUMENT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping document format names to their supported file extensions.
+        A dictionary mapping document format names to their supported file extensions.
 
-Example:
-    >>> {
-        "docx": frozenset(("docx",)),
-        "doc": frozenset(("doc",))
-    }
+    Example:
+        >>> {
+            "docx": frozenset(("docx",)),
+            "doc": frozenset(("doc",))
+        }
     """
 ```
 * **Async:** False
@@ -125,13 +125,13 @@ Example:
 @_classproperty
 def EBOOK_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping ebook format names to their supported file extensions.
+        A dictionary mapping ebook format names to their supported file extensions.
 
-Example:
-    >>> {
-        "epub": frozenset(("epub",)),
-        "mobi": frozenset(("mobi",))
-    }
+    Example:
+        >>> {
+            "epub": frozenset(("epub",)),
+            "mobi": frozenset(("mobi",))
+        }
     """
 ```
 * **Async:** False
@@ -144,15 +144,15 @@ Example:
 @_classproperty
 def FORMAT_EXTENSIONS(cls) -> dict[str, str]:
     """
-    Map of file extensions to formats
+        Map of file extensions to formats
 
-Example:
-    >>> {
-        '.html': 'html',
-        '.xml': 'xml',
-        '.txt': 'plain',
-        ...
-        }
+    Example:
+        >>> {
+            '.html': 'html',
+            '.xml': 'xml',
+            '.txt': 'plain',
+            ...
+            }
     """
 ```
 * **Async:** False
@@ -165,16 +165,16 @@ Example:
 @_classproperty
 def FORMAT_REGISTRY(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping format names to sets of supported file extensions.
+        A dictionary mapping format names to sets of supported file extensions.
 
-Example:
-    >>> {
-        "audio": {"mp3", "wav", "ogg", "flac", "aac"},
-        "video": {"mp4", "webm", "avi", "mkv", "mov"},
-        "image": {"jpeg", "jpg", "png", "gif", "webp", "svg+xml"},
-        "text": {"html", "xml", "plaintext", "calendar", "csv"},
-        "application": {"pdf", "json", "docx", "xlsx", "zip"}
-    }
+    Example:
+        >>> {
+            "audio": {"mp3", "wav", "ogg", "flac", "aac"},
+            "video": {"mp4", "webm", "avi", "mkv", "mov"},
+            "image": {"jpeg", "jpg", "png", "gif", "webp", "svg+xml"},
+            "text": {"html", "xml", "plaintext", "calendar", "csv"},
+            "application": {"pdf", "json", "docx", "xlsx", "zip"}
+        }
     """
 ```
 * **Async:** False
@@ -187,14 +187,14 @@ Example:
 @_classproperty
 def FORMAT_SIGNATURES(cls) -> dict[str, set[str]]:
     """
-    Map of MIME types to formats
+        Map of MIME types to formats
 
-Example:
-    {
-    'text/html': 'html',
-    'application/xhtml+xml': 'html',
-    ...
-    }
+    Example:
+        {
+        'text/html': 'html',
+        'application/xhtml+xml': 'html',
+        ...
+        }
     """
 ```
 * **Async:** False
@@ -220,16 +220,16 @@ def HTML_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
 @_classproperty
 def IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping image format names to their supported file extensions.
+        A dictionary mapping image format names to their supported file extensions.
 
-Example:
-    >>> {
-    "jpeg": frozenset(("jpeg", "jpg")),
-    "png": frozenset(("png",)),
-    "gif": frozenset(("gif",)),
-    "webp": frozenset(("webp",)),
-    "svg": frozenset(("svg",))
-    }
+    Example:
+        >>> {
+        "jpeg": frozenset(("jpeg", "jpg")),
+        "png": frozenset(("png",)),
+        "gif": frozenset(("gif",)),
+        "webp": frozenset(("webp",)),
+        "svg": frozenset(("svg",))
+        }
     """
 ```
 * **Async:** False
@@ -255,15 +255,15 @@ def PLAINTEXT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
 @_classproperty
 def RASTER_IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping raster image format names to their supported file extensions.
+        A dictionary mapping raster image format names to their supported file extensions.
 
-Example:
-    >>> {
-    "jpeg": frozenset(("jpeg", "jpg")),
-    "png": frozenset(("png",)),
-    "gif": frozenset(("gif",)),
-    "webp": frozenset(("webp",))
-    }
+    Example:
+        >>> {
+        "jpeg": frozenset(("jpeg", "jpg")),
+        "png": frozenset(("png",)),
+        "gif": frozenset(("gif",)),
+        "webp": frozenset(("webp",))
+        }
     """
 ```
 * **Async:** False
@@ -302,16 +302,16 @@ def SUPPORTED_AUDIO_FORMATS(cls) -> frozenset[str]:
 @_classproperty
 def SUPPORTED_FORMATS(cls) -> set[str]:
     """
-    A set of all supported mime-type formats across categories.
+        A set of all supported mime-type formats across categories.
 
-Example:
-    >>> {
-        "mp3", "wav", "ogg", "flac", "aac",
-        "mp4", "webm", "avi", "mkv", "mov",
-        "jpeg", "jpg", "png", "gif", "webp", "svg+xml",
-        "html", "xml", "plain", "calendar", "csv",
-        "pdf", "json", "docx", "xlsx", "zip"
-    }
+    Example:
+        >>> {
+            "mp3", "wav", "ogg", "flac", "aac",
+            "mp4", "webm", "avi", "mkv", "mov",
+            "jpeg", "jpg", "png", "gif", "webp", "svg+xml",
+            "html", "xml", "plain", "calendar", "csv",
+            "pdf", "json", "docx", "xlsx", "zip"
+        }
     """
 ```
 * **Async:** False
@@ -362,23 +362,23 @@ def SUPPORTED_VIDEO_FORMATS(cls) -> frozenset[str]:
 ```python
 class SupportedFormats:
     """
-    Utility class for managing supported formats and their extensions.
+        Utility class for managing supported formats and their extensions.
 
-Properties:
-    SUPPORTED_AUDIO_FORMATS (frozenset[str]): Set of supported audio format extensions.
-    SUPPORTED_APPLICATION_FORMATS (frozenset[str]): Set of supported application format extensions.
-    SUPPORTED_VIDEO_FORMATS (frozenset[str]): Set of supported video format extensions.
-    SUPPORTED_IMAGE_FORMATS (frozenset[str]): Set of supported image format extensions.
-    SUPPORTED_TEXT_FORMATS (frozenset[str]): Set of supported text format extensions.
-    SUPPORTED_FORMATS (frozenset[str]): Set of all supported format extensions across categories.
-    FORMAT_REGISTRY (dict[str, frozenset[str]]): Mapping of format categories to their supported extensions.
-    FORMAT_SIGNATURES (dict[str, str]): Mapping of MIME types to format names.
-    FORMAT_EXTENSIONS (dict[str, str]): Mapping of file extensions to format names.
-    TEXT_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Text format names to extensions mapping.
-    AUDIO_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Audio format names to extensions mapping.
-    APPLICATION_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Application format names to extensions mapping.
-    IMAGE_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Image format names to extensions mapping.
-    VIDEO_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Video format names to extensions mapping.
+    Properties:
+        SUPPORTED_AUDIO_FORMATS (frozenset[str]): Set of supported audio format extensions.
+        SUPPORTED_APPLICATION_FORMATS (frozenset[str]): Set of supported application format extensions.
+        SUPPORTED_VIDEO_FORMATS (frozenset[str]): Set of supported video format extensions.
+        SUPPORTED_IMAGE_FORMATS (frozenset[str]): Set of supported image format extensions.
+        SUPPORTED_TEXT_FORMATS (frozenset[str]): Set of supported text format extensions.
+        SUPPORTED_FORMATS (frozenset[str]): Set of all supported format extensions across categories.
+        FORMAT_REGISTRY (dict[str, frozenset[str]]): Mapping of format categories to their supported extensions.
+        FORMAT_SIGNATURES (dict[str, str]): Mapping of MIME types to format names.
+        FORMAT_EXTENSIONS (dict[str, str]): Mapping of file extensions to format names.
+        TEXT_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Text format names to extensions mapping.
+        AUDIO_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Audio format names to extensions mapping.
+        APPLICATION_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Application format names to extensions mapping.
+        IMAGE_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Image format names to extensions mapping.
+        VIDEO_FORMAT_EXTENSIONS (dict[str, frozenset[str]]): Video format names to extensions mapping.
     """
 ```
 * **Async:** False
@@ -391,16 +391,16 @@ Properties:
 @_classproperty
 def TEXT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping format names to their supported file extensions.
+        A dictionary mapping format names to their supported file extensions.
 
-Example:
-    >>> {
-        "html": frozenset(("html", "htm", "xhtml", "xml")),
-        "xml": frozenset(("xml",)),
-        "plain": frozenset(("txt", "text")),
-        "calendar": frozenset(("ics", "ical")),
-        "csv": frozenset(("csv",))
-    }
+    Example:
+        >>> {
+            "html": frozenset(("html", "htm", "xhtml", "xml")),
+            "xml": frozenset(("xml",)),
+            "plain": frozenset(("txt", "text")),
+            "calendar": frozenset(("ics", "ical")),
+            "csv": frozenset(("csv",))
+        }
     """
 ```
 * **Async:** False
@@ -499,14 +499,14 @@ def UNIMPLEMENTED_VIDEO_FORMATS_SET(cls) -> set[str]:
 @_classproperty
 def VECTOR_IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping vector image format names to their supported file extensions.
+        A dictionary mapping vector image format names to their supported file extensions.
 
-Example:
-    >>> {
-    "svg": frozenset(("svg",)),
-    "eps": frozenset(("eps",)),
-    "ai": frozenset(("ai",))
-    }
+    Example:
+        >>> {
+        "svg": frozenset(("svg",)),
+        "eps": frozenset(("eps",)),
+        "ai": frozenset(("ai",))
+        }
     """
 ```
 * **Async:** False
@@ -519,16 +519,16 @@ Example:
 @_classproperty
 def VIDEO_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
     """
-    A dictionary mapping video format names to their supported file extensions.
+        A dictionary mapping video format names to their supported file extensions.
 
-Example:
-    >>> {
-    "mp4": frozenset(("mp4",)),
-    "webm": frozenset(("webm",)),
-    "avi": frozenset(("avi",)),
-    "mkv": frozenset(("mkv",)),
-    "mov": frozenset(("mov",))
-    }
+    Example:
+        >>> {
+        "mp4": frozenset(("mp4",)),
+        "webm": frozenset(("webm",)),
+        "avi": frozenset(("avi",)),
+        "mkv": frozenset(("mkv",)),
+        "mov": frozenset(("mov",))
+        }
     """
 ```
 * **Async:** False
@@ -566,13 +566,13 @@ def __contains__(cls, key):
 ```python
 def __contains__(cls, item: str) -> bool:
     """
-    Check if a format is supported (e.g. can be processed).
+        Check if a format is supported (e.g. can be processed).
 
-Args:
-    item: The name of the supported format.
+    Args:
+        item: The name of the supported format.
 
-Returns:
-    Boolean: True if the format is supported, else False.
+    Returns:
+        Boolean: True if the format is supported, else False.
     """
 ```
 * **Async:** False
@@ -640,14 +640,14 @@ def _make_frozen_set_from_frozen_set_dict(set_dict: dict[str, frozenset]) -> fro
 @classmethod
 def get(cls, name: str, default: bool = False) -> bool:
     """
-    Get a supported format by name with a default value.
+        Get a supported format by name with a default value.
 
-Args:
-    name: The name of the supported format.
-    default: The default value to return if the supported format is not found.
+    Args:
+        name: The name of the supported format.
+        default: The default value to return if the supported format is not found.
 
-Returns:
-    The supported format if found, otherwise the default value.
+    Returns:
+        The supported format if found, otherwise the default value.
     """
 ```
 * **Async:** False
@@ -660,10 +660,10 @@ Returns:
 @classmethod
 def items(cls) -> list[tuple[str, bool]]:
     """
-    Get a list of all supported formats as (name, format) tuples.
+        Get a list of all supported formats as (name, format) tuples.
 
-Returns:
-    A list of tuples containing supported format names and their corresponding objects.
+    Returns:
+        A list of tuples containing supported format names and their corresponding objects.
     """
 ```
 * **Async:** False
@@ -676,10 +676,10 @@ Returns:
 @classmethod
 def keys(cls) -> list[str]:
     """
-    Get a list of all supported format names.
+        Get a list of all supported format names.
 
-Returns:
-    A list of supported format names.
+    Returns:
+        A list of supported format names.
     """
 ```
 * **Async:** False

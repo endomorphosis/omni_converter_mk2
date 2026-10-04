@@ -9,20 +9,20 @@ Stub file last updated: 2025-07-17 05:36:42
 ```python
 class ExternalPrograms:
     """
-    Check the availability of external programs.
+        Check the availability of external programs.
 
-NOTE: As these programs are entirely external, this class does not provide access to them.
-It only checks if they exist and can be run.
+    NOTE: As these programs are entirely external, this class does not provide access to them.
+    It only checks if they exist and can be run.
 
-Properties:
-    ffmpeg (bool): Whether ffmpeg is available.
-    ffprobe (bool): Whether ffprobe is available.
-    tesseract (bool): Whether tesseract is available.
-    calibre (bool): Whether calibre is available.
-    cuda (bool): Whether nvcc (NVIDIA CUDA Compiler) is available.
-    seven_zip (bool): Whether 7-zip is available.
-    libreoffice (bool): Whether LibreOffice is available.
-    audacity (bool): Whether Audacity is available (optional, TODO: check for CLI).
+    Properties:
+        ffmpeg (bool): Whether ffmpeg is available.
+        ffprobe (bool): Whether ffprobe is available.
+        tesseract (bool): Whether tesseract is available.
+        calibre (bool): Whether calibre is available.
+        cuda (bool): Whether nvcc (NVIDIA CUDA Compiler) is available.
+        seven_zip (bool): Whether 7-zip is available.
+        libreoffice (bool): Whether LibreOffice is available.
+        audacity (bool): Whether Audacity is available (optional, TODO: check for CLI).
     """
 ```
 * **Async:** False
@@ -76,21 +76,21 @@ class _classproperty:
 ```python
 def _test_for_non_critical_external_programs() -> None:
     """
-    Test for non-critical dependencies in a separate thread to ensure the application starts promptly.
+        Test for non-critical dependencies in a separate thread to ensure the application starts promptly.
 
-This function creates a temporary instance of the `_Dependencies` class to load all required
-modules without causing deadlocks. Once the modules are loaded, the temporary instance is
-cleared from memory to optimize resource usage.
+    This function creates a temporary instance of the `_Dependencies` class to load all required
+    modules without causing deadlocks. Once the modules are loaded, the temporary instance is
+    cleared from memory to optimize resource usage.
 
-Key Steps:
-1. Creates a separate `_Dependencies` instance to handle module loading.
-2. Ensures all modules are loaded using `load_all_modules`.
-3. Clears the cache and deletes the temporary instance to free up memory.
-4. Triggers garbage collection to reclaim unused memory.
+    Key Steps:
+    1. Creates a separate `_Dependencies` instance to handle module loading.
+    2. Ensures all modules are loaded using `load_all_modules`.
+    3. Clears the cache and deletes the temporary instance to free up memory.
+    4. Triggers garbage collection to reclaim unused memory.
 
-Note:
-- This function is designed to handle non-critical dependencies, allowing the application
-    to start without waiting for all dependencies to be fully loaded.
+    Note:
+    - This function is designed to handle non-critical dependencies, allowing the application
+        to start without waiting for all dependencies to be fully loaded.
     """
 ```
 * **Async:** False
@@ -116,11 +116,11 @@ def calibre(cls) -> bool:
 @classmethod
 def check_for_external_programs(cls) -> None:
     """
-    Check if external programs are available.
+        Check if external programs are available.
 
-This method checks the availability of various external programs by attempting to run them
-with the '--help' option. If the program is found and runs successfully, it is marked as available.
-If it fails or is not found, it is marked as unavailable.
+    This method checks the availability of various external programs by attempting to run them
+    with the '--help' option. If the program is found and runs successfully, it is marked as available.
+    If it fails or is not found, it is marked as unavailable.
     """
 ```
 * **Async:** False
@@ -172,15 +172,15 @@ def ffprobe(cls) -> bool:
 @classmethod
 def get(cls, name: str, default: bool = False) -> bool:
     """
-    Get a external program by name with a default value.
+        Get a external program by name with a default value.
 
-Args:
-    name (str): The name of the external program.
-    default (bool): The default value to return if the external program is not found.
-        Defaults to False.
+    Args:
+        name (str): The name of the external program.
+        default (bool): The default value to return if the external program is not found.
+            Defaults to False.
 
-Returns:
-    The external program if found, otherwise the default value.
+    Returns:
+        The external program if found, otherwise the default value.
     """
 ```
 * **Async:** False
@@ -193,10 +193,10 @@ Returns:
 @classmethod
 def items(cls) -> list[tuple[str, bool]]:
     """
-    Get a list of all dependencies as (name, dependency) tuples.
+        Get a list of all dependencies as (name, dependency) tuples.
 
-Returns:
-    A list of tuples containing dependency names and their corresponding objects.
+    Returns:
+        A list of tuples containing dependency names and their corresponding objects.
     """
 ```
 * **Async:** False
@@ -209,10 +209,10 @@ Returns:
 @classmethod
 def keys(cls) -> list[str]:
     """
-    Get a list of all external program names.
+        Get a list of all external program names.
 
-Returns:
-    A list of external program names.
+    Returns:
+        A list of external program names.
     """
 ```
 * **Async:** False

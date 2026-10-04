@@ -9,17 +9,17 @@ Stub file last updated: 2025-07-17 05:44:02
 ```python
 def get_processor_resource_configs() -> Generator[dict[str, Any], None, None]:
     """
-    Generator that yields resource configuration dictionaries for content processors.
+        Generator that yields resource configuration dictionaries for content processors.
 
-Each resource configuration contains:
-- supported_formats: Set of file extensions the processor can handle
-- processor_name: Unique identifier for the processor
-- dependencies: Dict of required Python packages/modules (name -> version or None)
-- critical_resources: List of methods that must be available for core functionality
-- optional_resources: List of methods that provide enhanced features but aren't required
+    Each resource configuration contains:
+    - supported_formats: Set of file extensions the processor can handle
+    - processor_name: Unique identifier for the processor
+    - dependencies: Dict of required Python packages/modules (name -> version or None)
+    - critical_resources: List of methods that must be available for core functionality
+    - optional_resources: List of methods that provide enhanced features but aren't required
 
-Yields:
-    dict: Resource configuration for each processor
+    Yields:
+        dict: Resource configuration for each processor
     """
 ```
 * **Async:** False
