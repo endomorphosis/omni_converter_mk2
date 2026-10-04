@@ -9,13 +9,13 @@ Stub file last updated: 2025-07-17 05:32:27
 ```python
 def is_mock(obj: Any) -> bool:
     """
-    Check if the object is a mock object. 
+        Check if the object is a mock object.
 
-Args:
-    obj: The object to check.
+    Args:
+        obj: The object to check.
 
-Returns:
-    bool: True if it is a mock, False otherwise.
+    Returns:
+        bool: True if it is a mock, False otherwise.
     """
 ```
 * **Async:** False

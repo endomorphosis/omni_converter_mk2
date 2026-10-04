@@ -18,14 +18,14 @@ def _get_words(text: str) -> list:
 ```python
 def simple_bleu_approximation(reference: str, extracted: str) -> float:
     """
-    Simple approximation of BLEU score when NLTK is not available.
+        Simple approximation of BLEU score when NLTK is not available.
 
-Args:
-    reference: Reference text
-    extracted: Extracted text
-    
-Returns:
-    Approximate BLEU score
+    Args:
+        reference: Reference text
+        extracted: Extracted text
+
+    Returns:
+        Approximate BLEU score
     """
 ```
 * **Async:** False

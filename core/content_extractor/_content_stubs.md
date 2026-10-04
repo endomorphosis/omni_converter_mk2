@@ -9,15 +9,15 @@ Stub file last updated: 2025-07-17 05:42:08
 ```python
 class Content(BaseModel):
     """
-    Content extracted from a file.
+        Content extracted from a file.
 
-Attributes:
-    text (str): The extracted text content.
-    metadata (dict): Metadata about the content.
-    sections (list): Sections of the content (if applicable).
-    source_format (str): The format of the source file.
-    source_path (str): The path to the source file.
-    extraction_time (datetime): The time the content was extracted.
+    Attributes:
+        text (str): The extracted text content.
+        metadata (dict): Metadata about the content.
+        sections (list): Sections of the content (if applicable).
+        source_format (str): The format of the source file.
+        source_path (str): The path to the source file.
+        extraction_time (datetime): The time the content was extracted.
     """
 ```
 * **Async:** False
@@ -29,10 +29,10 @@ Attributes:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-    Convert to a dictionary.
+        Convert to a dictionary.
 
-Returns:
-    A dictionary representation of the content.
+    Returns:
+        A dictionary representation of the content.
     """
 ```
 * **Async:** False
