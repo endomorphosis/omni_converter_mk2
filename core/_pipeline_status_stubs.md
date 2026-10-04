@@ -9,17 +9,17 @@ Stub file last updated: 2025-07-17 05:39:35
 ```python
 class PipelineStatus(BaseModel):
     """
-    Status of the processing pipeline.
+        Status of the processing pipeline.
 
-This class represents the current status of the processing pipeline,
-including statistics and the current state.
+    This class represents the current status of the processing pipeline,
+    including statistics and the current state.
 
-Attributes:
-    total_files (int): Total number of files processed.
-    successful_files (int): Number of files processed successfully.
-    failed_files (int): Number of files that failed processing.
-    current_file (str): Path to the file currently being processed.
-    is_processing (bool): Whether the pipeline is currently processing a file.
+    Attributes:
+        total_files (int): Total number of files processed.
+        successful_files (int): Number of files processed successfully.
+        failed_files (int): Number of files that failed processing.
+        current_file (str): Path to the file currently being processed.
+        is_processing (bool): Whether the pipeline is currently processing a file.
     """
 ```
 * **Async:** False
@@ -52,10 +52,10 @@ def reset(self) -> None:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-    Convert to a dictionary.
+        Convert to a dictionary.
 
-Returns:
-    A dictionary representation of the pipeline status.
+    Returns:
+        A dictionary representation of the pipeline status.
     """
 ```
 * **Async:** False

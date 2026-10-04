@@ -16,16 +16,18 @@ def _determine_backend_base_on_dependencies(configs: Configs) -> Optional[str]:
 ## create_async_llm_interface
 
 ```python
-def create_async_llm_interface(resources: dict[str, Any], configs: Optional[dict[str, Any]] = None) -> AsyncLLMInterface:
+def create_async_llm_interface(
+    resources: dict[str, Any], configs: Optional[dict[str, Any]] = None
+) -> AsyncLLMInterface:
     """
-    Factory function to create an AsyncLLMInterface instance.
+        Factory function to create an AsyncLLMInterface instance.
 
-Args:
-    resources: Dictionary of resources for dependency injection
-    configs: Configuration parameters
-    
-Returns:
-    Configured AsyncLLMInterface instance
+    Args:
+        resources: Dictionary of resources for dependency injection
+        configs: Configuration parameters
+
+    Returns:
+        Configured AsyncLLMInterface instance
     """
 ```
 * **Async:** False
@@ -37,16 +39,16 @@ Returns:
 ```python
 def create_llm_resources() -> dict[str, Any]:
     """
-    Create a resources dictionary with LLM components.
+        Create a resources dictionary with LLM components.
 
-Args:
-    api_key: OpenAI API key (uses environment variable if not provided)
-    model: Model to use for text generation
-    embedding_model: Model to use for embeddings
-    embedding_dimensions: Dimensions of embedding vectors
-    
-Returns:
-    Dictionary of LLM resources
+    Args:
+        api_key: OpenAI API key (uses environment variable if not provided)
+        model: Model to use for text generation
+        embedding_model: Model to use for embeddings
+        embedding_dimensions: Dimensions of embedding vectors
+
+    Returns:
+        Dictionary of LLM resources
     """
 ```
 * **Async:** False
@@ -56,16 +58,18 @@ Returns:
 ## make_embeddings_manager
 
 ```python
-def make_embeddings_manager(configs: Optional[dict[str, Any]] = None, api_key: Optional[str] = None) -> Optional[EmbeddingsInterface]:
+def make_embeddings_manager(
+    configs: Optional[dict[str, Any]] = None, api_key: Optional[str] = None
+) -> Optional[EmbeddingsInterface]:
     """
-    Create a configured EmbeddingsInterface instance.
+        Create a configured EmbeddingsInterface instance.
 
-Args:
-    configs: Configuration parameters
-    api_key: OpenAI API key (uses environment variable if not provided)
-    
-Returns:
-    Configured EmbeddingsInterface instance or None if creation failed
+    Args:
+        configs: Configuration parameters
+        api_key: OpenAI API key (uses environment variable if not provided)
+
+    Returns:
+        Configured EmbeddingsInterface instance or None if creation failed
     """
 ```
 * **Async:** False
@@ -75,16 +79,18 @@ Returns:
 ## make_embeddings_manager
 
 ```python
-def make_embeddings_manager(resources: dict[str, Any], configs: Optional[dict[str, Any]] = None) -> EmbeddingsInterface:
+def make_embeddings_manager(
+    resources: dict[str, Any], configs: Optional[dict[str, Any]] = None
+) -> EmbeddingsInterface:
     """
-    Factory function to create an EmbeddingsInterface instance.
+        Factory function to create an EmbeddingsInterface instance.
 
-Args:
-    resources: Dictionary of resources for dependency injection
-    configs: Configuration parameters
-    
-Returns:
-    Configured EmbeddingsInterface instance
+    Args:
+        resources: Dictionary of resources for dependency injection
+        configs: Configuration parameters
+
+    Returns:
+        Configured EmbeddingsInterface instance
     """
 ```
 * **Async:** False
@@ -96,14 +102,14 @@ Returns:
 ```python
 def make_llm_components() -> dict[str, Any]:
     """
-    Initialize and return all LLM components.
+        Initialize and return all LLM components.
 
-Args:
-    configs: Configuration parameters
-    api_key: OpenAI API key (uses environment variable if not provided)
-    
-Returns:
-    Dictionary with initialized LLM components
+    Args:
+        configs: Configuration parameters
+        api_key: OpenAI API key (uses environment variable if not provided)
+
+    Returns:
+        Dictionary with initialized LLM components
     """
 ```
 * **Async:** False
@@ -113,16 +119,18 @@ Returns:
 ## make_llm_interface
 
 ```python
-def make_llm_interface(configs: Optional[dict[str, Any]] = None, api_key: Optional[str] = None) -> Optional[AsyncLLMInterface]:
+def make_llm_interface(
+    configs: Optional[dict[str, Any]] = None, api_key: Optional[str] = None
+) -> Optional[AsyncLLMInterface]:
     """
-    Create a configured AsyncLLMInterface instance.
+        Create a configured AsyncLLMInterface instance.
 
-Args:
-    configs: Configuration parameters
-    api_key: OpenAI API key (uses environment variable if not provided)
-    
-Returns:
-    Configured AsyncLLMInterface instance or None if creation failed
+    Args:
+        configs: Configuration parameters
+        api_key: OpenAI API key (uses environment variable if not provided)
+
+    Returns:
+        Configured AsyncLLMInterface instance or None if creation failed
     """
 ```
 * **Async:** False

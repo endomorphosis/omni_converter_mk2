@@ -38,17 +38,19 @@ def get_progress_bar(total: int, unit: str = "file", desc: str = None) -> tqdm.t
 ```python
 @contextmanager
 @staticmethod
-def progress_bar(total: int, unit: str = "file", desc: str = None) -> Generator[None, None, tqdm.tqdm]:
+def progress_bar(
+    total: int, unit: str = "file", desc: str = None
+) -> Generator[None, None, tqdm.tqdm]:
     """
-    Context manager for a progress bar.
+        Context manager for a progress bar.
 
-Args:
-    total: Total number of iterations.
-    unit: Unit of measurement for the progress bar.
-    desc: Description for the progress bar.
+    Args:
+        total: Total number of iterations.
+        unit: Unit of measurement for the progress bar.
+        desc: Description for the progress bar.
 
-Yields:
-    A tqdm progress bar instance.
+    Yields:
+        A tqdm progress bar instance.
     """
 ```
 * **Async:** False

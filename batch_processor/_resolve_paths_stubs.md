@@ -21,13 +21,13 @@ def _resolve_path(str_path: str, logger: Logger) -> Generator[str, None, None]:
 ```python
 def resolve_paths(file_paths: list[str] | str, logger: Logger) -> list[str]:
     """
-    Resolve file paths, expanding directories if necessary.
+        Resolve file paths, expanding directories if necessary.
 
-Args:
-    file_paths: list of file paths or a directory path.
-    
-Returns:
-    List of resolved file paths.
+    Args:
+        file_paths: list of file paths or a directory path.
+
+    Returns:
+        List of resolved file paths.
     """
 ```
 * **Async:** False
