@@ -9,17 +9,17 @@ Stub file last updated: 2025-07-17 05:42:08
 ```python
 def _recursive_serialize(obj: Any, _seen: set = None) -> Any:
     """
-    Recursively serialize objects to JSON-compatible types.
+        Recursively serialize objects to JSON-compatible types.
 
-Args:
-    obj (Any): The object to serialize.
-    _seen (set): Internal parameter to track seen objects for circular reference detection.
+    Args:
+        obj (Any): The object to serialize.
+        _seen (set): Internal parameter to track seen objects for circular reference detection.
 
-Returns:
-    JSON-compatible representation of the object.
+    Returns:
+        JSON-compatible representation of the object.
 
-Raises:
-    ValueError: If circular reference is detected.
+    Raises:
+        ValueError: If circular reference is detected.
     """
 ```
 * **Async:** False

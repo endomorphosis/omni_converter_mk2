@@ -9,8 +9,8 @@ Stub file last updated: 2025-07-17 05:45:32
 ```python
 def _get_available_processors() -> list:
     """
-    Check if the processor is available.
-This function should be implemented in each processor class.
+        Check if the processor is available.
+    This function should be implemented in each processor class.
     """
 ```
 * **Async:** False
@@ -22,14 +22,14 @@ This function should be implemented in each processor class.
 ```python
 def create_llm_processor() -> LLMProcessor:
     """
-    Factory function to create an LLMProcessor instance.
+        Factory function to create an LLMProcessor instance.
 
-Args:
-    resources: Dictionary of resources for dependency injection
-    configs: Configuration parameters
-    
-Returns:
-    Configured LLMProcessor instance
+    Args:
+        resources: Dictionary of resources for dependency injection
+        configs: Configuration parameters
+
+    Returns:
+        Configured LLMProcessor instance
     """
 ```
 * **Async:** False
@@ -40,9 +40,7 @@ Returns:
 
 ```python
 def make_processors():
-    """
-        
-    """
+    """ """
 ```
 * **Async:** False
 * **Method:** False

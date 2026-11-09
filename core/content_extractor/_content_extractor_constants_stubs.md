@@ -48,20 +48,20 @@ def CV2_AVAILABLE(cls) -> bool:
 ```python
 class Constants:
     """
-    Utility class for managing constants related to format handlers.
-This includes 
-Constants for format handlers including supported formats and capabilities.
+        Utility class for managing constants related to format handlers.
+    This includes
+    Constants for format handlers including supported formats and capabilities.
 
-Table of Contents:
-- Dependency and External Programs Availability
-    Boolean properties to check if external cls._dependencies and programs are available.
-- Combination Processors
-    Boolean properties to check if a combination of cls._dependencies are available to enable certain processors.
-    For example, if openpyxl *or* pandas is available, the xlsx processor can be used.
-- Format Handlers Constants
-- MIME Type to Format Mapping
-- Unimplemented Formats
-- All Formats from ROADMAP
+    Table of Contents:
+    - Dependency and External Programs Availability
+        Boolean properties to check if external cls._dependencies and programs are available.
+    - Combination Processors
+        Boolean properties to check if a combination of cls._dependencies are available to enable certain processors.
+        For example, if openpyxl *or* pandas is available, the xlsx processor can be used.
+    - Format Handlers Constants
+    - MIME Type to Format Mapping
+    - Unimplemented Formats
+    - All Formats from ROADMAP
     """
 ```
 * **Async:** False
@@ -616,14 +616,14 @@ def _get_generic_processors() -> Generator[set[str], None, None]:
 @classmethod
 def get(cls, name: str, default: bool = False) -> bool:
     """
-    Get a external program by name with a default value.
+        Get a external program by name with a default value.
 
-Args:
-    name: The name of the external program.
-    default: The default value to return if the external program is not found.
+    Args:
+        name: The name of the external program.
+        default: The default value to return if the external program is not found.
 
-Returns:
-    The external program if found, otherwise the default value.
+    Returns:
+        The external program if found, otherwise the default value.
     """
 ```
 * **Async:** False
@@ -636,10 +636,10 @@ Returns:
 @classmethod
 def items(cls) -> list[tuple[str, bool]]:
     """
-    Get a list of all dependencies as (name, dependency) tuples.
+        Get a list of all dependencies as (name, dependency) tuples.
 
-Returns:
-    A list of tuples containing dependency names and their corresponding objects.
+    Returns:
+        A list of tuples containing dependency names and their corresponding objects.
     """
 ```
 * **Async:** False
@@ -652,10 +652,10 @@ Returns:
 @classmethod
 def keys(cls) -> list[str]:
     """
-    Get a list of all external program names.
+        Get a list of all external program names.
 
-Returns:
-    A list of external program names.
+    Returns:
+        A list of external program names.
     """
 ```
 * **Async:** False

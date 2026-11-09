@@ -9,15 +9,15 @@ Stub file last updated: 2025-07-17 05:31:21
 ```python
 def simple_rouge_approximation(reference: str, extracted: str) -> float:
     """
-    Simple approximation of ROUGE-L score when Rouge library is not available.
+        Simple approximation of ROUGE-L score when Rouge library is not available.
 
-Args:
-    self: Class instance
-    reference: Reference text
-    extracted: Extracted text
-    
-Returns:
-    Approximate ROUGE-L score
+    Args:
+        self: Class instance
+        reference: Reference text
+        extracted: Extracted text
+
+    Returns:
+        Approximate ROUGE-L score
     """
 ```
 * **Async:** False

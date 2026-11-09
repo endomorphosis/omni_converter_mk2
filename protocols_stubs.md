@@ -125,13 +125,13 @@ class ProcessorModuleProtocol(Protocol):
 ```python
 def __call__(self, text: str) -> str:
     """
-    Normalize text.
+        Normalize text.
 
-Args:
-    text (str): The text to normalize.
+    Args:
+        text (str): The text to normalize.
 
-Returns:
-    str: The normalized text.
+    Returns:
+        str: The normalized text.
     """
 ```
 * **Async:** False
@@ -141,16 +141,18 @@ Returns:
 ## __call__
 
 ```python
-def __call__(self, data: bytes | str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+def __call__(
+    self, data: bytes | str, options: dict[str, Any]
+) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
     """
-    Process data.
+        Process data.
 
-Args:
-    data (bytes | str): The file content to process.
-    options (dict[str, Any]): Processing options.
-    
-Returns:
-    Tuple of (text content, metadata, sections).
+    Args:
+        data (bytes | str): The file content to process.
+        options (dict[str, Any]): Processing options.
+
+    Returns:
+        Tuple of (text content, metadata, sections).
     """
 ```
 * **Async:** False
