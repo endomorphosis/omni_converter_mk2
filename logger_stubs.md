@@ -37,23 +37,29 @@ def __new__(cls):
 ## get_logger
 
 ```python
-def get_logger(name: str, log_file_name: str = "app.log", level: int = logging.INFO, max_size: int = 5 * 1024 * 1024, backup_count: int = 3) -> logging.Logger:
+def get_logger(
+    name: str,
+    log_file_name: str = "app.log",
+    level: int = logging.INFO,
+    max_size: int = 5 * 1024 * 1024,
+    backup_count: int = 3,
+) -> logging.Logger:
     """
-    Sets up a logger with both file and console handlers.
+        Sets up a logger with both file and console handlers.
 
-Args:
-    name: Name of the logger.
-    log_file_name: Name of the log file. Defaults to 'app.log'.
-    level: Logging level. Defaults to logging.INFO.
-    max_size: Maximum size of the log file before it rotates. Defaults to 5MB.
-    backup_count: Number of backup files to keep. Defaults to 3.
+    Args:
+        name: Name of the logger.
+        log_file_name: Name of the log file. Defaults to 'app.log'.
+        level: Logging level. Defaults to logging.INFO.
+        max_size: Maximum size of the log file before it rotates. Defaults to 5MB.
+        backup_count: Number of backup files to keep. Defaults to 3.
 
-Returns:
-    Configured logger.
+    Returns:
+        Configured logger.
 
-Example:
-    # Usage
-    logger = get_logger(__name__)
+    Example:
+        # Usage
+        logger = get_logger(__name__)
     """
 ```
 * **Async:** False

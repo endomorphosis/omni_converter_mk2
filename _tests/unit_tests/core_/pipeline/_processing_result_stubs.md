@@ -29,10 +29,10 @@ class ProcessingResult:
 ```python
 def add_error(self, error: str) -> None:
     """
-    Add an error to the result.
+        Add an error to the result.
 
-Args:
-    error: The error message to add.
+    Args:
+        error: The error message to add.
     """
 ```
 * **Async:** False
@@ -44,11 +44,11 @@ Args:
 ```python
 def add_metadata(self, key: str, value: Any) -> None:
     """
-    Add metadata to the result.
+        Add metadata to the result.
 
-Args:
-    key: The metadata key.
-    value: The metadata value.
+    Args:
+        key: The metadata key.
+        value: The metadata value.
     """
 ```
 * **Async:** False
@@ -60,10 +60,10 @@ Args:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-    Convert to a dictionary.
+        Convert to a dictionary.
 
-Returns:
-    A dictionary representation of the processing result.
+    Returns:
+        A dictionary representation of the processing result.
     """
 ```
 * **Async:** False
@@ -76,10 +76,10 @@ Returns:
 @property
 def error_string(self) -> str:
     """
-    Get the errors as a formatted string.
+        Get the errors as a formatted string.
 
-Returns:
-    A formatted string of errors.
+    Returns:
+        A formatted string of errors.
     """
 ```
 * **Async:** False
@@ -91,10 +91,10 @@ Returns:
 ```python
 def __str__(self) -> str:
     """
-    Get a string representation of the result.
+        Get a string representation of the result.
 
-Returns:
-    A string representation of the processing result.
+    Returns:
+        A string representation of the processing result.
     """
 ```
 * **Async:** False
