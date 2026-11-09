@@ -21,13 +21,13 @@ class PromptTemplate(BaseModel if BaseModel != object else object):
 ```python
 def format(self, **kwargs) -> "PromptTemplate":
     """
-    Format the prompts using the provided variables.
+        Format the prompts using the provided variables.
 
-Args:
-    **kwargs: Variables to insert into the prompt templates
-    
-Returns:
-    Self with formatted prompts
+    Args:
+        **kwargs: Variables to insert into the prompt templates
+
+    Returns:
+        Self with formatted prompts
     """
 ```
 * **Async:** False
@@ -39,10 +39,10 @@ Returns:
 ```python
 def is_yaml_available() -> bool:
     """
-    Check if YAML library is available.
+        Check if YAML library is available.
 
-Returns:
-    True if YAML is available, False otherwise
+    Returns:
+        True if YAML is available, False otherwise
     """
 ```
 * **Async:** False
@@ -52,17 +52,19 @@ Returns:
 ## load_prompt_by_name
 
 ```python
-def load_prompt_by_name(name: str, prompts_dir: Union[str, Path], default_prompt: Optional[PromptTemplate] = None) -> PromptTemplate:
+def load_prompt_by_name(
+    name: str, prompts_dir: Union[str, Path], default_prompt: Optional[PromptTemplate] = None
+) -> PromptTemplate:
     """
-    Load a prompt template by name from the prompts directory.
+        Load a prompt template by name from the prompts directory.
 
-Args:
-    name: Name of the prompt template
-    prompts_dir: Directory containing prompt templates
-    default_prompt: Default prompt to use if loading fails
-    
-Returns:
-    PromptTemplate instance
+    Args:
+        name: Name of the prompt template
+        prompts_dir: Directory containing prompt templates
+        default_prompt: Default prompt to use if loading fails
+
+    Returns:
+        PromptTemplate instance
     """
 ```
 * **Async:** False
@@ -72,16 +74,18 @@ Returns:
 ## load_prompt_from_yaml
 
 ```python
-def load_prompt_from_yaml(prompt_path: Union[str, Path], default_prompt: Optional[PromptTemplate] = None) -> PromptTemplate:
+def load_prompt_from_yaml(
+    prompt_path: Union[str, Path], default_prompt: Optional[PromptTemplate] = None
+) -> PromptTemplate:
     """
-    Load a prompt template from a YAML file.
+        Load a prompt template from a YAML file.
 
-Args:
-    prompt_path: Path to YAML file
-    default_prompt: Default prompt to use if loading fails
-    
-Returns:
-    PromptTemplate instance
+    Args:
+        prompt_path: Path to YAML file
+        default_prompt: Default prompt to use if loading fails
+
+    Returns:
+        PromptTemplate instance
     """
 ```
 * **Async:** False
@@ -93,14 +97,14 @@ Returns:
 ```python
 def safe_format(template: str, **kwargs) -> str:
     """
-    Safely format a string template, ignoring missing keys.
+        Safely format a string template, ignoring missing keys.
 
-Args:
-    template: String template to format
-    **kwargs: Variables to insert into the template
-    
-Returns:
-    Formatted string
+    Args:
+        template: String template to format
+        **kwargs: Variables to insert into the template
+
+    Returns:
+        Formatted string
     """
 ```
 * **Async:** False
