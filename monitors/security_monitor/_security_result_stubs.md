@@ -21,15 +21,15 @@ class RiskLevel(str, Enum):
 ```python
 class SecurityResult(BaseModel):
     """
-    Result of security validation.
+        Result of security validation.
 
-This class represents the result of security validation for a file.
+    This class represents the result of security validation for a file.
 
-Attributes:
-    is_safe (bool): Whether the file is considered safe.
-    issues (list[str]): list of security issues found.
-    risk_level (str): Risk level assessment ('low', 'medium', 'high'). Default is 'low'. # TODO Maybe this should be high as default?
-    metadata (dict[str, Any]): Additional metadata about the security check.
+    Attributes:
+        is_safe (bool): Whether the file is considered safe.
+        issues (list[str]): list of security issues found.
+        risk_level (str): Risk level assessment ('low', 'medium', 'high'). Default is 'low'. # TODO Maybe this should be high as default?
+        metadata (dict[str, Any]): Additional metadata about the security check.
     """
 ```
 * **Async:** False
@@ -53,10 +53,10 @@ def __str__(self) -> str:
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-    Convert to a dictionary.
+        Convert to a dictionary.
 
-Returns:
-    A dictionary representation of the security result.
+    Returns:
+        A dictionary representation of the security result.
     """
 ```
 * **Async:** False

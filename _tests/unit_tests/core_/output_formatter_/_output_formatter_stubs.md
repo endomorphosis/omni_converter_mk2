@@ -29,11 +29,11 @@ class OutputFormatter:
 ```python
 def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
     """
-    Initialize an output formatter.
+        Initialize an output formatter.
 
-Args:
-    resources: A dictionary of callable objects and dependencies.
-    configs: A pydantic model containing configuration settings.
+    Args:
+        resources: A dictionary of callable objects and dependencies.
+        configs: A pydantic model containing configuration settings.
     """
 ```
 * **Async:** False
@@ -57,13 +57,13 @@ def _register_default_formatters(self) -> None:
 ```python
 def _format_as_txt(self, content: Content) -> str:
     """
-    Format content as plain text.
+        Format content as plain text.
 
-Args:
-    content: The content to format.
-    
-Returns:
-    The formatted content as plain text.
+    Args:
+        content: The content to format.
+
+    Returns:
+        The formatted content as plain text.
     """
 ```
 * **Async:** False
@@ -75,13 +75,13 @@ Returns:
 ```python
 def _format_as_json(self, content: Content) -> str:
     """
-    Format content as JSON.
+        Format content as JSON.
 
-Args:
-    content: The content to format.
-    
-Returns:
-    The formatted content as JSON.
+    Args:
+        content: The content to format.
+
+    Returns:
+        The formatted content as JSON.
     """
 ```
 * **Async:** False
@@ -93,13 +93,13 @@ Returns:
 ```python
 def _format_as_markdown(self, content: Content) -> str:
     """
-    Format content as Markdown.
+        Format content as Markdown.
 
-Args:
-    content: The content to format.
-    
-Returns:
-    The formatted content as Markdown.
+    Args:
+        content: The content to format.
+
+    Returns:
+        The formatted content as Markdown.
     """
 ```
 * **Async:** False
@@ -109,21 +109,27 @@ Returns:
 ## format_output
 
 ```python
-def format_output(self, content: Content, format: Optional[str] = None, options: Optional[dict[str, Any]] = None, output_path: Optional[str] = None) -> FormattedOutput:
+def format_output(
+    self,
+    content: Content,
+    format: Optional[str] = None,
+    options: Optional[dict[str, Any]] = None,
+    output_path: Optional[str] = None,
+) -> FormattedOutput:
     """
-    Format content for output.
+        Format content for output.
 
-Args:
-    content: The content to format.
-    format: The output format. If None, the default format is used.
-    options: Optional formatting options.
-    output_path: The path where the output will be written.
-    
-Returns:
-    The formatted output.
-    
-Raises:
-    ValueError: If the specified format is not supported.
+    Args:
+        content: The content to format.
+        format: The output format. If None, the default format is used.
+        options: Optional formatting options.
+        output_path: The path where the output will be written.
+
+    Returns:
+        The formatted output.
+
+    Raises:
+        ValueError: If the specified format is not supported.
     """
 ```
 * **Async:** False
@@ -135,14 +141,14 @@ Raises:
 ```python
 def register_format(self, format_name: str, formatter: FormatterFunc) -> None:
     """
-    Register an output format.
+        Register an output format.
 
-Args:
-    format_name: The name of the format.
-    formatter: The formatter function.
-    
-Raises:
-    ValueError: If a formatter for the format already exists.
+    Args:
+        format_name: The name of the format.
+        formatter: The formatter function.
+
+    Raises:
+        ValueError: If a formatter for the format already exists.
     """
 ```
 * **Async:** False
@@ -155,10 +161,10 @@ Raises:
 @property
 def available_formats(self) -> list[str]:
     """
-    Get the available output formats.
+        Get the available output formats.
 
-Returns:
-    List of available output formats.
+    Returns:
+        List of available output formats.
     """
 ```
 * **Async:** False

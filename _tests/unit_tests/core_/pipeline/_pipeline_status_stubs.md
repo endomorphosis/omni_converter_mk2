@@ -4,13 +4,15 @@
 
 ```python
 from pydantic import BaseModel
+
+
 class PipelineStatus(BaseModel):
     """
     Status of the processing pipeline.
-    
+
     This class represents the current status of the processing pipeline,
     including statistics and the current state.
-    
+
     Attributes:
         total_files (int): Total number of files processed.
         successful_files (int): Number of files processed successfully.
@@ -25,10 +27,10 @@ class PipelineStatus(BaseModel):
 ```python
 def to_dict(self) -> dict[str, Any]:
     """
-    Convert to a dictionary.
+        Convert to a dictionary.
 
-Returns:
-    A dictionary representation of the pipeline status.
+    Returns:
+        A dictionary representation of the pipeline status.
     """
 ```
 * **Async:** False
